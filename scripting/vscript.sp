@@ -1,4 +1,3 @@
-#include <sdktools>
 #include "include/vscript.inc"
 
 static Address g_pFirstClassDesc;
@@ -16,7 +15,7 @@ public Plugin myinfo =
 	name = "VScript",
 	author = "42",
 	description = "Proof of concept to get address of VScript function",
-	version = "1.0.0",
+	version = "1.0.1",
 	url = "https://github.com/FortyTwoFortyTwo/VScript",
 };
 
@@ -24,6 +23,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 {
 	CreateNative("VScript_GetFunctionAddress", Native_GetFunctionAddress);
 	
+	RegPluginLibrary("vscript");
 	return APLRes_Success;
 }
 

@@ -30,7 +30,7 @@
 			
 			"ScriptClassDesc_t::GetDescList"
 			{
-				// Neither GetDescList or RegisterAllClasses exists in windows, so we have to go to VScriptServerInit and get mov of it
+				// Neither GetDescList or RegisterAllClasses exists in linux, so we have to go to VScriptServerInit and get mov of it
 				"library"	"server"
 				"linux"		"\x8B\x35\x2A\x2A\x2A\x2A\x8B\x3D\x2A\x2A\x2A\x2A\x85\xF6"
 			}
