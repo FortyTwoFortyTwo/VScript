@@ -1,0 +1,78 @@
+"Games"
+{
+	"tf"
+	{
+		"Addresses"
+		{
+			"ScriptClassDesc_t::GetDescList"
+			{
+				"windows"
+				{
+					"signature" "IScriptVM::RegisterAllClasses"
+					"offset"	"3"
+				}
+				
+				"linux"
+				{
+					"signature" "ScriptClassDesc_t::GetDescList"
+					"offset"	"2"
+				}
+			}
+		}
+		
+		"Signatures"
+		{
+			"IScriptVM::RegisterAllClasses"
+			{
+				"library"	"server"
+				"windows"	"\x56\x8B\x35\x2A\x2A\x2A\x2A\x57\x8B\xF9\x85\xF6\x74\x2A\x8B\xFF"
+			}
+			
+			"ScriptClassDesc_t::GetDescList"
+			{
+				// Neither GetDescList or RegisterAllClasses exists in windows, so we have to go to VScriptServerInit and get mov of it
+				"library"	"server"
+				"linux"		"\x8B\x35\x2A\x2A\x2A\x2A\x8B\x3D\x2A\x2A\x2A\x2A\x85\xF6"
+			}
+		}
+		
+		"Offsets"
+		{
+			"ScriptClassDesc_t::m_pszScriptName"
+			{
+				"linux"		"0"
+				"windows"	"0"
+			}
+			
+			"ScriptClassDesc_t::m_FunctionBindings"
+			{
+				"linux"		"16"
+				"windows"	"16"
+			}
+			
+			"ScriptClassDesc_t::m_pNextDesc"
+			{
+				"linux"		"48"
+				"windows"	"48"
+			}
+			
+			"sizeof(ScriptFunctionBinding_t)"
+			{
+				"linux"		"52"
+				"windows"	"52"
+			}
+			
+			"ScriptFunctionBinding_t::m_pszScriptName"
+			{
+				"linux"		"0"
+				"windows"	"0"
+			}
+			
+			"ScriptFunctionBinding_t::m_pFunction"
+			{
+				"linux"		"40"
+				"windows"	"40"
+			}
+		}
+	}
+}
