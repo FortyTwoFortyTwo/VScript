@@ -58,8 +58,8 @@
 			
 			"sizeof(ScriptFunctionBinding_t)"
 			{
-				"linux"		"52"
-				"windows"	"52"
+				"linux"		"60"
+				"windows"	"60"
 			}
 			
 			"ScriptFunctionBinding_t::m_pszScriptName"
