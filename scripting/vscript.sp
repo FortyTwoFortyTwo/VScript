@@ -2,32 +2,39 @@
 
 #include "include/vscript.inc"
 
-static Address g_pFirstClassDesc;
 static Address g_pScriptVM;
-
-static int g_iClassDesc_ScriptName;
-static int g_iClassDesc_FunctionBindings;
-static int g_iClassDesc_NextDesc;
-
-static int g_iFunctionBinding_sizeof;
-static int g_iFunctionBinding_ScriptName;
-static int g_iFunctionBinding_Function;
 
 static Handle g_hSDKCallGetScriptInstance;
 static Handle g_hSDKCallGetInstanceValue;
+
+const VScriptClass VScriptClass_Invalid = view_as<VScriptClass>(Address_Null);
+const VScriptFunction VScriptFunction_Invalid = view_as<VScriptFunction>(Address_Null);
+
+#include "vscript/class.sp"
+#include "vscript/function.sp"
 
 public Plugin myinfo =
 {
 	name = "VScript",
 	author = "42",
 	description = "Proof of concept to get address of VScript function",
-	version = "1.0.1",
+	version = "1.1.0",
 	url = "https://github.com/FortyTwoFortyTwo/VScript",
 };
 
 public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLength)
 {
-	CreateNative("VScript_GetFunctionAddress", Native_GetFunctionAddress);
+	CreateNative("VScriptFunction.GetScriptName", Native_Function_GetScriptName);
+	CreateNative("VScriptFunction.GetDescription", Native_Function_GetDescription);
+	CreateNative("VScriptFunction.Function.get", Native_Function_FunctionGet);
+	
+	CreateNative("VScriptClass.GetScriptName", Native_Class_GetScriptName);
+	CreateNative("VScriptClass.GetAllFunctions", Native_Class_GetAllFunctions);
+	CreateNative("VScriptClass.GetFunction", Native_Class_GetFunction);
+	
+	CreateNative("VScript_GetAllClasses", Native_GetAllClasses);
+	CreateNative("VScript_GetClass", Native_GetClass);
+	CreateNative("VScript_GetClassFunction", Native_GetClassFunction);
 	CreateNative("VScript_EntityToHScript", Native_EntityToHScript);
 	CreateNative("VScript_HScriptToEntity", Native_HScriptToEntity);
 	
@@ -39,16 +46,10 @@ public void OnPluginStart()
 {
 	GameData hGameData = new GameData("vscript");
 	
-	g_pFirstClassDesc = LoadPointerAddressFromGamedata(hGameData, "ScriptClassDesc_t::GetDescList");
+	Class_LoadGamedata(hGameData);
+	Function_LoadGamedata(hGameData);
+	
 	g_pScriptVM = LoadPointerAddressFromGamedata(hGameData, "g_pScriptVM");
-	
-	g_iClassDesc_ScriptName = hGameData.GetOffset("ScriptClassDesc_t::m_pszScriptName");
-	g_iClassDesc_FunctionBindings = hGameData.GetOffset("ScriptClassDesc_t::m_FunctionBindings");
-	g_iClassDesc_NextDesc = hGameData.GetOffset("ScriptClassDesc_t::m_pNextDesc");
-	
-	g_iFunctionBinding_sizeof = hGameData.GetOffset("sizeof(ScriptFunctionBinding_t)");
-	g_iFunctionBinding_ScriptName = hGameData.GetOffset("ScriptFunctionBinding_t::m_pszScriptName");
-	g_iFunctionBinding_Function = hGameData.GetOffset("ScriptFunctionBinding_t::m_pFunction");
 	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseEntity::GetScriptInstance");
@@ -69,7 +70,90 @@ public void OnPluginStart()
 	delete hGameData;
 }
 
-public any Native_GetFunctionAddress(Handle hPlugin, int iNumParams)
+public any Native_Function_GetScriptName(Handle hPlugin, int iNumParams)
+{
+	int iLength = GetNativeCell(3);
+	char[] sBuffer = new char[iLength + 1];
+	
+	Function_GetScriptName(GetNativeCell(1), sBuffer, iLength);
+	SetNativeString(2, sBuffer, iLength);
+	return 0;
+}
+
+public any Native_Function_GetDescription(Handle hPlugin, int iNumParams)
+{
+	int iLength = GetNativeCell(3);
+	char[] sBuffer = new char[iLength + 1];
+	
+	Function_GetDescription(GetNativeCell(1), sBuffer, iLength);
+	SetNativeString(2, sBuffer, iLength);
+	return 0;
+}
+
+public any Native_Function_FunctionGet(Handle hPlugin, int iNumParams)
+{
+	return Function_GetFunction(GetNativeCell(1));
+}
+
+public any Native_Class_GetScriptName(Handle hPlugin, int iNumParams)
+{
+	int iLength = GetNativeCell(3);
+	char[] sBuffer = new char[iLength + 1];
+	
+	Class_GetScriptName(GetNativeCell(1), sBuffer, iLength);
+	SetNativeString(2, sBuffer, iLength);
+	return 0;
+}
+
+public any Native_Class_GetAllFunctions(Handle hPlugin, int iNumParams)
+{
+	ArrayList aList = Class_GetAllFunctions(GetNativeCell(1));
+	
+	ArrayList aClone = view_as<ArrayList>(CloneHandle(aList, hPlugin));
+	delete aList;
+	return aClone;
+}
+
+public any Native_Class_GetFunction(Handle hPlugin, int iNumParams)
+{
+	int iLength;
+	GetNativeStringLength(2, iLength);
+	
+	char[] sBuffer = new char[iLength + 1];
+	GetNativeString(2, sBuffer, iLength + 1);
+	
+	VScriptFunction pFunction = Class_GetFunction(GetNativeCell(1), sBuffer);
+	if (!pFunction)
+		return ThrowNativeError(SP_ERROR_NATIVE, "Could not find function name '%s'", sBuffer);
+	
+	return pFunction;
+}
+
+public any Native_GetAllClasses(Handle hPlugin, int iNumParams)
+{
+	ArrayList aList = Class_GetAll();
+	
+	ArrayList aClone = view_as<ArrayList>(CloneHandle(aList, hPlugin));
+	delete aList;
+	return aClone;
+}
+
+public any Native_GetClass(Handle hPlugin, int iNumParams)
+{
+	int iLength;
+	GetNativeStringLength(1, iLength);
+	
+	char[] sBuffer = new char[iLength + 1];
+	GetNativeString(1, sBuffer, iLength + 1);
+	
+	VScriptClass pClass = Class_Get(sBuffer);
+	if (!pClass)
+		return ThrowNativeError(SP_ERROR_NATIVE, "Could not find class name '%s'", sBuffer);
+	
+	return pClass;
+}
+
+public any Native_GetClassFunction(Handle hPlugin, int iNumParams)
 {
 	int iClassNameLength, iFunctionNameLength;
 	GetNativeStringLength(1, iClassNameLength);
@@ -81,38 +165,15 @@ public any Native_GetFunctionAddress(Handle hPlugin, int iNumParams)
 	GetNativeString(1, sNativeClass, iClassNameLength + 1);
 	GetNativeString(2, sNativeFunction, iFunctionNameLength + 1);
 	
-	Address pClassDesc = g_pFirstClassDesc;
+	VScriptClass pClass = Class_Get(sNativeClass);
+	if (!pClass)
+		return ThrowNativeError(SP_ERROR_NATIVE, "Could not find class name '%s'", sNativeClass);
 	
-	while (pClassDesc)
-	{
-		char sScriptName[256];
-		LoadPointerStringFromAddress(pClassDesc + view_as<Address>(g_iClassDesc_ScriptName), sScriptName, sizeof(sScriptName));
-		
-		if (!StrEqual(sScriptName, sNativeClass))
-		{
-			pClassDesc = LoadFromAddress(pClassDesc + view_as<Address>(g_iClassDesc_NextDesc), NumberType_Int32);
-			continue;
-		}
-		
-		Address pData = LoadFromAddress(pClassDesc + view_as<Address>(g_iClassDesc_FunctionBindings), NumberType_Int32);
-		int iFunctionCount = LoadFromAddress(pClassDesc + view_as<Address>(g_iClassDesc_FunctionBindings) + view_as<Address>(0x0C), NumberType_Int32);
-		for (int i = 0; i < iFunctionCount; i++)
-		{
-			Address pFunctionName = pData + view_as<Address>(g_iFunctionBinding_sizeof * i) + view_as<Address>(g_iFunctionBinding_ScriptName);
-			
-			char sFunctionName[256];
-			LoadPointerStringFromAddress(pFunctionName, sFunctionName, sizeof(sFunctionName));
-			
-			if (!StrEqual(sFunctionName, sNativeFunction))
-				continue;
-			
-			return LoadFromAddress(pData + view_as<Address>(g_iFunctionBinding_sizeof * i) + view_as<Address>(g_iFunctionBinding_Function), NumberType_Int32);
-		}
-		
+	VScriptFunction pFunction = Class_GetFunction(pClass, sNativeFunction);
+	if (!pFunction)
 		return ThrowNativeError(SP_ERROR_NATIVE, "Class name '%s' does not have function name '%s'", sNativeClass, sNativeFunction);
-	}
 	
-	return ThrowNativeError(SP_ERROR_NATIVE, "Could not find class name '%s'", sNativeClass);
+	return pFunction;
 }
 
 public any Native_EntityToHScript(Handle hPlugin, int iNumParams)
@@ -132,18 +193,7 @@ public any Native_HScriptToEntity(Handle hPlugin, int iNumParams)
 	
 	static Address pClassDesc;
 	if (!pClassDesc)
-	{
-		pClassDesc = g_pFirstClassDesc;
-		while (pClassDesc)
-		{
-			char sScriptName[256];
-			LoadPointerStringFromAddress(pClassDesc + view_as<Address>(g_iClassDesc_ScriptName), sScriptName, sizeof(sScriptName));
-			if (StrEqual(sScriptName, "CBaseEntity"))
-				break;
-			
-			pClassDesc = LoadFromAddress(pClassDesc + view_as<Address>(g_iClassDesc_NextDesc), NumberType_Int32);
-		}
-	}
+		pClassDesc = Class_Get("CBaseEntity");
 	
 	if (!pClassDesc)
 		ThrowError("Could not find script name CBaseEntity, file a bug report.");

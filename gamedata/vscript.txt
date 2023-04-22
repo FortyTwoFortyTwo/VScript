@@ -97,6 +97,12 @@
 				"windows"	"0"
 			}
 			
+			"ScriptFunctionBinding_t::m_pszDescription"
+			{
+				"linux"		"8"
+				"windows"	"8"
+			}
+			
 			"ScriptFunctionBinding_t::m_pFunction"
 			{
 				"linux"		"40"
