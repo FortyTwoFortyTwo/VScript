@@ -14,6 +14,25 @@
  */
 native Address VScript_GetFunctionAddress(const char[] className, const char[] functionName);
 
+/**
+ * Gets the HScript address of an entity
+ * 
+ * @param entity           Entity index.
+ * 
+ * @return Address of the HScript
+ * @error Invalid entity
+ */
+native Address VScript_EntityToHScript(int entity);
+
+/**
+ * Gets the entity index from HScript address
+ * 
+ * @param hscript          HScript address.
+ * 
+ * @return Entity index
+ */
+native int VScript_HScriptToEntity(Address hscript);
+
 public SharedPlugin __pl_vscript =
 {
 	name = "vscript",

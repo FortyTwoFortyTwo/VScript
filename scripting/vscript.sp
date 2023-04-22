@@ -1,6 +1,9 @@
+#include <sdktools>
+
 #include "include/vscript.inc"
 
 static Address g_pFirstClassDesc;
+static Address g_pScriptVM;
 
 static int g_iClassDesc_ScriptName;
 static int g_iClassDesc_FunctionBindings;
@@ -9,6 +12,9 @@ static int g_iClassDesc_NextDesc;
 static int g_iFunctionBinding_sizeof;
 static int g_iFunctionBinding_ScriptName;
 static int g_iFunctionBinding_Function;
+
+static Handle g_hSDKCallGetScriptInstance;
+static Handle g_hSDKCallGetInstanceValue;
 
 public Plugin myinfo =
 {
@@ -22,6 +28,8 @@ public Plugin myinfo =
 public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLength)
 {
 	CreateNative("VScript_GetFunctionAddress", Native_GetFunctionAddress);
+	CreateNative("VScript_EntityToHScript", Native_EntityToHScript);
+	CreateNative("VScript_HScriptToEntity", Native_HScriptToEntity);
 	
 	RegPluginLibrary("vscript");
 	return APLRes_Success;
@@ -31,9 +39,8 @@ public void OnPluginStart()
 {
 	GameData hGameData = new GameData("vscript");
 	
-	Address pGetDescList = hGameData.GetAddress("ScriptClassDesc_t::GetDescList");
-	Address pToClassDesc = LoadFromAddress(pGetDescList, NumberType_Int32);
-	g_pFirstClassDesc = LoadFromAddress(pToClassDesc, NumberType_Int32);
+	g_pFirstClassDesc = LoadPointerAddressFromGamedata(hGameData, "ScriptClassDesc_t::GetDescList");
+	g_pScriptVM = LoadPointerAddressFromGamedata(hGameData, "g_pScriptVM");
 	
 	g_iClassDesc_ScriptName = hGameData.GetOffset("ScriptClassDesc_t::m_pszScriptName");
 	g_iClassDesc_FunctionBindings = hGameData.GetOffset("ScriptClassDesc_t::m_FunctionBindings");
@@ -42,6 +49,22 @@ public void OnPluginStart()
 	g_iFunctionBinding_sizeof = hGameData.GetOffset("sizeof(ScriptFunctionBinding_t)");
 	g_iFunctionBinding_ScriptName = hGameData.GetOffset("ScriptFunctionBinding_t::m_pszScriptName");
 	g_iFunctionBinding_Function = hGameData.GetOffset("ScriptFunctionBinding_t::m_pFunction");
+	
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseEntity::GetScriptInstance");
+	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
+	g_hSDKCallGetScriptInstance = EndPrepSDKCall();
+	if (!g_hSDKCallGetScriptInstance)
+		LogError("Failed to create call: CBaseEntity::GetScriptInstance");
+	
+	StartPrepSDKCall(SDKCall_Raw);
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CSquirrelVM::GetInstanceValue");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// HSCRIPT hInstance
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// ScriptClassDesc_t *pExpectedType
+	PrepSDKCall_SetReturnInfo(SDKType_CBaseEntity, SDKPass_Pointer);
+	g_hSDKCallGetInstanceValue = EndPrepSDKCall();
+	if (!g_hSDKCallGetInstanceValue)
+		LogError("Failed to create call: CSquirrelVM::GetInstanceValue");
 	
 	delete hGameData;
 }
@@ -90,6 +113,49 @@ public any Native_GetFunctionAddress(Handle hPlugin, int iNumParams)
 	}
 	
 	return ThrowNativeError(SP_ERROR_NATIVE, "Could not find class name '%s'", sNativeClass);
+}
+
+public any Native_EntityToHScript(Handle hPlugin, int iNumParams)
+{
+	int iEntity = GetNativeCell(1);
+	if (iEntity == INVALID_ENT_REFERENCE)
+		return Address_Null;	// follows the same way to how ToHScript handles it
+	
+	return SDKCall(g_hSDKCallGetScriptInstance, iEntity);
+}
+
+public any Native_HScriptToEntity(Handle hPlugin, int iNumParams)
+{
+	Address pHScript = GetNativeCell(1);
+	if (pHScript == Address_Null)
+		return INVALID_ENT_REFERENCE;	// follows the same way to how ToEnt handles it
+	
+	static Address pClassDesc;
+	if (!pClassDesc)
+	{
+		pClassDesc = g_pFirstClassDesc;
+		while (pClassDesc)
+		{
+			char sScriptName[256];
+			LoadPointerStringFromAddress(pClassDesc + view_as<Address>(g_iClassDesc_ScriptName), sScriptName, sizeof(sScriptName));
+			if (StrEqual(sScriptName, "CBaseEntity"))
+				break;
+			
+			pClassDesc = LoadFromAddress(pClassDesc + view_as<Address>(g_iClassDesc_NextDesc), NumberType_Int32);
+		}
+	}
+	
+	if (!pClassDesc)
+		ThrowError("Could not find script name CBaseEntity, file a bug report.");
+	
+	return SDKCall(g_hSDKCallGetInstanceValue, g_pScriptVM, pHScript, pClassDesc);
+}
+
+Address LoadPointerAddressFromGamedata(GameData hGameData, const char[] sAddress)
+{
+	Address pGamedata = hGameData.GetAddress(sAddress);
+	Address pToAddress = LoadFromAddress(pGamedata, NumberType_Int32);
+	return LoadFromAddress(pToAddress, NumberType_Int32);
 }
 
 int LoadPointerStringFromAddress(Address pPointer, char[] sBuffer, int iMaxLen)

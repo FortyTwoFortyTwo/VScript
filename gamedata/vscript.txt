@@ -6,15 +6,30 @@
 		{
 			"ScriptClassDesc_t::GetDescList"
 			{
+				"linux"
+				{
+					"signature" "ScriptClassDesc_t::GetDescList"
+					"offset"	"2"
+				}
+				
 				"windows"
 				{
 					"signature" "IScriptVM::RegisterAllClasses"
 					"offset"	"3"
 				}
+			}
+			
+			"g_pScriptVM"
+			{
+				"signature" "g_pScriptVM"
 				
 				"linux"
 				{
-					"signature" "ScriptClassDesc_t::GetDescList"
+					"offset"	"1"
+				}
+				
+				"windows"
+				{
 					"offset"	"2"
 				}
 			}
@@ -33,6 +48,20 @@
 				// Neither GetDescList or RegisterAllClasses exists in linux, so we have to go to VScriptServerInit and get mov of it
 				"library"	"server"
 				"linux"		"\x8B\x35\x2A\x2A\x2A\x2A\x8B\x3D\x2A\x2A\x2A\x2A\x85\xF6"
+			}
+			
+			"g_pScriptVM"	// Getting the very first mov of it in VScriptServerInit
+			{
+				"library"	"server"
+				"linux"		"\xA1\x2A\x2A\x2A\x2A\x85\xC0\x0F\x84\x2A\x2A\x2A\x2A\xA1\x2A\x2A\x2A\x2A\x8B\x70\x30"
+				"windows"	"\x8B\x15\x2A\x2A\x2A\x2A\x85\xD2\x75\x2A\x8B\x0D\x2A\x2A\x2A\x2A"
+			}
+			
+			"CBaseEntity::GetScriptInstance"
+			{
+				"library"	"server"
+				"linux"		"@_ZN11CBaseEntity17GetScriptInstanceEv"
+				"windows"	"\x55\x8B\xEC\x51\x53\x56\x57\x8B\xF9\x83\xBF\x28\x01\x00\x00\x00"
 			}
 		}
 		
@@ -72,6 +101,12 @@
 			{
 				"linux"		"40"
 				"windows"	"40"
+			}
+			
+			"CSquirrelVM::GetInstanceValue"
+			{
+				"linux"		"24"
+				"windows"	"24"
 			}
 		}
 	}
