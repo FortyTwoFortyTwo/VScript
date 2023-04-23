@@ -103,16 +103,52 @@
 				"windows"	"8"
 			}
 			
+			"ScriptFunctionBinding_t::m_ReturnType"
+			{
+				"linux"		"12"
+				"windows"	"12"
+			}
+			
+			"ScriptFunctionBinding_t::m_Parameters"
+			{
+				"linux"		"16"
+				"windows"	"16"
+			}
+			
 			"ScriptFunctionBinding_t::m_pFunction"
 			{
 				"linux"		"40"
 				"windows"	"40"
 			}
 			
+			"sizeof(ScriptVariant_t)"
+			{
+				"linux"		"12"
+				"windows"	"12"
+			}
+			
+			"ScriptVariant_t::m_type"
+			{
+				"linux"		"8"
+				"windows"	"8"
+			}
+			
 			"CSquirrelVM::GetInstanceValue"
 			{
 				"linux"		"24"
 				"windows"	"24"
+			}
+			
+			"CSquirrelVM::GetKeyValue"
+			{
+				"linux"		"31"
+				"windows"	"31"
+			}
+			
+			"CSquirrelVM::GetValue"
+			{
+				"linux"		"32"
+				"windows"	"32"
 			}
 		}
 	}
