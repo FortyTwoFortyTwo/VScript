@@ -74,6 +74,12 @@ methodmap VScriptFunction < Address
 	// @param length           Size of buffer.
 	public native void GetDescription(char[] buffer, int length);
 	
+	// Gets the address of the binding
+	property Address Binding
+	{
+		public native get();
+	}
+	
 	// Gets the address of the function
 	property Address Function
 	{
@@ -203,6 +209,7 @@ public void __pl_vscript_SetNTVOptional()
 	
 	MarkNativeAsOptional("VScriptFunction.GetScriptName");
 	MarkNativeAsOptional("VScriptFunction.GetDescription");
+	MarkNativeAsOptional("VScriptFunction.Binding.get");
 	MarkNativeAsOptional("VScriptFunction.Function.get");
 	MarkNativeAsOptional("VScriptFunction.CreateSDKCall");
 	MarkNativeAsOptional("VScriptFunction.CreateDetour");

@@ -2,6 +2,7 @@ static int g_iFunctionBinding_ScriptName;
 static int g_iFunctionBinding_Description;
 static int g_iFunctionBinding_ReturnType;
 static int g_iFunctionBinding_Parameters;
+static int g_iFunctionBinding_Binding;
 static int g_iFunctionBinding_Function;
 
 void Function_LoadGamedata(GameData hGameData)
@@ -10,6 +11,7 @@ void Function_LoadGamedata(GameData hGameData)
 	g_iFunctionBinding_Description = hGameData.GetOffset("ScriptFunctionBinding_t::m_pszDescription");
 	g_iFunctionBinding_ReturnType = hGameData.GetOffset("ScriptFunctionBinding_t::m_ReturnType");
 	g_iFunctionBinding_Parameters = hGameData.GetOffset("ScriptFunctionBinding_t::m_Parameters");
+	g_iFunctionBinding_Binding = hGameData.GetOffset("ScriptFunctionBinding_t::m_pfnBinding");
 	g_iFunctionBinding_Function = hGameData.GetOffset("ScriptFunctionBinding_t::m_pFunction");
 }
 
@@ -37,6 +39,11 @@ fieldtype_t Function_GetParameter(VScriptFunction pFunction, int iPosition)
 int Function_GetParameterCount(VScriptFunction pFunction)
 {
 	return LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Parameters) + view_as<Address>(0x0C), NumberType_Int32);
+}
+
+Address Function_GetBinding(VScriptFunction pFunction)
+{
+	return LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Binding), NumberType_Int32);
 }
 
 Address Function_GetFunction(VScriptFunction pFunction)

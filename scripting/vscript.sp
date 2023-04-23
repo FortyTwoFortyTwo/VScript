@@ -34,6 +34,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	
 	CreateNative("VScriptFunction.GetScriptName", Native_Function_GetScriptName);
 	CreateNative("VScriptFunction.GetDescription", Native_Function_GetDescription);
+	CreateNative("VScriptFunction.Binding.get", Native_Function_BindingGet);
 	CreateNative("VScriptFunction.Function.get", Native_Function_FunctionGet);
 	CreateNative("VScriptFunction.CreateSDKCall", Native_Function_CreateSDKCall);
 	CreateNative("VScriptFunction.CreateDetour", Native_Function_CreateDetour);
@@ -225,6 +226,11 @@ public any Native_Function_GetDescription(Handle hPlugin, int iNumParams)
 	Function_GetDescription(GetNativeCell(1), sBuffer, iLength);
 	SetNativeString(2, sBuffer, iLength);
 	return 0;
+}
+
+public any Native_Function_BindingGet(Handle hPlugin, int iNumParams)
+{
+	return Function_GetBinding(GetNativeCell(1));
 }
 
 public any Native_Function_FunctionGet(Handle hPlugin, int iNumParams)

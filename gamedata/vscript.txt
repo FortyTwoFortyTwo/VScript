@@ -115,6 +115,12 @@
 				"windows"	"16"
 			}
 			
+			"ScriptFunctionBinding_t::m_pfnBinding"
+			{
+				"linux"		"36"
+				"windows"	"36"
+			}
+			
 			"ScriptFunctionBinding_t::m_pFunction"
 			{
 				"linux"		"40"
