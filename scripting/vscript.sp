@@ -36,6 +36,9 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScriptFunction.GetDescription", Native_Function_GetDescription);
 	CreateNative("VScriptFunction.Binding.get", Native_Function_BindingGet);
 	CreateNative("VScriptFunction.Function.get", Native_Function_FunctionGet);
+	CreateNative("VScriptFunction.Return.get", Native_Function_ReturnGet);
+	CreateNative("VScriptFunction.ParameterCount.get", Native_Function_ParameterCountGet);
+	CreateNative("VScriptFunction.GetParameter", Native_Function_GetParameter);
 	CreateNative("VScriptFunction.CreateSDKCall", Native_Function_CreateSDKCall);
 	CreateNative("VScriptFunction.CreateDetour", Native_Function_CreateDetour);
 	
@@ -236,6 +239,28 @@ public any Native_Function_BindingGet(Handle hPlugin, int iNumParams)
 public any Native_Function_FunctionGet(Handle hPlugin, int iNumParams)
 {
 	return Function_GetFunction(GetNativeCell(1));
+}
+
+public any Native_Function_ReturnGet(Handle hPlugin, int iNumParams)
+{
+	return Function_GetReturnType(GetNativeCell(1));
+}
+
+public any Native_Function_ParameterCountGet(Handle hPlugin, int iNumParams)
+{
+	return Function_GetParameterCount(GetNativeCell(1));
+}
+
+public any Native_Function_GetParameter(Handle hPlugin, int iNumParams)
+{
+	VScriptFunction pFunc = GetNativeCell(1);
+	int iParam = GetNativeCell(2);
+	int iCount = Function_GetParameterCount(pFunc);
+	
+	if (iParam <= 0 || iParam > iCount)
+		return ThrowNativeError(SP_ERROR_NATIVE, "Parameter number '%d' out of range (max '%d')", iParam, iCount);
+	
+	return Function_GetParameter(pFunc, iParam - 1);
 }
 
 public any Native_Function_CreateSDKCall(Handle hPlugin, int iNumParams)

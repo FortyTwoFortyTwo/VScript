@@ -86,6 +86,25 @@ methodmap VScriptFunction < Address
 		public native get();
 	}
 	
+	// Gets the return field type
+	property fieldtype_t Return
+	{
+		public native get();
+	}
+	
+	// Gets amount of parameters function has
+	property int ParameterCount
+	{
+		public native get();
+	}
+	
+	// Gets the field type of a parameter
+	// 
+	// @param param            Parameter number, starting from 1.
+	// @return                 Field type of a parameter.
+	// @error                  Parameter number out of range.
+	public native fieldtype_t GetParameter(int param);
+	
 	// Creates an SDKCall with parameters auto filled
 	// 
 	// @return                 SDKCall handle, must be deleted when not needed.
@@ -211,6 +230,9 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("VScriptFunction.GetDescription");
 	MarkNativeAsOptional("VScriptFunction.Binding.get");
 	MarkNativeAsOptional("VScriptFunction.Function.get");
+	MarkNativeAsOptional("VScriptFunction.Return.get");
+	MarkNativeAsOptional("VScriptFunction.ParameterCount.get");
+	MarkNativeAsOptional("VScriptFunction.GetParameter");
 	MarkNativeAsOptional("VScriptFunction.CreateSDKCall");
 	MarkNativeAsOptional("VScriptFunction.CreateDetour");
 	
