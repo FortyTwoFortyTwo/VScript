@@ -53,7 +53,6 @@ Handle Function_CreateSDKCall(VScriptFunction pFunction)
 	for (int i = 0; i < iCount; i++)
 	{
 		fieldtype_t nField = Function_GetParameter(pFunction, i);
-		PrintToServer("%d - %s", i, Field_GetName(nField));
 		PrepSDKCall_AddParameter(Field_GetSDKType(nField), Field_GetSDKPassMethod(nField), VDECODE_FLAG_ALLOWNULL|VDECODE_FLAG_ALLOWNOTINGAME|VDECODE_FLAG_ALLOWWORLD, VENCODE_FLAG_COPYBACK);
 	}
 	
@@ -67,7 +66,6 @@ Handle Function_CreateSDKCall(VScriptFunction pFunction)
 DynamicDetour Function_CreateDetour(VScriptFunction pFunction)
 {
 	fieldtype_t nField = Function_GetReturnType(pFunction);
-	PrintToServer("nField %d Field_GetReturnType %d", nField, Field_GetReturnType(nField));
 	DynamicDetour hDetour = new DynamicDetour(Function_GetFunction(pFunction), CallConv_THISCALL, Field_GetReturnType(nField), ThisPointer_CBaseEntity);
 	
 	int iCount = Function_GetParameterCount(pFunction);
