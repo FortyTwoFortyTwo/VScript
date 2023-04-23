@@ -58,6 +58,23 @@ methodmap HSCRIPT < Address
 	// @param buffer           Buffer to store vector.
 	// @error                  Invalid key name or field usage.
 	public native void GetValueVector(const char[] key, float buffer[3]);
+	
+	// Sets a value to key
+	//
+	// @param key              Key name to set.
+	// @param field            Field to use to set.
+	// @param value            Value to set.
+	public native void SetValue(const char[] key, fieldtype_t field, any value);
+	
+	// Sets a string value to key
+	//
+	// @param key              Key name to set.
+	// @param field            Field to use to set.
+	// @param value            String value to set.
+	public native void SetValueString(const char[] key, fieldtype_t field, const char[] value);
+	
+	// Frees a HSCRIPT memory
+	public native void Release();
 }
 
 methodmap VScriptFunction < Address
@@ -144,6 +161,13 @@ methodmap VScriptClass < Address
 native HSCRIPT VScript_GetScriptVM();
 
 /**
+ * Creates a new HSCRIPT table, it MUST be deleted when no longer needed by using HSCRIPT.Release()
+ * 
+ * @return                 HSCRIPT of table.
+ */
+native HSCRIPT VScript_CreateTable();
+
+/**
  * Get all the classes used for vscript
  * 
  * @return                 Arrays of VScriptClass, handle must be deleted when not needed.
@@ -225,6 +249,9 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("HSCRIPT.GetValue");
 	MarkNativeAsOptional("HSCRIPT.GetValueString");
 	MarkNativeAsOptional("HSCRIPT.GetValueVector");
+	MarkNativeAsOptional("HSCRIPT.SetValue");
+	MarkNativeAsOptional("HSCRIPT.SetValueString");
+	MarkNativeAsOptional("HSCRIPT.Release");
 	
 	MarkNativeAsOptional("VScriptFunction.GetScriptName");
 	MarkNativeAsOptional("VScriptFunction.GetDescription");
@@ -241,6 +268,7 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("VScriptClass.GetFunction");
 	
 	MarkNativeAsOptional("VScript_GetScriptVM");
+	MarkNativeAsOptional("VScript_CreateTable");
 	MarkNativeAsOptional("VScript_GetAllClasses");
 	MarkNativeAsOptional("VScript_GetClass");
 	MarkNativeAsOptional("VScript_GetClassFunction");

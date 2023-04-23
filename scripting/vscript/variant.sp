@@ -76,9 +76,17 @@ static int g_iScriptVariant_type;
 
 methodmap ScriptVariant_t < MemoryBlock
 {
-	public ScriptVariant_t()
+	public ScriptVariant_t(fieldtype_t nField = FIELD_VOID, any nValue = 0)
 	{
-		return view_as<ScriptVariant_t>(new MemoryBlock(g_iScriptVariant_sizeof));
+		ScriptVariant_t pValue = view_as<ScriptVariant_t>(new MemoryBlock(g_iScriptVariant_sizeof));
+		
+		if (nField != FIELD_VOID)
+		{
+			pValue.Field = nField;
+			pValue.Value = nValue;
+		}
+		
+		return pValue;
 	}
 	
 	property any Value
@@ -86,6 +94,11 @@ methodmap ScriptVariant_t < MemoryBlock
 		public get()
 		{
 			return this.LoadFromOffset(0, NumberType_Int32);
+		}
+		
+		public set(any nValue)
+		{
+			this.StoreToOffset(0, nValue, NumberType_Int32);
 		}
 	}
 	
@@ -106,6 +119,11 @@ methodmap ScriptVariant_t < MemoryBlock
 		public get()
 		{
 			return view_as<fieldtype_t>(this.LoadFromOffset(g_iScriptVariant_type, NumberType_Int16));
+		}
+		
+		public set(fieldtype_t nField)
+		{
+			this.StoreToOffset(g_iScriptVariant_type, nField, NumberType_Int16);
 		}
 	}
 	

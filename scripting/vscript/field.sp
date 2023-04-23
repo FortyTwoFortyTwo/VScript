@@ -1,3 +1,10 @@
+enum SMField
+{
+	SMField_Any,
+	SMField_String,
+	SMField_Vector,
+}
+
 char[] Field_GetName(fieldtype_t nField)
 {
 	char sValue[64];
@@ -18,6 +25,22 @@ char[] Field_GetName(fieldtype_t nField)
 	}
 	
 	return sValue;
+}
+
+SMField Field_GetSMField(fieldtype_t nField)
+{
+	switch (nField)
+	{
+		case FIELD_FLOAT, FIELD_INTEGER, FIELD_BOOLEAN, FIELD_HSCRIPT:
+			return SMField_Any;
+		case FIELD_CSTRING:
+			return SMField_String;
+		case FIELD_VECTOR, FIELD_QANGLE:
+			return SMField_Vector;
+	}
+	
+	ThrowError("Invalid field type '%s'", Field_GetName(nField));
+	return SMField_Any;
 }
 
 SDKType Field_GetSDKType(fieldtype_t nField)

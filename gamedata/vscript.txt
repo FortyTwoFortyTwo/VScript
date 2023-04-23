@@ -145,6 +145,24 @@
 				"windows"	"24"
 			}
 			
+			"CSquirrelVM::SetValueString"	// actually same name CSquirrelVM::SetValue but with different param
+			{
+				"linux"		"27"
+				"windows"	"28"
+			}
+			
+			"CSquirrelVM::SetValue"
+			{
+				"linux"		"28"
+				"windows"	"27"
+			}
+			
+			"CSquirrelVM::CreateTable"
+			{
+				"linux"		"29"
+				"windows"	"29"
+			}
+			
 			"CSquirrelVM::GetKeyValue"
 			{
 				"linux"		"31"
@@ -155,6 +173,12 @@
 			{
 				"linux"		"32"
 				"windows"	"32"
+			}
+			
+			"CSquirrelVM::ReleaseValue"
+			{
+				"linux"		"33"
+				"windows"	"33"
 			}
 		}
 	}

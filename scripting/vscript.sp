@@ -31,6 +31,9 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("HSCRIPT.GetValue", Native_HScript_GetValue);
 	CreateNative("HSCRIPT.GetValueString", Native_HScript_GetValueString);
 	CreateNative("HSCRIPT.GetValueVector", Native_HScript_GetValueVector);
+	CreateNative("HSCRIPT.SetValue", Native_HScript_SetValue);
+	CreateNative("HSCRIPT.SetValueString", Native_HScript_SetValueString);
+	CreateNative("HSCRIPT.Release", Native_HScript_Release);
 	
 	CreateNative("VScriptFunction.GetScriptName", Native_Function_GetScriptName);
 	CreateNative("VScriptFunction.GetDescription", Native_Function_GetDescription);
@@ -47,6 +50,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScriptClass.GetFunction", Native_Class_GetFunction);
 	
 	CreateNative("VScript_GetScriptVM", Native_GetScriptVM);
+	CreateNative("VScript_CreateTable", Native_CreateTable);
 	CreateNative("VScript_GetAllClasses", Native_GetAllClasses);
 	CreateNative("VScript_GetClass", Native_GetClass);
 	CreateNative("VScript_GetClassFunction", Native_GetClassFunction);
@@ -105,110 +109,53 @@ public any Native_HScript_GetKey(Handle hPlugin, int iNumParams)
 
 public any Native_HScript_GetValue(Handle hPlugin, int iNumParams)
 {
-	int iLength;
-	GetNativeStringLength(2, iLength);
-	
-	char[] sBuffer = new char[iLength + 1];
-	GetNativeString(2, sBuffer, iLength + 1);
-	
-	ScriptVariant_t pValue = new ScriptVariant_t();
-	bool bResult = HScript_GetValue(GetNativeCell(1), sBuffer, pValue);
-	
-	if (!bResult)
-	{
-		delete pValue;
-		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid key name '%s'", sBuffer);
-	}
-	
-	fieldtype_t nField = pValue.Field;
-	switch (nField)
-	{
-		case FIELD_FLOAT, FIELD_INTEGER, FIELD_BOOLEAN, FIELD_HSCRIPT:
-		{
-			delete pValue;
-			return pValue.Value;
-		}
-		default:
-		{
-			delete pValue;
-			return ThrowNativeError(SP_ERROR_NATIVE, "Invalid field value '%d'", nField);
-		}
-	}
+	ScriptVariant_t pValue = HScript_NativeGetValue(SMField_Any);
+	any nValue = pValue.Value;
+	delete pValue;
+	return nValue;
 }
 
 public any Native_HScript_GetValueString(Handle hPlugin, int iNumParams)
 {
-	int iLength;
-	GetNativeStringLength(2, iLength);
+	ScriptVariant_t pValue = HScript_NativeGetValue(SMField_String);
 	
-	char[] sBuffer = new char[iLength + 1];
-	GetNativeString(2, sBuffer, iLength + 1);
+	int iLength = GetNativeCell(4);
+	char[] sBuffer = new char[iLength];
+	pValue.GetString(sBuffer, iLength);
+	SetNativeString(3, sBuffer, iLength);
 	
-	ScriptVariant_t pValue = new ScriptVariant_t();
-	bool bResult = HScript_GetValue(GetNativeCell(1), sBuffer, pValue);
-	
-	if (!bResult)
-	{
-		delete pValue;
-		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid key name '%s'", sBuffer);
-	}
-	
-	fieldtype_t nField = pValue.Field;
-	switch (nField)
-	{
-		case FIELD_CSTRING:
-		{
-			iLength = GetNativeCell(4);
-			char[] sValue = new char[iLength];
-			pValue.GetString(sValue, iLength);
-			SetNativeString(3, sValue, iLength);
-			
-			delete pValue;
-			return 0;
-		}
-		default:
-		{
-			delete pValue;
-			return ThrowNativeError(SP_ERROR_NATIVE, "Invalid field value '%d'", nField);
-		}
-	}
+	delete pValue;
+	return 0;
 }
 
 public any Native_HScript_GetValueVector(Handle hPlugin, int iNumParams)
 {
-	int iLength;
-	GetNativeStringLength(2, iLength);
+	ScriptVariant_t pValue = HScript_NativeGetValue(SMField_Vector);
 	
-	char[] sBuffer = new char[iLength + 1];
-	GetNativeString(2, sBuffer, iLength + 1);
+	float vecBuffer[3];
+	pValue.GetVector(vecBuffer);
+	SetNativeArray(3, vecBuffer, sizeof(vecBuffer));
 	
-	ScriptVariant_t pValue = new ScriptVariant_t();
-	bool bResult = HScript_GetValue(GetNativeCell(1), sBuffer, pValue);
-	
-	if (!bResult)
-	{
-		delete pValue;
-		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid key name '%s'", sBuffer);
-	}
-	
-	fieldtype_t nField = pValue.Field;
-	switch (nField)
-	{
-		case FIELD_VECTOR, FIELD_QANGLE:
-		{
-			float vecBuffer[3];
-			pValue.GetVector(vecBuffer);
-			SetNativeArray(3, vecBuffer, sizeof(vecBuffer));
-			
-			delete pValue;
-			return 0;
-		}
-		default:
-		{
-			delete pValue;
-			return ThrowNativeError(SP_ERROR_NATIVE, "Invalid field value '%d'", nField);
-		}
-	}
+	delete pValue;
+	return 0;
+}
+
+public any Native_HScript_SetValue(Handle hPlugin, int iNumParams)
+{
+	HScript_NativeSetValue(SMField_Any);
+	return 0;
+}
+
+public any Native_HScript_SetValueString(Handle hPlugin, int iNumParams)
+{
+	HScript_NativeSetValue(SMField_String);
+	return 0;
+}
+
+public any Native_HScript_Release(Handle hPlugin, int iNumParams)
+{
+	HScript_ReleaseValue(GetNativeCell(1));
+	return 0;
 }
 
 public any Native_Function_GetScriptName(Handle hPlugin, int iNumParams)
@@ -318,6 +265,11 @@ public any Native_Class_GetFunction(Handle hPlugin, int iNumParams)
 public any Native_GetScriptVM(Handle hPlugin, int iNumParams)
 {
 	return g_pScriptVM;
+}
+
+public any Native_CreateTable(Handle hPlugin, int iNumParams)
+{
+	return HScript_CreateTable();
 }
 
 public any Native_GetAllClasses(Handle hPlugin, int iNumParams)
