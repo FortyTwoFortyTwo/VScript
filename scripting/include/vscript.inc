@@ -309,6 +309,15 @@ public SharedPlugin __pl_vscript =
 #if !defined REQUIRE_PLUGIN
 public void __pl_vscript_SetNTVOptional()
 {
+	MarkNativeAsOptional("ScriptVariant_t.ScriptVariant_t");
+	MarkNativeAsOptional("ScriptVariant_t.Value.get");
+	MarkNativeAsOptional("ScriptVariant_t.Value.set");
+	MarkNativeAsOptional("ScriptVariant_t.GetString");
+	MarkNativeAsOptional("ScriptVariant_t.GetVector");
+	MarkNativeAsOptional("ScriptVariant_t.Type.get");
+	MarkNativeAsOptional("ScriptVariant_t.Type.set");
+	
+	MarkNativeAsOptional("HSCRIPT.ExecuteFunction");
 	MarkNativeAsOptional("HSCRIPT.GetKey");
 	MarkNativeAsOptional("HSCRIPT.GetValue");
 	MarkNativeAsOptional("HSCRIPT.GetValueString");
@@ -331,12 +340,14 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("VScriptClass.GetAllFunctions");
 	MarkNativeAsOptional("VScriptClass.GetFunction");
 	
-	MarkNativeAsOptional("VScript_GetScriptVM");
+	MarkNativeAsOptional("VScript_CompileScript");
+	MarkNativeAsOptional("VScript_CompileScriptFile");
 	MarkNativeAsOptional("VScript_CreateTable");
 	MarkNativeAsOptional("VScript_GetAllClasses");
 	MarkNativeAsOptional("VScript_GetClass");
 	MarkNativeAsOptional("VScript_GetClassFunction");
 	MarkNativeAsOptional("VScript_EntityToHScript");
 	MarkNativeAsOptional("VScript_HScriptToEntity");
+	MarkNativeAsOptional("VScript_EntityExecuteFunction");
 }
 #endif
