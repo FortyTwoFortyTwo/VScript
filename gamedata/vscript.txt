@@ -139,6 +139,18 @@
 				"windows"	"8"
 			}
 			
+			"CSquirrelVM::CompileScript"
+			{
+				"linux"		"9"
+				"windows"	"10"	// vtable dumper got it wrong
+			}
+			
+			"CSquirrelVM::ExecuteFunction"
+			{
+				"linux"		"18"
+				"windows"	"18"
+			}
+			
 			"CSquirrelVM::GetInstanceValue"
 			{
 				"linux"		"24"

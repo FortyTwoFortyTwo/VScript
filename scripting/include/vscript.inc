@@ -26,8 +26,45 @@ enum fieldtype_t
 
 methodmap Address {}
 
+methodmap ScriptVariant_t < Handle
+{
+	// Creates a new variant to get and pass into parameters.
+	public native ScriptVariant_t();
+	
+	// Get/Set a 32-bit value
+	property any Value
+	{
+		public native get();
+		public native set(any value);
+	}
+	
+	// Gets a string value
+	//
+	// @param buffer           Buffer to store string.
+	// @param length           Size of buffer.
+	public native void GetString(char[] buffer, int length);
+	
+	// Gets a vector value
+	//
+	// @param buffer           Buffer to store vector.
+	public native void GetVector(float buffer[3]);
+	
+	// Get/Set a field type to use for value
+	property fieldtype_t Type
+	{
+		public native get();
+		public native set(fieldtype_t field);
+	}
+}
+
 methodmap HSCRIPT < Address
 {
+	// Executes a VScript function, this is not to be confused with native functions
+	//
+	// @param ...              Parameters to fill in a function.
+	// @return                 Return value from function, or null if an error occurred. handle must be deleted when not needed.
+	public native ScriptVariant_t ExecuteFunction(ScriptVariant_t ...);
+	
 	// Gets the key name by interator in hscript
 	//
 	// @param interator        Interator number, 0 for the first key.
@@ -76,6 +113,9 @@ methodmap HSCRIPT < Address
 	// Frees a HSCRIPT memory
 	public native void Release();
 }
+
+// Several functions accept null HScript as g_pScriptVM for root table
+const HSCRIPT HSCRIPT_RootTable = view_as<HSCRIPT>(0);
 
 methodmap VScriptFunction < Address
 {
@@ -154,11 +194,24 @@ methodmap VScriptClass < Address
 }
 
 /**
- * Gets the global g_pScriptVM pointer
+ * Compiles a script.
  * 
- * @return                 HSCRIPT of g_pScriptVM.
+ * @param script           Script to compile
+ * @param id               Optional ID to set
+ * 
+ * @return                 HSCRIPT of script, null if could not compile. This MUST be freed when not in use by using HSCRIPT.Release()
  */
-native HSCRIPT VScript_GetScriptVM();
+native HSCRIPT VScript_CompileScript(const char[] script, const char[] id = NULL_STRING);
+
+/**
+ * Compiles a script file.
+ * 
+ * @param filepath         Filepath to get a script, 'scripts/vscripts/' are automatically added to the filepath
+ * 
+ * @return                 HSCRIPT of script, null if could not compile. This MUST be freed when not in use by using HSCRIPT.Release()
+ * @error                  Invalid filepath.
+ */
+native HSCRIPT VScript_CompileScriptFile(const char[] filepath);
 
 /**
  * Creates a new HSCRIPT table, it MUST be deleted when no longer needed by using HSCRIPT.Release()
@@ -179,8 +232,8 @@ native ArrayList VScript_GetAllClasses();
  * 
  * @param className        Class name.
  * 
- * @return Address of VScriptClass
- * @error Invalid class name
+ * @return                 Address of VScriptClass
+ * @error                  Invalid class name
  */
 native VScriptClass VScript_GetClass(const char[] className);
 
@@ -190,8 +243,8 @@ native VScriptClass VScript_GetClass(const char[] className);
  * @param className        Class name.
  * @param functionName     Function name.
  * 
- * @return Address of VScriptFunction
- * @error Invalid class or function name
+ * @return                 Address of VScriptFunction
+ * @error                  Invalid class or function name
  */
 native VScriptFunction VScript_GetClassFunction(const char[] className, const char[] functionName);
 
@@ -200,8 +253,8 @@ native VScriptFunction VScript_GetClassFunction(const char[] className, const ch
  * 
  * @param entity           Entity index.
  * 
- * @return Address of the HScript
- * @error Invalid entity
+ * @return                 Address of the HScript
+ * @error                  Invalid entity
  */
 native HSCRIPT VScript_EntityToHScript(int entity);
 
@@ -210,9 +263,21 @@ native HSCRIPT VScript_EntityToHScript(int entity);
  * 
  * @param hscript          HScript address.
  * 
- * @return Entity index
+ * @return                 Entity index
  */
 native int VScript_HScriptToEntity(HSCRIPT hscript);
+
+/**
+ * Executes a named VScript function from entity script scope. This is not to be confused with native functions.
+ * 
+ * @param entity           Entity index to get script scope.
+ * @param name             Name of the function to execute
+ * @param ...              Parameters to fill in a function.
+ * 
+ * @return                 Return value from function, or null if an error occurred. handle must be deleted when not needed.
+ * @error                  Invalid entity or function name.
+ */
+native ScriptVariant_t VScript_EntityExecuteFunction(int entity, const char[] name, ScriptVariant_t ...);
 
 /**
  * Returns the value of a constant
@@ -220,13 +285,12 @@ native int VScript_HScriptToEntity(HSCRIPT hscript);
  * @param table            Enum or bitfield name to get.
  * @param name             Value name to get.
  * 
- * @return value of the enum value.
- * @error Invalid enum, bitfield or value name to get.
+ * @return                 Value of the enum key.
+ * @error                  Invalid enum, bitfield or value name to get.
  */
 stock any VScript_GetConstantsValue(const char[] table, const char[] name)
 {
-	HSCRIPT vm = VScript_GetScriptVM();
-	HSCRIPT constants = vm.GetValue("Constants");
+	HSCRIPT constants = HSCRIPT_RootTable.GetValue("Constants");
 	HSCRIPT keys = constants.GetValue(table);
 	return keys.GetValue(name);
 }

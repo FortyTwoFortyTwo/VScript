@@ -4,6 +4,7 @@
 
 HSCRIPT g_pScriptVM;
 
+static Handle g_hSDKCallCompileScript;
 static Handle g_hSDKCallGetScriptInstance;
 static Handle g_hSDKCallGetInstanceValue;
 
@@ -14,6 +15,7 @@ const VScriptFunction VScriptFunction_Invalid = view_as<VScriptFunction>(Address
 #include "vscript/field.sp"
 #include "vscript/function.sp"
 #include "vscript/hscript.sp"
+#include "vscript/util.sp"
 #include "vscript/variant.sp"
 
 public Plugin myinfo =
@@ -27,6 +29,15 @@ public Plugin myinfo =
 
 public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLength)
 {
+	CreateNative("ScriptVariant_t.ScriptVariant_t", Native_Variant);
+	CreateNative("ScriptVariant_t.Value.get", Native_Variant_ValueGet);
+	CreateNative("ScriptVariant_t.Value.set", Native_Variant_ValueSet);
+	CreateNative("ScriptVariant_t.GetString", Native_Variant_GetString);
+	CreateNative("ScriptVariant_t.GetVector", Native_Variant_GetVector);
+	CreateNative("ScriptVariant_t.Type.get", Native_Variant_TypeGet);
+	CreateNative("ScriptVariant_t.Type.set", Native_Variant_TypeSet);
+	
+	CreateNative("HSCRIPT.ExecuteFunction", Native_HScript_ExecuteFunction);
 	CreateNative("HSCRIPT.GetKey", Native_HScript_GetKey);
 	CreateNative("HSCRIPT.GetValue", Native_HScript_GetValue);
 	CreateNative("HSCRIPT.GetValueString", Native_HScript_GetValueString);
@@ -49,13 +60,15 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScriptClass.GetAllFunctions", Native_Class_GetAllFunctions);
 	CreateNative("VScriptClass.GetFunction", Native_Class_GetFunction);
 	
-	CreateNative("VScript_GetScriptVM", Native_GetScriptVM);
+	CreateNative("VScript_CompileScript", Native_CompileScript);
+	CreateNative("VScript_CompileScriptFile", Native_CompileScriptFile);
 	CreateNative("VScript_CreateTable", Native_CreateTable);
 	CreateNative("VScript_GetAllClasses", Native_GetAllClasses);
 	CreateNative("VScript_GetClass", Native_GetClass);
 	CreateNative("VScript_GetClassFunction", Native_GetClassFunction);
 	CreateNative("VScript_EntityToHScript", Native_EntityToHScript);
 	CreateNative("VScript_HScriptToEntity", Native_HScriptToEntity);
+	CreateNative("VScript_EntityExecuteFunction", Native_EntityExecuteFunction);
 	
 	RegPluginLibrary("vscript");
 	return APLRes_Success;
@@ -71,6 +84,15 @@ public void OnPluginStart()
 	Function_LoadGamedata(hGameData);
 	HScript_LoadGamedata(hGameData);
 	Variant_LoadGamedata(hGameData);
+	
+	StartPrepSDKCall(SDKCall_Raw);
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CSquirrelVM::CompileScript");
+	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);	// const char *pszScript
+	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer, VDECODE_FLAG_ALLOWNULL);	// const char *pszId
+	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);	// HSCRIPT
+	g_hSDKCallCompileScript = EndPrepSDKCall();
+	if (!g_hSDKCallCompileScript)
+		LogError("Failed to create call: CSquirrelVM::CompileScript");
 	
 	StartPrepSDKCall(SDKCall_Entity);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseEntity::GetScriptInstance");
@@ -89,6 +111,67 @@ public void OnPluginStart()
 		LogError("Failed to create call: CSquirrelVM::GetInstanceValue");
 	
 	delete hGameData;
+}
+
+public any Native_Variant(Handle hPlugin, int iNumParams)
+{
+	ScriptVariant_t pValue = Variant_Create();
+	ScriptVariant_t pClone = view_as<ScriptVariant_t>(CloneHandle(pValue, hPlugin));
+	delete pValue;
+	return pClone;
+}
+
+public any Native_Variant_ValueGet(Handle hPlugin, int iNumParams)
+{
+	return Variant_GetValue(GetNativeCell(1));
+}
+
+public any Native_Variant_ValueSet(Handle hPlugin, int iNumParams)
+{
+	Variant_SetValue(GetNativeCell(1), GetNativeCell(2));
+	return 0;
+}
+
+public any Native_Variant_GetString(Handle hPlugin, int iNumParams)
+{
+	int iLength = GetNativeCell(3);
+	char[] sBuffer = new char[iLength];
+	
+	Variant_GetString(GetNativeCell(1), sBuffer, iLength);
+	
+	SetNativeString(2, sBuffer, iLength);
+	return 0;
+}
+
+public any Native_Variant_GetVector(Handle hPlugin, int iNumParams)
+{
+	float vecBuffer[3];
+	Variant_GetVector(GetNativeCell(1), vecBuffer);
+	SetNativeArray(3, vecBuffer, sizeof(vecBuffer));
+	
+	return 0;
+}
+
+public any Native_Variant_TypeGet(Handle hPlugin, int iNumParams)
+{
+	return Variant_GetType(GetNativeCell(1));
+}
+
+public any Native_Variant_TypeSet(Handle hPlugin, int iNumParams)
+{
+	Variant_SetType(GetNativeCell(1), GetNativeCell(2));
+	return 0;
+}
+
+public any Native_HScript_ExecuteFunction(Handle hPlugin, int iNumParams)
+{
+	ScriptVariant_t pReturn = HScript_ExecuteFunction(GetNativeCell(1), 2, iNumParams - 1);
+	if (!pReturn)
+		return pReturn;
+	
+	ScriptVariant_t pClone = view_as<ScriptVariant_t>(CloneHandle(pReturn, hPlugin));
+	delete pReturn;
+	return pClone;
 }
 
 public any Native_HScript_GetKey(Handle hPlugin, int iNumParams)
@@ -262,9 +345,63 @@ public any Native_Class_GetFunction(Handle hPlugin, int iNumParams)
 	return pFunction;
 }
 
-public any Native_GetScriptVM(Handle hPlugin, int iNumParams)
+public any Native_CompileScript(Handle hPlugin, int iNumParams)
 {
-	return g_pScriptVM;
+	int iScriptLength;
+	GetNativeStringLength(1, iScriptLength);
+	
+	char[] sScript = new char[iScriptLength + 1];
+	GetNativeString(1, sScript, iScriptLength + 1);
+	
+	if (IsNativeParamNullString(2))
+	{
+		return SDKCall(g_hSDKCallCompileScript, g_pScriptVM, sScript, 0);
+	}
+	else
+	{
+		int iIdLength;
+		GetNativeStringLength(2, iIdLength);
+		
+		char[] sId = new char[iIdLength + 1];
+		GetNativeString(2, sId, iIdLength + 1);
+		
+		return SDKCall(g_hSDKCallCompileScript, g_pScriptVM, sScript, sId);
+	}
+}
+
+public any Native_CompileScriptFile(Handle hPlugin, int iNumParams)
+{
+	char sFilepath[PLATFORM_MAX_PATH];
+	GetNativeString(1, sFilepath, sizeof(sFilepath));
+	Format(sFilepath, sizeof(sFilepath), "scripts/vscripts/%s", sFilepath);
+	
+	int iLength = FileSize(sFilepath);
+	if (iLength == -1)
+		ThrowNativeError(SP_ERROR_NATIVE, "Invalid vscript filepath '%s'", sFilepath);
+	
+	char[] sScript = new char[iLength + 1];
+	File hFile = OpenFile(sFilepath, "r");
+	if (!hFile)
+		ThrowNativeError(SP_ERROR_NATIVE, "Could not open vscript file '%s'", sFilepath);
+	
+	hFile.ReadString(sScript, iLength + 1);
+	
+	delete hFile;
+	
+	int iIndex = FindCharInString(sFilepath, '\\', true);
+	if (iIndex == -1)
+		iIndex = FindCharInString(sFilepath, '/', true);
+	
+	if (iIndex == -1)
+	{
+		return VScript_CompileScript(sScript, sFilepath);
+	}
+	else
+	{
+		char iId[PLATFORM_MAX_PATH];
+		Format(iId, strlen(iId), sFilepath[iIndex + 1]);
+		return VScript_CompileScript(sScript, iId);
+	}
 }
 
 public any Native_CreateTable(Handle hPlugin, int iNumParams)
@@ -344,30 +481,30 @@ public any Native_HScriptToEntity(Handle hPlugin, int iNumParams)
 	return SDKCall(g_hSDKCallGetInstanceValue, g_pScriptVM, pHScript, pClassDesc);
 }
 
-Address LoadPointerAddressFromGamedata(GameData hGameData, const char[] sAddress)
+public any Native_EntityExecuteFunction(Handle hPlugin, int iNumParams)
 {
-	Address pGamedata = hGameData.GetAddress(sAddress);
-	Address pToAddress = LoadFromAddress(pGamedata, NumberType_Int32);
-	return LoadFromAddress(pToAddress, NumberType_Int32);
-}
-
-int LoadPointerStringFromAddress(Address pPointer, char[] sBuffer, int iMaxLen)
-{
-	Address pString = LoadFromAddress(pPointer, NumberType_Int32);
-	return LoadStringFromAddress(pString, sBuffer, iMaxLen);
-}
-
-int LoadStringFromAddress(Address pString, char[] sBuffer, int iMaxLen)
-{
-	int iChar;
-	char sChar;
+	int iEntity = GetNativeCell(1);
+	if (!IsValidEntity(iEntity))
+		ThrowNativeError(SP_ERROR_NATIVE, "Invalid entity index '%d'", iEntity);
 	
-	do
-	{
-		sChar = view_as<int>(LoadFromAddress(pString + view_as<Address>(iChar), NumberType_Int8));
-		sBuffer[iChar] = sChar;
-	}
-	while (sChar && ++iChar < iMaxLen - 1);
+	static Handle hGetScriptScope;
+	if (!hGetScriptScope)
+		hGetScriptScope = VScript_GetClassFunction("CBaseEntity", "GetScriptScope").CreateSDKCall();
 	
-	return iChar;
+	HSCRIPT pHScope = SDKCall(hGetScriptScope, iEntity);
+	
+	int iLength;
+	GetNativeStringLength(2, iLength);
+	
+	char[] sBuffer = new char[iLength + 1];
+	GetNativeString(2, sBuffer, iLength + 1);
+	HSCRIPT pFunction = pHScope.GetValue(sBuffer);
+	
+	ScriptVariant_t pReturn = HScript_ExecuteFunction(pFunction, 3, iNumParams - 2);
+	if (!pReturn)
+		return pReturn;
+	
+	ScriptVariant_t pClone = view_as<ScriptVariant_t>(CloneHandle(pReturn, hPlugin));
+	delete pReturn;
+	return pClone;
 }

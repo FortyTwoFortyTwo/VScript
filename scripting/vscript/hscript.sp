@@ -1,3 +1,11 @@
+enum ScriptStatus_t
+{
+	SCRIPT_ERROR = -1,
+	SCRIPT_DONE,
+	SCRIPT_RUNNING,
+};
+
+static Handle g_hSDKCallExecuteFunction;
 static Handle g_hSDKCallCreateTable;
 static Handle g_hSDKCallGetKeyValue;
 static Handle g_hSDKCallGetValue;
@@ -7,6 +15,19 @@ static Handle g_hSDKCallReleaseValue;
 
 void HScript_LoadGamedata(GameData hGameData)
 {
+	StartPrepSDKCall(SDKCall_Raw);
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CSquirrelVM::ExecuteFunction");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// HSCRIPT hFunction
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// ScriptVariant_t *pArgs
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// int nArgs
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// ScriptVariant_t *pReturn
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// HSCRIPT hScope
+	PrepSDKCall_AddParameter(SDKType_Bool, SDKPass_Plain);			// bool bWait
+	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);	// ScriptStatus_t
+	g_hSDKCallExecuteFunction = EndPrepSDKCall();
+	if (!g_hSDKCallExecuteFunction)
+		LogError("Failed to create call: CSquirrelVM::ExecuteFunction");
+	
 	StartPrepSDKCall(SDKCall_Raw);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CSquirrelVM::CreateTable");
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// ScriptVariant_t pValue
@@ -63,12 +84,43 @@ void HScript_LoadGamedata(GameData hGameData)
 		LogError("Failed to create call: CSquirrelVM::ReleaseValue");
 }
 
+ScriptVariant_t HScript_ExecuteFunction(HSCRIPT pHScript, int iStartParam, int iNumParams)
+{
+	MemoryBlock hArgs = null;
+	ScriptVariant_t pReturn = new ScriptVariant_t();
+	
+	int iSize = Variant_GetSize();
+	if (iNumParams)
+		hArgs = new MemoryBlock(iNumParams * iSize);
+	
+	for (int iParam = 0; iParam < iNumParams; iParam++)
+	{
+		ScriptVariant_t pArg = GetNativeCellRef(iParam + iStartParam);
+		
+		for (int iOffset = 0; iOffset < iSize; iOffset++)
+		{
+			any nValue = view_as<MemoryBlock>(pArg).LoadFromOffset(iOffset, NumberType_Int8);
+			hArgs.StoreToOffset((iParam * iSize) + iOffset, nValue, NumberType_Int8);
+		}
+	}
+	
+	ScriptStatus_t nStatus = SDKCall(g_hSDKCallExecuteFunction, g_pScriptVM, pHScript, hArgs ? hArgs.Address : Address_Null, iNumParams, Variant_GetAddress(pReturn), 0, true);
+	
+	delete hArgs;
+	
+	if (nStatus != SCRIPT_ERROR)
+		return pReturn;
+	
+	delete pReturn;
+	return null;
+}
+
 HSCRIPT HScript_CreateTable()
 {
-	ScriptVariant_t pTable = new ScriptVariant_t();
-	SDKCall(g_hSDKCallCreateTable, g_pScriptVM, pTable.Address);
+	ScriptVariant_t pTable = Variant_Create();
+	SDKCall(g_hSDKCallCreateTable, g_pScriptVM, Variant_GetAddress(pTable));
 	
-	HSCRIPT pHScript = pTable.Value;
+	HSCRIPT pHScript = Variant_GetValue(pTable);
 	delete pTable;
 	return pHScript;
 }
@@ -77,15 +129,15 @@ int HScript_GetKey(HSCRIPT pHScript, int iIterator, char[] sKey, int iLength, fi
 {
 	// if pHScript is null, g_pScriptVM is used instead
 	
-	ScriptVariant_t pKey = new ScriptVariant_t();
-	ScriptVariant_t pValue = new ScriptVariant_t();
+	ScriptVariant_t pKey = Variant_Create();
+	ScriptVariant_t pValue = Variant_Create();
 	
-	iIterator = SDKCall(g_hSDKCallGetKeyValue, g_pScriptVM, pHScript, iIterator, pKey.Address, pValue.Address);
+	iIterator = SDKCall(g_hSDKCallGetKeyValue, g_pScriptVM, pHScript, iIterator, Variant_GetAddress(pKey), Variant_GetAddress(pValue));
 	
 	if (iIterator != -1)
 	{
-		pKey.GetString(sKey, iLength);
-		nField = pValue.Field;
+		Variant_GetString(pKey, sKey, iLength);
+		nField = Variant_GetType(pValue);
 	}
 	
 	delete pKey, pValue;
@@ -95,7 +147,7 @@ int HScript_GetKey(HSCRIPT pHScript, int iIterator, char[] sKey, int iLength, fi
 
 bool HScript_GetValue(HSCRIPT pHScript, const char[] sKey, ScriptVariant_t pValue)
 {
-	return SDKCall(g_hSDKCallGetValue, g_pScriptVM, pHScript, sKey, pValue.Address);
+	return SDKCall(g_hSDKCallGetValue, g_pScriptVM, pHScript, sKey, Variant_GetAddress(pValue));
 }
 
 ScriptVariant_t HScript_NativeGetValue(SMField nSMField)
@@ -106,7 +158,7 @@ ScriptVariant_t HScript_NativeGetValue(SMField nSMField)
 	char[] sBuffer = new char[iLength + 1];
 	GetNativeString(2, sBuffer, iLength + 1);
 	
-	ScriptVariant_t pValue = new ScriptVariant_t();
+	ScriptVariant_t pValue = Variant_Create();
 	bool bResult = HScript_GetValue(GetNativeCell(1), sBuffer, pValue);
 	
 	if (!bResult)
@@ -115,7 +167,7 @@ ScriptVariant_t HScript_NativeGetValue(SMField nSMField)
 		ThrowNativeError(SP_ERROR_NATIVE, "Key name '%s' either don't exist or value is null", sBuffer);
 	}
 	
-	fieldtype_t nField = pValue.Field;
+	fieldtype_t nField = Variant_GetType(pValue);
 	if (Field_GetSMField(nField) != nSMField)
 	{
 		delete pValue;
@@ -132,7 +184,7 @@ bool HScript_SetValueString(HSCRIPT pHScript, const char[] sKey, const char[] sV
 
 bool HScript_SetValue(HSCRIPT pHScript, const char[] sKey, ScriptVariant_t pValue)
 {
-	return SDKCall(g_hSDKCallSetValue, g_pScriptVM, pHScript, sKey, pValue.Address);
+	return SDKCall(g_hSDKCallSetValue, g_pScriptVM, pHScript, sKey, Variant_GetAddress(pValue));
 }
 
 void HScript_NativeSetValue(SMField nSMField)
@@ -154,7 +206,10 @@ void HScript_NativeSetValue(SMField nSMField)
 	{
 		case SMField_Any:
 		{
-			ScriptVariant_t pValue = new ScriptVariant_t(nField, GetNativeCell(4));
+			ScriptVariant_t pValue = Variant_Create();
+			Variant_SetType(pValue, nField);
+			Variant_SetValue(pValue, GetNativeCell(4));
+			
 			bResult = HScript_SetValue(GetNativeCell(1), sBuffer, pValue);
 			delete pValue;
 		}
@@ -175,7 +230,10 @@ void HScript_NativeSetValue(SMField nSMField)
 
 void HScript_ReleaseValue(HSCRIPT pHScript)
 {
-	ScriptVariant_t pValue = new ScriptVariant_t(FIELD_HSCRIPT, pHScript);
-	SDKCall(g_hSDKCallReleaseValue, g_pScriptVM, pValue.Address);
+	ScriptVariant_t pValue = Variant_Create();
+	Variant_SetType(pValue, FIELD_HSCRIPT);
+	Variant_SetValue(pValue, pHScript);
+	
+	SDKCall(g_hSDKCallReleaseValue, g_pScriptVM, Variant_GetAddress(pValue));
 	delete pValue;
 }
