@@ -145,10 +145,10 @@
 				"windows"	"8"
 			}
 			
-			"CSquirrelVM::CompileScript"
+			"CSquirrelVM::CompileScript"	// vtable dumper got it wrong
 			{
-				"linux"		"9"
-				"windows"	"10"	// vtable dumper got it wrong
+				"linux"		"8"
+				"windows"	"10"
 			}
 			
 			"CSquirrelVM::ExecuteFunction"

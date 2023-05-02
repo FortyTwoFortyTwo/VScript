@@ -87,8 +87,6 @@ ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
 	if (iNumParams)
 		hArgs = new MemoryBlock(iNumParams * g_iScriptVariant_sizeof);
 	
-	MemoryBlock[] nParams = new MemoryBlock[iNumParams];
-	
 	for (int iParam = 0; iParam < iNumParams; iParam++)
 	{
 		ExecuteParam param;
@@ -115,10 +113,6 @@ ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
 	}
 	
 	ScriptStatus_t nStatus = SDKCall(g_hSDKCallExecuteFunction, g_pScriptVM, execute.pHScript, hArgs ? hArgs.Address : Address_Null, iNumParams, pReturn.Address, 0, true);
-	
-	for (int iParam = 0; iParam < iNumParams; iParam++)
-		if (nParams[iParam])
-			delete nParams[iParam];
 	
 	execute.nReturn.nType = pReturn.nType;
 	execute.nReturn.nValue = pReturn.nValue;

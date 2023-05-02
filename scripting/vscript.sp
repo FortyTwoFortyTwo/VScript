@@ -392,7 +392,7 @@ public any Native_CompileScriptFile(Handle hPlugin, int iNumParams)
 	else
 	{
 		char sId[PLATFORM_MAX_PATH];
-		Format(sId, strlen(sId), sFilepath[iIndex + 1]);
+		Format(sId, sizeof(sId), sFilepath[iIndex + 1]);
 		return SDKCall(g_hSDKCallCompileScript, g_pScriptVM, sScript, sId);
 	}
 }
