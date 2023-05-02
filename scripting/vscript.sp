@@ -2,7 +2,7 @@
 
 #include "include/vscript.inc"
 
-HSCRIPT g_pScriptVM;
+Address g_pToScriptVM;
 
 int g_iScriptVariant_sizeof;
 int g_iScriptVariant_union;
@@ -80,7 +80,7 @@ public void OnPluginStart()
 {
 	GameData hGameData = new GameData("vscript");
 	
-	g_pScriptVM = view_as<HSCRIPT>(LoadPointerAddressFromGamedata(hGameData, "g_pScriptVM"));
+	g_pToScriptVM = GetPointerAddressFromGamedata(hGameData, "g_pScriptVM");
 	
 	g_iScriptVariant_sizeof = hGameData.GetOffset("sizeof(ScriptVariant_t)");
 	g_iScriptVariant_union = hGameData.GetOffset("ScriptVariant_t::union");
@@ -348,7 +348,7 @@ public any Native_CompileScript(Handle hPlugin, int iNumParams)
 	
 	if (IsNativeParamNullString(2))
 	{
-		return SDKCall(g_hSDKCallCompileScript, g_pScriptVM, sScript, 0);
+		return SDKCall(g_hSDKCallCompileScript, GetScriptVM(), sScript, 0);
 	}
 	else
 	{
@@ -358,7 +358,7 @@ public any Native_CompileScript(Handle hPlugin, int iNumParams)
 		char[] sId = new char[iIdLength + 1];
 		GetNativeString(2, sId, iIdLength + 1);
 		
-		return SDKCall(g_hSDKCallCompileScript, g_pScriptVM, sScript, sId);
+		return SDKCall(g_hSDKCallCompileScript, GetScriptVM(), sScript, sId);
 	}
 }
 
@@ -387,13 +387,13 @@ public any Native_CompileScriptFile(Handle hPlugin, int iNumParams)
 	
 	if (iIndex == -1)
 	{
-		return SDKCall(g_hSDKCallCompileScript, g_pScriptVM, sScript, 0);
+		return SDKCall(g_hSDKCallCompileScript, GetScriptVM(), sScript, 0);
 	}
 	else
 	{
 		char sId[PLATFORM_MAX_PATH];
 		Format(sId, sizeof(sId), sFilepath[iIndex + 1]);
-		return SDKCall(g_hSDKCallCompileScript, g_pScriptVM, sScript, sId);
+		return SDKCall(g_hSDKCallCompileScript, GetScriptVM(), sScript, sId);
 	}
 }
 
@@ -471,5 +471,5 @@ public any Native_HScriptToEntity(Handle hPlugin, int iNumParams)
 	if (!pClassDesc)
 		ThrowError("Could not find script name CBaseEntity, file a bug report.");
 	
-	return SDKCall(g_hSDKCallGetInstanceValue, g_pScriptVM, pHScript, pClassDesc);
+	return SDKCall(g_hSDKCallGetInstanceValue, GetScriptVM(), pHScript, pClassDesc);
 }

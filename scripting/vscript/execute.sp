@@ -112,7 +112,7 @@ ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
 		hArgs.StoreToOffset((iParam * g_iScriptVariant_sizeof) + g_iScriptVariant_union, nValue, NumberType_Int32);
 	}
 	
-	ScriptStatus_t nStatus = SDKCall(g_hSDKCallExecuteFunction, g_pScriptVM, execute.pHScript, hArgs ? hArgs.Address : Address_Null, iNumParams, pReturn.Address, 0, true);
+	ScriptStatus_t nStatus = SDKCall(g_hSDKCallExecuteFunction, GetScriptVM(), execute.pHScript, hArgs ? hArgs.Address : Address_Null, iNumParams, pReturn.Address, 0, true);
 	
 	execute.nReturn.nType = pReturn.nType;
 	execute.nReturn.nValue = pReturn.nValue;

@@ -1,8 +1,12 @@
-Address LoadPointerAddressFromGamedata(GameData hGameData, const char[] sAddress)
+HSCRIPT GetScriptVM()
+{
+	return view_as<HSCRIPT>(LoadFromAddress(g_pToScriptVM, NumberType_Int32));
+}
+
+Address GetPointerAddressFromGamedata(GameData hGameData, const char[] sAddress)
 {
 	Address pGamedata = hGameData.GetAddress(sAddress);
-	Address pToAddress = LoadFromAddress(pGamedata, NumberType_Int32);
-	return LoadFromAddress(pToAddress, NumberType_Int32);
+	return LoadFromAddress(pGamedata, NumberType_Int32);
 }
 
 int LoadPointerStringFromAddress(Address pPointer, char[] sBuffer, int iMaxLen)

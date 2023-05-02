@@ -66,7 +66,7 @@ void HScript_LoadGamedata(GameData hGameData)
 HSCRIPT HScript_CreateTable()
 {
 	ScriptVariant_t pTable = new ScriptVariant_t();
-	SDKCall(g_hSDKCallCreateTable, g_pScriptVM, pTable.Address);
+	SDKCall(g_hSDKCallCreateTable, GetScriptVM(), pTable.Address);
 	
 	HSCRIPT pHScript = pTable.nValue;
 	delete pTable;
@@ -80,7 +80,7 @@ int HScript_GetKey(HSCRIPT pHScript, int iIterator, char[] sKey, int iLength, fi
 	ScriptVariant_t pKey = new ScriptVariant_t();
 	ScriptVariant_t pValue = new ScriptVariant_t();
 	
-	iIterator = SDKCall(g_hSDKCallGetKeyValue, g_pScriptVM, pHScript, iIterator, pKey.Address, pValue.Address);
+	iIterator = SDKCall(g_hSDKCallGetKeyValue, GetScriptVM(), pHScript, iIterator, pKey.Address, pValue.Address);
 	
 	if (iIterator != -1)
 	{
@@ -95,7 +95,7 @@ int HScript_GetKey(HSCRIPT pHScript, int iIterator, char[] sKey, int iLength, fi
 
 bool HScript_GetValue(HSCRIPT pHScript, const char[] sKey, ScriptVariant_t pValue)
 {
-	return SDKCall(g_hSDKCallGetValue, g_pScriptVM, pHScript, sKey, pValue.Address);
+	return SDKCall(g_hSDKCallGetValue, GetScriptVM(), pHScript, sKey, pValue.Address);
 }
 
 ScriptVariant_t HScript_NativeGetValue(SMField nSMField)
@@ -127,12 +127,12 @@ ScriptVariant_t HScript_NativeGetValue(SMField nSMField)
 
 bool HScript_SetValueString(HSCRIPT pHScript, const char[] sKey, const char[] sValue)
 {
-	return SDKCall(g_hSDKCallSetValueString, g_pScriptVM, pHScript, sKey, sValue);
+	return SDKCall(g_hSDKCallSetValueString, GetScriptVM(), pHScript, sKey, sValue);
 }
 
 bool HScript_SetValue(HSCRIPT pHScript, const char[] sKey, ScriptVariant_t pValue)
 {
-	return SDKCall(g_hSDKCallSetValue, g_pScriptVM, pHScript, sKey, pValue.Address);
+	return SDKCall(g_hSDKCallSetValue, GetScriptVM(), pHScript, sKey, pValue.Address);
 }
 
 void HScript_NativeSetValue(SMField nSMField)
@@ -182,6 +182,6 @@ void HScript_ReleaseValue(HSCRIPT pHScript)
 	pValue.nType = FIELD_HSCRIPT;
 	pValue.nValue = pHScript;
 	
-	SDKCall(g_hSDKCallReleaseValue, g_pScriptVM, pValue.Address);
+	SDKCall(g_hSDKCallReleaseValue, GetScriptVM(), pValue.Address);
 	delete pValue;
 }

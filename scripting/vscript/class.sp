@@ -8,7 +8,7 @@ static int g_iFunctionBinding_sizeof;
 
 void Class_LoadGamedata(GameData hGameData)
 {
-	g_pFirstClassDesc = view_as<VScriptClass>(LoadPointerAddressFromGamedata(hGameData, "ScriptClassDesc_t::GetDescList"));
+	g_pFirstClassDesc = view_as<VScriptClass>(LoadFromAddress(GetPointerAddressFromGamedata(hGameData, "ScriptClassDesc_t::GetDescList"), NumberType_Int32));
 	
 	g_iClassDesc_ScriptName = hGameData.GetOffset("ScriptClassDesc_t::m_pszScriptName");
 	g_iClassDesc_FunctionBindings = hGameData.GetOffset("ScriptClassDesc_t::m_FunctionBindings");
