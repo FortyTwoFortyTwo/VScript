@@ -1,4 +1,4 @@
-/*
+
 #define SQOBJECT_REF_COUNTED	0x08000000
 #define SQOBJECT_NUMERIC		0x04000000
 #define SQOBJECT_DELEGABLE		0x02000000
@@ -71,60 +71,61 @@ stock char[] Variant_GetObjectTypeName(SQObjectType nType)
 	
 	return sValue;
 }
-*/
 
-static int g_iScriptVariant_sizeof;
-static int g_iScriptVariant_type;
 
-void Variant_LoadGamedata(GameData hGameData)
+methodmap ScriptVariant_t < MemoryBlock
 {
-	g_iScriptVariant_sizeof = hGameData.GetOffset("sizeof(ScriptVariant_t)");
-	g_iScriptVariant_type = hGameData.GetOffset("ScriptVariant_t::m_type");
-}
+	public ScriptVariant_t()
+	{
+		return view_as<ScriptVariant_t>(new MemoryBlock(g_iScriptVariant_sizeof));
+	}
+	
+	property any nValue
+	{
+		public get()
+		{
+			return this.LoadFromOffset(g_iScriptVariant_union, NumberType_Int32);
+		}
+		
+		public set(any nValue)
+		{
+			this.StoreToOffset(g_iScriptVariant_union, nValue, NumberType_Int32);
+		}
+	}
+	
+	public void GetString(char[] sBuffer, int iLength)
+	{
+		LoadPointerStringFromAddress(this.Address + view_as<Address>(g_iScriptVariant_union), sBuffer, iLength);
+	}
+	
+	public void GetVector(float vecBuffer[3])
+	{
+		Address pVector = this.nValue;
+		for (int i = 0; i < sizeof(vecBuffer); i++)
+			vecBuffer[i] = LoadFromAddress(pVector + view_as<Address>(i * 4), NumberType_Int32);
+	}
+	
+	property fieldtype_t nType
+	{
+		public get()
+		{
+			return view_as<fieldtype_t>(this.LoadFromOffset(g_iScriptVariant_type, NumberType_Int16));
+		}
+		
+		public set(fieldtype_t nField)
+		{
+			this.StoreToOffset(g_iScriptVariant_type, nField, NumberType_Int16);
+		}
+	}
+	
+	property SQObjectType ObjectType
+	{
+		public get()
+		{
+			if (this.nType != FIELD_HSCRIPT)
+				ThrowError("Field must be FIELD_HSCRIPT");
 
-int Variant_GetSize()
-{
-	return g_iScriptVariant_sizeof;
-}
-
-ScriptVariant_t Variant_Create()
-{
-	return view_as<ScriptVariant_t>(new MemoryBlock(g_iScriptVariant_sizeof));
-}
-
-Address Variant_GetAddress(ScriptVariant_t pValue)
-{
-	return view_as<MemoryBlock>(pValue).Address;
-}
-
-any Variant_GetValue(ScriptVariant_t pValue)
-{
-	return view_as<MemoryBlock>(pValue).LoadFromOffset(0, NumberType_Int32);
-}
-
-void Variant_SetValue(ScriptVariant_t pValue, any nValue)
-{
-	view_as<MemoryBlock>(pValue).StoreToOffset(0, nValue, NumberType_Int32);
-}
-
-void Variant_GetString(ScriptVariant_t pValue, char[] sBuffer, int iLength)
-{
-	LoadPointerStringFromAddress(view_as<MemoryBlock>(pValue).Address + view_as<Address>(0), sBuffer, iLength);
-}
-
-void Variant_GetVector(ScriptVariant_t pValue, float vecBuffer[3])
-{
-	Address pVector = Variant_GetValue(pValue);
-	for (int i = 0; i < sizeof(vecBuffer); i++)
-		vecBuffer[i] = LoadFromAddress(pVector + view_as<Address>(i * 4), NumberType_Int32);
-}
-
-any Variant_GetType(ScriptVariant_t pValue)
-{
-	return view_as<MemoryBlock>(pValue).LoadFromOffset(g_iScriptVariant_type, NumberType_Int16);
-}
-
-void Variant_SetType(ScriptVariant_t pValue, any nValue)
-{
-	view_as<MemoryBlock>(pValue).StoreToOffset(g_iScriptVariant_type, nValue, NumberType_Int16);
+			return LoadFromAddress(this.nValue + view_as<Address>(0), NumberType_Int32);
+		}
+	}
 }

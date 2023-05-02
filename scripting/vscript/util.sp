@@ -25,3 +25,23 @@ int LoadStringFromAddress(Address pString, char[] sBuffer, int iMaxLen)
 	
 	return iChar;
 }
+
+stock int LoadPointerStringLengthFromAddress(Address pPointer)
+{
+	Address pString = LoadFromAddress(pPointer, NumberType_Int32);
+	return LoadStringLengthFromAddress(pString);
+}
+
+int LoadStringLengthFromAddress(Address pString)
+{
+	int iChar;
+	char sChar;
+	
+	do
+	{
+		sChar = view_as<int>(LoadFromAddress(pString + view_as<Address>(iChar), NumberType_Int8));
+	}
+	while (sChar && ++iChar);
+	
+	return iChar;
+}

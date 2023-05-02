@@ -24,47 +24,17 @@ enum fieldtype_t
 	FIELD_QANGLE = 39,
 };
 
-methodmap Address {}
-
-methodmap ScriptVariant_t < Handle
+enum ScriptStatus_t
 {
-	// Creates a new variant to get and pass into parameters.
-	public native ScriptVariant_t();
-	
-	// Get/Set a 32-bit value
-	property any Value
-	{
-		public native get();
-		public native set(any value);
-	}
-	
-	// Gets a string value
-	//
-	// @param buffer           Buffer to store string.
-	// @param length           Size of buffer.
-	public native void GetString(char[] buffer, int length);
-	
-	// Gets a vector value
-	//
-	// @param buffer           Buffer to store vector.
-	public native void GetVector(float buffer[3]);
-	
-	// Get/Set a field type to use for value
-	property fieldtype_t Type
-	{
-		public native get();
-		public native set(fieldtype_t field);
-	}
-}
+	SCRIPT_ERROR = -1,
+	SCRIPT_DONE,
+	SCRIPT_RUNNING,
+};
+
+methodmap Address {}
 
 methodmap HSCRIPT < Address
 {
-	// Executes a VScript function, this is not to be confused with native functions
-	//
-	// @param ...              Parameters to fill in a function.
-	// @return                 Return value from function, or null if an error occurred. handle must be deleted when not needed.
-	public native ScriptVariant_t ExecuteFunction(ScriptVariant_t ...);
-	
 	// Gets the key name by interator in hscript
 	//
 	// @param interator        Interator number, 0 for the first key.
@@ -193,6 +163,44 @@ methodmap VScriptClass < Address
 	public native VScriptFunction GetFunction(const char[] functionName);
 }
 
+methodmap VScriptExecute < Handle
+{
+	// Creates a new handle to execute a script function
+	// 
+	// @param script           Script address to execute.
+	public native VScriptExecute(HSCRIPT script);
+	
+	// Adds a new parameter at the end
+	// 
+	// @param type             Type of field to set.
+	// @param value            Value to set.
+	public native void AddParam(fieldtype_t type, any value);
+	
+	// Sets a specific parameter with value
+	// 
+	// @param param            Parameter to set.
+	// @param type             Type of field to set.
+	// @param value            Value to set.
+	public native void SetParam(int param, fieldtype_t type, any value);
+	
+	// Executes a function
+	//
+	// @return                 Script status after executed.
+	public native ScriptStatus_t Execute();
+	
+	// Gets return field type
+	property fieldtype_t ReturnType
+	{
+		public native get();
+	}
+	
+	// Gets return value
+	property any ReturnValue
+	{
+		public native get();
+	}
+}
+
 /**
  * Compiles a script.
  * 
@@ -266,18 +274,6 @@ native HSCRIPT VScript_EntityToHScript(int entity);
  * @return                 Entity index
  */
 native int VScript_HScriptToEntity(HSCRIPT hscript);
-
-/**
- * Executes a named VScript function from entity script scope. This is not to be confused with native functions.
- * 
- * @param entity           Entity index to get script scope.
- * @param name             Name of the function to execute
- * @param ...              Parameters to fill in a function.
- * 
- * @return                 Return value from function, or null if an error occurred. handle must be deleted when not needed.
- * @error                  Invalid entity or function name.
- */
-native ScriptVariant_t VScript_EntityExecuteFunction(int entity, const char[] name, ScriptVariant_t ...);
 
 /**
  * Returns the value of a constant

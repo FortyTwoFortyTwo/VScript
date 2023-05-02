@@ -133,6 +133,12 @@
 				"windows"	"12"
 			}
 			
+			"ScriptVariant_t::union"
+			{
+				"linux"		"0"
+				"windows"	"0"
+			}
+			
 			"ScriptVariant_t::m_type"
 			{
 				"linux"		"8"
