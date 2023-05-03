@@ -132,6 +132,11 @@ methodmap VScriptFunction < Address
 	// @error                  Parameter number out of range.
 	public native fieldtype_t GetParameter(int param);
 	
+	// Copys all datas from another function
+	// 
+	// @param from             A function to copy from.
+	public native void CopyFrom(VScriptFunction from);
+	
 	// Creates an SDKCall with parameters auto filled
 	// 
 	// @return                 SDKCall handle, must be deleted when not needed.
@@ -159,8 +164,14 @@ methodmap VScriptClass < Address
 	// Gets VScriptFunction from this class
 	// 
 	// @param functionName     Function name.
-	// @return                 Address of VScriptFunction.
+	// @return                 Address of VScriptFunction, null if does not exist.
 	public native VScriptFunction GetFunction(const char[] functionName);
+	
+	// Creates a new VScriptFunction connected from this class. Function will need to be filled in then call VScript_ResetScriptVM
+	// 
+	// @param functionName     Function name.
+	// @return                 Address of VScriptFunction.
+	public native VScriptFunction CreateFunction();
 }
 
 methodmap VScriptExecute < Handle
@@ -200,6 +211,11 @@ methodmap VScriptExecute < Handle
 		public native get();
 	}
 }
+
+/**
+ * Deletes g_pScriptVM and creates a new one. This should be used after creating new functions.
+ */
+native void VScript_ResetScriptVM();
 
 /**
  * Compiles a script.
@@ -251,8 +267,8 @@ native VScriptClass VScript_GetClass(const char[] className);
  * @param className        Class name.
  * @param functionName     Function name.
  * 
- * @return                 Address of VScriptFunction
- * @error                  Invalid class or function name
+ * @return                 Address of VScriptFunction, null if class does not have one
+ * @error                  Invalid class name
  */
 native VScriptFunction VScript_GetClassFunction(const char[] className, const char[] functionName);
 
@@ -329,13 +345,16 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("VScriptFunction.Return.get");
 	MarkNativeAsOptional("VScriptFunction.ParameterCount.get");
 	MarkNativeAsOptional("VScriptFunction.GetParameter");
+	MarkNativeAsOptional("VScriptFunction.CopyFrom");
 	MarkNativeAsOptional("VScriptFunction.CreateSDKCall");
 	MarkNativeAsOptional("VScriptFunction.CreateDetour");
 	
 	MarkNativeAsOptional("VScriptClass.GetScriptName");
 	MarkNativeAsOptional("VScriptClass.GetAllFunctions");
 	MarkNativeAsOptional("VScriptClass.GetFunction");
+	MarkNativeAsOptional("VScriptClass.CreateFunction");
 	
+	MarkNativeAsOptional("VScript_ResetScriptVM");
 	MarkNativeAsOptional("VScript_CompileScript");
 	MarkNativeAsOptional("VScript_CompileScriptFile");
 	MarkNativeAsOptional("VScript_CreateTable");

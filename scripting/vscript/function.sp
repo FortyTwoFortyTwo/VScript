@@ -4,6 +4,7 @@ static int g_iFunctionBinding_ReturnType;
 static int g_iFunctionBinding_Parameters;
 static int g_iFunctionBinding_Binding;
 static int g_iFunctionBinding_Function;
+static int g_iFunctionBinding_sizeof;
 
 void Function_LoadGamedata(GameData hGameData)
 {
@@ -13,6 +14,7 @@ void Function_LoadGamedata(GameData hGameData)
 	g_iFunctionBinding_Parameters = hGameData.GetOffset("ScriptFunctionBinding_t::m_Parameters");
 	g_iFunctionBinding_Binding = hGameData.GetOffset("ScriptFunctionBinding_t::m_pfnBinding");
 	g_iFunctionBinding_Function = hGameData.GetOffset("ScriptFunctionBinding_t::m_pFunction");
+	g_iFunctionBinding_sizeof = hGameData.GetOffset("sizeof(ScriptFunctionBinding_t)");
 }
 
 void Function_GetScriptName(VScriptFunction pFunction, char[] sBuffer, int iLength)
@@ -49,6 +51,12 @@ Address Function_GetBinding(VScriptFunction pFunction)
 Address Function_GetFunction(VScriptFunction pFunction)
 {
 	return LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Function), NumberType_Int32);
+}
+
+void Function_CopyFrom(VScriptFunction pTo, VScriptFunction pFrom)
+{
+	for (int i = 0; i < g_iFunctionBinding_sizeof; i++)
+		StoreToAddress(pTo + view_as<Address>(i), LoadFromAddress(pFrom + view_as<Address>(i), NumberType_Int8), NumberType_Int8);
 }
 
 Handle Function_CreateSDKCall(VScriptFunction pFunction)

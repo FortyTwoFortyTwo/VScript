@@ -6,6 +6,8 @@ static int g_iClassDesc_NextDesc;
 
 static int g_iFunctionBinding_sizeof;
 
+static Handle g_hSDKCallInsertBefore;
+
 void Class_LoadGamedata(GameData hGameData)
 {
 	g_pFirstClassDesc = view_as<VScriptClass>(LoadFromAddress(GetPointerAddressFromGamedata(hGameData, "ScriptClassDesc_t::GetDescList"), NumberType_Int32));
@@ -15,6 +17,14 @@ void Class_LoadGamedata(GameData hGameData)
 	g_iClassDesc_NextDesc = hGameData.GetOffset("ScriptClassDesc_t::m_pNextDesc");
 	
 	g_iFunctionBinding_sizeof = hGameData.GetOffset("sizeof(ScriptFunctionBinding_t)");
+	
+	StartPrepSDKCall(SDKCall_Raw);
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CUtlVector<ScriptFunctionBinding_t,CUtlMemory<ScriptFunctionBinding_t,int>>::InsertBefore");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
+	g_hSDKCallInsertBefore = EndPrepSDKCall();
+	if (!g_hSDKCallInsertBefore)
+		LogError("Failed to create SDKCall: CUtlVector<ScriptFunctionBinding_t,CUtlMemory<ScriptFunctionBinding_t,int>>::InsertBefore");
 }
 
 ArrayList Class_GetAll()
@@ -82,4 +92,15 @@ VScriptFunction Class_GetFunction(VScriptClass pClass, const char[] sName)
 	}
 	
 	return VScriptFunction_Invalid;
+}
+
+VScriptFunction Class_CreateFunction(VScriptClass pClass)
+{
+	Address pFunctionBindings = pClass + view_as<Address>(g_iClassDesc_FunctionBindings);
+	int iFunctionCount = LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_FunctionBindings) + view_as<Address>(0x0C), NumberType_Int32);
+	
+	SDKCall(g_hSDKCallInsertBefore, pFunctionBindings, iFunctionCount);
+	
+	Address pData = LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_FunctionBindings), NumberType_Int32);
+	return view_as<VScriptFunction>(pData + view_as<Address>(g_iFunctionBinding_sizeof * iFunctionCount));
 }

@@ -11,6 +11,8 @@ int g_iScriptVariant_type;
 static Handle g_hSDKCallCompileScript;
 static Handle g_hSDKCallGetScriptInstance;
 static Handle g_hSDKCallGetInstanceValue;
+static Handle g_hSDKCallVScriptServerInit;
+static Handle g_hSDKCallVScriptServerTerm;
 
 const VScriptClass VScriptClass_Invalid = view_as<VScriptClass>(Address_Null);
 const VScriptFunction VScriptFunction_Invalid = view_as<VScriptFunction>(Address_Null);
@@ -49,12 +51,14 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScriptFunction.Return.get", Native_Function_ReturnGet);
 	CreateNative("VScriptFunction.ParameterCount.get", Native_Function_ParameterCountGet);
 	CreateNative("VScriptFunction.GetParameter", Native_Function_GetParameter);
+	CreateNative("VScriptFunction.CopyFrom", Native_Function_CopyFrom);
 	CreateNative("VScriptFunction.CreateSDKCall", Native_Function_CreateSDKCall);
 	CreateNative("VScriptFunction.CreateDetour", Native_Function_CreateDetour);
 	
 	CreateNative("VScriptClass.GetScriptName", Native_Class_GetScriptName);
 	CreateNative("VScriptClass.GetAllFunctions", Native_Class_GetAllFunctions);
 	CreateNative("VScriptClass.GetFunction", Native_Class_GetFunction);
+	CreateNative("VScriptClass.CreateFunction", Native_Class_CreateFunction);
 	
 	CreateNative("VScriptExecute.VScriptExecute", Native_Execute);
 	CreateNative("VScriptExecute.AddParam", Native_Execute_AddParam);
@@ -63,6 +67,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScriptExecute.ReturnType.get", Native_Execute_ReturnTypeGet);
 	CreateNative("VScriptExecute.ReturnValue.get", Native_Execute_ReturnValueGet);
 	
+	CreateNative("VScript_ResetScriptVM", Native_ResetScriptVM);
 	CreateNative("VScript_CompileScript", Native_CompileScript);
 	CreateNative("VScript_CompileScriptFile", Native_CompileScriptFile);
 	CreateNative("VScript_CreateTable", Native_CreateTable);
@@ -115,6 +120,19 @@ public void OnPluginStart()
 	g_hSDKCallGetInstanceValue = EndPrepSDKCall();
 	if (!g_hSDKCallGetInstanceValue)
 		LogError("Failed to create call: CSquirrelVM::GetInstanceValue");
+	
+	StartPrepSDKCall(SDKCall_Static);
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "VScriptServerInit");
+	PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
+	g_hSDKCallVScriptServerInit = EndPrepSDKCall();
+	if (!g_hSDKCallVScriptServerInit)
+		LogError("Failed to create call: VScriptServerInit");
+	
+	StartPrepSDKCall(SDKCall_Static);
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "VScriptServerTerm");
+	g_hSDKCallVScriptServerTerm = EndPrepSDKCall();
+	if (!g_hSDKCallVScriptServerTerm)
+		LogError("Failed to create call: VScriptServerTerm");
 	
 	delete hGameData;
 }
@@ -238,6 +256,12 @@ public any Native_Function_GetParameter(Handle hPlugin, int iNumParams)
 	return Function_GetParameter(pFunc, iParam - 1);
 }
 
+public any Native_Function_CopyFrom(Handle hPlugin, int iNumParams)
+{
+	Function_CopyFrom(GetNativeCell(1), GetNativeCell(2));
+	return 0;
+}
+
 public any Native_Function_CreateSDKCall(Handle hPlugin, int iNumParams)
 {
 	Handle hSDKCall = Function_CreateSDKCall(GetNativeCell(1));
@@ -283,11 +307,12 @@ public any Native_Class_GetFunction(Handle hPlugin, int iNumParams)
 	char[] sBuffer = new char[iLength + 1];
 	GetNativeString(2, sBuffer, iLength + 1);
 	
-	VScriptFunction pFunction = Class_GetFunction(GetNativeCell(1), sBuffer);
-	if (!pFunction)
-		return ThrowNativeError(SP_ERROR_NATIVE, "Could not find function name '%s'", sBuffer);
-	
-	return pFunction;
+	return Class_GetFunction(GetNativeCell(1), sBuffer);
+}
+
+public any Native_Class_CreateFunction(Handle hPlugin, int iNumParams)
+{
+	return Class_CreateFunction(GetNativeCell(1));
 }
 
 public any Native_Execute(Handle hPlugin, int iNumParams)
@@ -336,6 +361,13 @@ public any Native_Execute_ReturnValueGet(Handle hPlugin, int iNumParams)
 	Execute_GetInfo(GetNativeCell(1), execute);
 	
 	return execute.nReturn.nValue;
+}
+
+public any Native_ResetScriptVM(Handle hPlugin, int iNumParams)
+{
+	SDKCall(g_hSDKCallVScriptServerTerm);
+	SDKCall(g_hSDKCallVScriptServerInit);
+	return 0;
 }
 
 public any Native_CompileScript(Handle hPlugin, int iNumParams)
@@ -442,11 +474,7 @@ public any Native_GetClassFunction(Handle hPlugin, int iNumParams)
 	if (!pClass)
 		return ThrowNativeError(SP_ERROR_NATIVE, "Could not find class name '%s'", sNativeClass);
 	
-	VScriptFunction pFunction = Class_GetFunction(pClass, sNativeFunction);
-	if (!pFunction)
-		return ThrowNativeError(SP_ERROR_NATIVE, "Class name '%s' does not have function name '%s'", sNativeClass, sNativeFunction);
-	
-	return pFunction;
+	return Class_GetFunction(pClass, sNativeFunction);
 }
 
 public any Native_EntityToHScript(Handle hPlugin, int iNumParams)
