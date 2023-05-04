@@ -6,8 +6,6 @@ static int g_iClassDesc_NextDesc;
 
 static int g_iFunctionBinding_sizeof;
 
-static Handle g_hSDKCallInsertBefore;
-
 void Class_LoadGamedata(GameData hGameData)
 {
 	g_pFirstClassDesc = view_as<VScriptClass>(LoadFromAddress(GetPointerAddressFromGamedata(hGameData, "ScriptClassDesc_t::GetDescList"), NumberType_Int32));
@@ -17,14 +15,6 @@ void Class_LoadGamedata(GameData hGameData)
 	g_iClassDesc_NextDesc = hGameData.GetOffset("ScriptClassDesc_t::m_pNextDesc");
 	
 	g_iFunctionBinding_sizeof = hGameData.GetOffset("sizeof(ScriptFunctionBinding_t)");
-	
-	StartPrepSDKCall(SDKCall_Raw);
-	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CUtlVector<ScriptFunctionBinding_t,CUtlMemory<ScriptFunctionBinding_t,int>>::InsertBefore");
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
-	g_hSDKCallInsertBefore = EndPrepSDKCall();
-	if (!g_hSDKCallInsertBefore)
-		LogError("Failed to create SDKCall: CUtlVector<ScriptFunctionBinding_t,CUtlMemory<ScriptFunctionBinding_t,int>>::InsertBefore");
 }
 
 ArrayList Class_GetAll()
@@ -102,5 +92,64 @@ VScriptFunction Class_CreateFunction(VScriptClass pClass)
 	SDKCall(g_hSDKCallInsertBefore, pFunctionBindings, iFunctionCount);
 	
 	Address pData = LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_FunctionBindings), NumberType_Int32);
-	return view_as<VScriptFunction>(pData + view_as<Address>(g_iFunctionBinding_sizeof * iFunctionCount));
+	VScriptFunction pFunction = view_as<VScriptFunction>(pData + view_as<Address>(g_iFunctionBinding_sizeof * iFunctionCount));
+	Function_Init(pFunction);
+	return pFunction;
+}
+
+Address Class_FindNewBinding(VScriptFunction pSearch)
+{
+	// Would be really tough to create new binding in pure SP, we'll have to yoink one from existing binding if return and param matches
+	
+	fieldtype_t nReturn = Function_GetReturnType(pSearch);
+	int iParamCount = Function_GetParamCount(pSearch);
+	
+	fieldtype_t[] nParams = new fieldtype_t[iParamCount];
+	for (int i = 0; i < iParamCount; i++)
+		nParams[i] = Function_GetParam(pSearch, i);
+	
+	VScriptClass pClass = g_pFirstClassDesc;
+	while (pClass)
+	{
+		char sClass[256], sFunction[256];
+		Class_GetScriptName(pClass, sClass, sizeof(sClass));
+		
+		Address pData = LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_FunctionBindings), NumberType_Int32);
+		int iFunctionCount = LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_FunctionBindings) + view_as<Address>(0x0C), NumberType_Int32);
+		for (int i = 0; i < iFunctionCount; i++)
+		{
+			VScriptFunction pFunction = view_as<VScriptFunction>(pData + view_as<Address>(g_iFunctionBinding_sizeof * i));
+			
+			if (pFunction == pSearch)	// Don't want to pick itself as pSearch binding is assumed incorrect
+				continue;
+			
+			Function_GetScriptName(pFunction, sFunction, sizeof(sFunction));
+			
+			if (!Field_MatchesBinding(Function_GetReturnType(pFunction), nReturn))
+				continue;
+			
+			if (Function_GetParamCount(pFunction) != iParamCount)
+				continue;
+			
+			bool bAllow = true;
+			
+			for (int j = 0; j < Function_GetParamCount(pFunction); j++)
+			{
+				if (!Field_MatchesBinding(Function_GetParam(pFunction, j), nParams[j]))
+				{
+					bAllow = false;
+					break;
+				}
+			}
+			
+			if (!bAllow)
+				continue;
+			
+			return Function_GetBinding(pFunction);
+		}
+		
+		pClass = LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_NextDesc), NumberType_Int32);
+	}
+	
+	return Address_Null;
 }

@@ -115,6 +115,12 @@
 				"windows"	"0"
 			}
 			
+			"ScriptFunctionBinding_t::m_pszFunction"
+			{
+				"linux"		"4"
+				"windows"	"4"
+			}
+			
 			"ScriptFunctionBinding_t::m_pszDescription"
 			{
 				"linux"		"8"
@@ -143,6 +149,12 @@
 			{
 				"linux"		"40"
 				"windows"	"40"
+			}
+			
+			"ScriptFunctionBinding_t::m_flags"
+			{
+				"linux"		"56"
+				"windows"	"56"
 			}
 			
 			"sizeof(ScriptVariant_t)"

@@ -49,3 +49,23 @@ int LoadStringLengthFromAddress(Address pString)
 	
 	return iChar;
 }
+
+void StoreNativePointerStringToAddress(Address pAddress, int iParam)
+{
+	int iLength;
+	GetNativeStringLength(iParam, iLength);
+	iLength++;
+	
+	char[] sBuffer = new char[iLength];
+	GetNativeString(iParam, sBuffer, iLength);
+	
+	MemoryBlock hString = new MemoryBlock(iLength);
+	for (int i = 0; i < iLength; i++)
+		hString.StoreToOffset(i, sBuffer[i], NumberType_Int8);
+	
+	StoreToAddress(pAddress, hString.Address, NumberType_Int32);
+	
+	// This makes string pointer never get deleted, possibly creating a memory leak if it gets overridden. meh, we can prob get away from it.
+	hString.Disown();
+	delete hString;
+}

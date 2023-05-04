@@ -8,6 +8,8 @@ int g_iScriptVariant_sizeof;
 int g_iScriptVariant_union;
 int g_iScriptVariant_type;
 
+Handle g_hSDKCallInsertBefore;
+
 static Handle g_hSDKCallCompileScript;
 static Handle g_hSDKCallGetScriptInstance;
 static Handle g_hSDKCallGetInstanceValue;
@@ -45,12 +47,19 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("HSCRIPT.Release", Native_HScript_Release);
 	
 	CreateNative("VScriptFunction.GetScriptName", Native_Function_GetScriptName);
+	CreateNative("VScriptFunction.SetScriptName", Native_Function_SetScriptName);
+	CreateNative("VScriptFunction.GetFunctionName", Native_Function_GetFunctionName);
+	CreateNative("VScriptFunction.SetFunctionName", Native_Function_SetFunctionName);
 	CreateNative("VScriptFunction.GetDescription", Native_Function_GetDescription);
+	CreateNative("VScriptFunction.SetDescription", Native_Function_SetDescription);
 	CreateNative("VScriptFunction.Binding.get", Native_Function_BindingGet);
 	CreateNative("VScriptFunction.Function.get", Native_Function_FunctionGet);
+	CreateNative("VScriptFunction.Function.set", Native_Function_FunctionSet);
 	CreateNative("VScriptFunction.Return.get", Native_Function_ReturnGet);
-	CreateNative("VScriptFunction.ParameterCount.get", Native_Function_ParameterCountGet);
-	CreateNative("VScriptFunction.GetParameter", Native_Function_GetParameter);
+	CreateNative("VScriptFunction.Return.set", Native_Function_ReturnSet);
+	CreateNative("VScriptFunction.ParamCount.get", Native_Function_ParamCountGet);
+	CreateNative("VScriptFunction.GetParam", Native_Function_GetParam);
+	CreateNative("VScriptFunction.SetParam", Native_Function_SetParam);
 	CreateNative("VScriptFunction.CopyFrom", Native_Function_CopyFrom);
 	CreateNative("VScriptFunction.CreateSDKCall", Native_Function_CreateSDKCall);
 	CreateNative("VScriptFunction.CreateDetour", Native_Function_CreateDetour);
@@ -120,6 +129,14 @@ public void OnPluginStart()
 	g_hSDKCallGetInstanceValue = EndPrepSDKCall();
 	if (!g_hSDKCallGetInstanceValue)
 		LogError("Failed to create call: CSquirrelVM::GetInstanceValue");
+	
+	StartPrepSDKCall(SDKCall_Raw);
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CUtlVector<ScriptFunctionBinding_t,CUtlMemory<ScriptFunctionBinding_t,int>>::InsertBefore");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
+	g_hSDKCallInsertBefore = EndPrepSDKCall();
+	if (!g_hSDKCallInsertBefore)
+		LogError("Failed to create SDKCall: CUtlVector<ScriptFunctionBinding_t,CUtlMemory<ScriptFunctionBinding_t,int>>::InsertBefore");
 	
 	StartPrepSDKCall(SDKCall_Static);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "VScriptServerInit");
@@ -214,6 +231,28 @@ public any Native_Function_GetScriptName(Handle hPlugin, int iNumParams)
 	return 0;
 }
 
+public any Native_Function_SetScriptName(Handle hPlugin, int iNumParams)
+{
+	Function_SetScriptName(GetNativeCell(1), 2);
+	return 0;
+}
+
+public any Native_Function_GetFunctionName(Handle hPlugin, int iNumParams)
+{
+	int iLength = GetNativeCell(3);
+	char[] sBuffer = new char[iLength];
+	
+	Function_GetFunctionName(GetNativeCell(1), sBuffer, iLength);
+	SetNativeString(2, sBuffer, iLength);
+	return 0;
+}
+
+public any Native_Function_SetFunctionName(Handle hPlugin, int iNumParams)
+{
+	Function_SetFunctionName(GetNativeCell(1), 2);
+	return 0;
+}
+
 public any Native_Function_GetDescription(Handle hPlugin, int iNumParams)
 {
 	int iLength = GetNativeCell(3);
@@ -221,6 +260,12 @@ public any Native_Function_GetDescription(Handle hPlugin, int iNumParams)
 	
 	Function_GetDescription(GetNativeCell(1), sBuffer, iLength);
 	SetNativeString(2, sBuffer, iLength);
+	return 0;
+}
+
+public any Native_Function_SetDescription(Handle hPlugin, int iNumParams)
+{
+	Function_SetDescription(GetNativeCell(1), 2);
 	return 0;
 }
 
@@ -234,26 +279,48 @@ public any Native_Function_FunctionGet(Handle hPlugin, int iNumParams)
 	return Function_GetFunction(GetNativeCell(1));
 }
 
+public any Native_Function_FunctionSet(Handle hPlugin, int iNumParams)
+{
+	Function_SetFunction(GetNativeCell(1), GetNativeCell(2));
+	return 0;
+}
+
 public any Native_Function_ReturnGet(Handle hPlugin, int iNumParams)
 {
 	return Function_GetReturnType(GetNativeCell(1));
 }
 
-public any Native_Function_ParameterCountGet(Handle hPlugin, int iNumParams)
+public any Native_Function_ReturnSet(Handle hPlugin, int iNumParams)
 {
-	return Function_GetParameterCount(GetNativeCell(1));
+	if (!Function_SetReturnType(GetNativeCell(1), GetNativeCell(2)))
+		return ThrowNativeError(SP_ERROR_NATIVE, "Could not find new binding with return field '%s'", Field_GetName(GetNativeCell(2)));
+	
+	return 0;
 }
 
-public any Native_Function_GetParameter(Handle hPlugin, int iNumParams)
+public any Native_Function_ParamCountGet(Handle hPlugin, int iNumParams)
+{
+	return Function_GetParamCount(GetNativeCell(1));
+}
+
+public any Native_Function_GetParam(Handle hPlugin, int iNumParams)
 {
 	VScriptFunction pFunc = GetNativeCell(1);
 	int iParam = GetNativeCell(2);
-	int iCount = Function_GetParameterCount(pFunc);
+	int iCount = Function_GetParamCount(pFunc);
 	
 	if (iParam <= 0 || iParam > iCount)
 		return ThrowNativeError(SP_ERROR_NATIVE, "Parameter number '%d' out of range (max '%d')", iParam, iCount);
 	
-	return Function_GetParameter(pFunc, iParam - 1);
+	return Function_GetParam(pFunc, iParam - 1);
+}
+
+public any Native_Function_SetParam(Handle hPlugin, int iNumParams)
+{
+	if (!Function_SetParam(GetNativeCell(1), GetNativeCell(2) - 1, GetNativeCell(3)))
+		return ThrowNativeError(SP_ERROR_NATIVE, "Could not find new binding with parameter number '%d' and field '%s'", GetNativeCell(2), Field_GetName(GetNativeCell(3)));
+	
+	return 0;
 }
 
 public any Native_Function_CopyFrom(Handle hPlugin, int iNumParams)

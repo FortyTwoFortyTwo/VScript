@@ -111,3 +111,16 @@ HookParamType Field_GetParamType(fieldtype_t nField)
 	ThrowError("Invalid field type '%s' for HookParamType", Field_GetName(nField));
 	return HookParamType_Unknown;
 }
+
+bool Field_MatchesBinding(fieldtype_t nField1, fieldtype_t nField2)
+{
+	// cstring and hscript are pointers, same thing
+	if ((nField1 == FIELD_CSTRING || nField1 == FIELD_HSCRIPT) && (nField2 == FIELD_CSTRING || nField2 == FIELD_HSCRIPT))
+		return true;
+	
+	// don't know reason behind this, but C++ views it the same for binding
+	if ((nField1 == FIELD_VECTOR || nField1 == FIELD_TYPEUNKNOWN) && (nField2 == FIELD_VECTOR || nField2 == FIELD_TYPEUNKNOWN))
+		return true;
+	
+	return nField1 == nField2;
+}

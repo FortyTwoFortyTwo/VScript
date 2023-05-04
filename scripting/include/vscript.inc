@@ -95,32 +95,56 @@ methodmap VScriptFunction < Address
 	// @param length           Size of buffer.
 	public native void GetScriptName(char[] buffer, int length);
 	
+	// Sets a script name
+	// 
+	// @param value            Name to set.
+	public native void SetScriptName(const char[] value);
+	
+	// Gets the function name, this is only for display purpose
+	// 
+	// @param buffer           Buffer to store name.
+	// @param length           Size of buffer.
+	public native void GetFunctionName(char[] buffer, int length);
+	
+	// Sets a function name, this is only for display purpose
+	// 
+	// @param value            Name to set.
+	public native void SetFunctionName(const char[] value);
+	
 	// Gets the description
 	// 
 	// @param buffer           Buffer to store name.
 	// @param length           Size of buffer.
 	public native void GetDescription(char[] buffer, int length);
 	
+	// Sets the description
+	// 
+	// @param value            Description to set.
+	public native void SetDescription(const char[] value);
+	
 	// Gets the address of the binding
+	// Binding gets automatically updated when return and params is updated when possible.
 	property Address Binding
 	{
 		public native get();
 	}
 	
-	// Gets the address of the function
+	// Gets/Sets the address of the function
 	property Address Function
 	{
 		public native get();
+		public native set(Address func);
 	}
 	
-	// Gets the return field type
+	// Gets/Sets the return field type
 	property fieldtype_t Return
 	{
 		public native get();
+		public native set(fieldtype_t field);
 	}
 	
 	// Gets amount of parameters function has
-	property int ParameterCount
+	property int ParamCount
 	{
 		public native get();
 	}
@@ -130,9 +154,15 @@ methodmap VScriptFunction < Address
 	// @param param            Parameter number, starting from 1.
 	// @return                 Field type of a parameter.
 	// @error                  Parameter number out of range.
-	public native fieldtype_t GetParameter(int param);
+	public native fieldtype_t GetParam(int param);
 	
-	// Copys all datas from another function
+	// Sets the field type of a parameter, creating any new param values when needed, initialized as FIELD_VOID
+	// 
+	// @param param            Parameter number, starting from 1.
+	// @param field            Field type to set.
+	public native void SetParam(int param, fieldtype_t field);
+	
+	// Copy all datas from another function
 	// 
 	// @param from             A function to copy from.
 	public native void CopyFrom(VScriptFunction from);
