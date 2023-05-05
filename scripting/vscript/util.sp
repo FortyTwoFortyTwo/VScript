@@ -69,3 +69,15 @@ void StoreNativePointerStringToAddress(Address pAddress, int iParam)
 	hString.Disown();
 	delete hString;
 }
+
+bool FunctionInstructionMatches(Address pFunction, int[] iInstructions, int iLength)
+{
+	if (!pFunction)
+		return false;
+	
+	for (int i = 0; i < iLength; i++)
+		if (LoadFromAddress(pFunction + view_as<Address>(i), NumberType_Int8) != iInstructions[i])
+			return false;
+	
+	return true;
+}

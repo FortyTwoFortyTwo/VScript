@@ -2,6 +2,8 @@
 
 #include "include/vscript.inc"
 
+bool g_bWindows;
+
 Address g_pToScriptVM;
 
 int g_iScriptVariant_sizeof;
@@ -55,6 +57,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScriptFunction.Binding.get", Native_Function_BindingGet);
 	CreateNative("VScriptFunction.Function.get", Native_Function_FunctionGet);
 	CreateNative("VScriptFunction.Function.set", Native_Function_FunctionSet);
+	CreateNative("VScriptFunction.SetFunctionEmpty", Native_Function_SetFunctionEmpty);
 	CreateNative("VScriptFunction.Return.get", Native_Function_ReturnGet);
 	CreateNative("VScriptFunction.Return.set", Native_Function_ReturnSet);
 	CreateNative("VScriptFunction.ParamCount.get", Native_Function_ParamCountGet);
@@ -93,6 +96,10 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 public void OnPluginStart()
 {
 	GameData hGameData = new GameData("vscript");
+	
+	char sOS[16];
+	hGameData.GetKeyValue("OS", sOS, sizeof(sOS));
+	g_bWindows = StrEqual(sOS, "windows");
 	
 	g_pToScriptVM = GetPointerAddressFromGamedata(hGameData, "g_pScriptVM");
 	
@@ -282,6 +289,12 @@ public any Native_Function_FunctionGet(Handle hPlugin, int iNumParams)
 public any Native_Function_FunctionSet(Handle hPlugin, int iNumParams)
 {
 	Function_SetFunction(GetNativeCell(1), GetNativeCell(2));
+	return 0;
+}
+
+public any Native_Function_SetFunctionEmpty(Handle hPlugin, int iNumParams)
+{
+	Function_SetFunctionEmpty(GetNativeCell(1));
 	return 0;
 }
 

@@ -28,8 +28,13 @@ void Function_LoadGamedata(GameData hGameData)
 
 void Function_Init(VScriptFunction pFunction)
 {
+	// Not sure this is needed
+	for (int i = 0; i < g_iFunctionBinding_sizeof; i++)
+		StoreToAddress(pFunction + view_as<Address>(i), 0, NumberType_Int8);
+	
 	// Right now just need to set flags, currently we can only support member functions
 	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_Flags), SF_MEMBER_FUNC, NumberType_Int32);
+	Function_UpdateBinding(pFunction);
 }
 
 void Function_GetScriptName(VScriptFunction pFunction, char[] sBuffer, int iLength)
@@ -120,6 +125,49 @@ Address Function_GetFunction(VScriptFunction pFunction)
 void Function_SetFunction(VScriptFunction pFunction, Address pFunc)
 {
 	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_Function), pFunc, NumberType_Int32);
+}
+
+void Function_SetFunctionEmpty(VScriptFunction pFunction)
+{
+	int iCount = 0;
+	int iInstructions[5];
+	if (Function_GetReturnType(pFunction) != FIELD_VOID)
+	{
+		// Set return value as 0
+		iInstructions[iCount++] = 0x31;
+		iInstructions[iCount++] = 0xC0;
+	}
+	
+	int iParamCount = Function_GetParamCount(pFunction);
+	if (iParamCount && g_bWindows)
+	{
+		// Return with param count
+		iInstructions[iCount++] = 0xC2;
+		iInstructions[iCount++] = (iParamCount * 4);
+		iInstructions[iCount++] = 0x00;
+	}
+	else
+	{
+		// Return with no param
+		iInstructions[iCount++] = 0xC3;
+	}
+	
+	for (int i = iCount; i < sizeof(iInstructions); i++)
+		iInstructions[i] = 0x90;	// Fill the rest as skip
+	
+	// Does function already match?
+	Address pAddress = Function_GetFunction(pFunction);
+	if (FunctionInstructionMatches(pAddress, iInstructions, sizeof(iInstructions)))
+		return;	// Yes, don't need to do anything
+	
+	MemoryBlock hEmptyFunction = new MemoryBlock(sizeof(iInstructions));
+	for (int i = 0; i < sizeof(iInstructions); i++)
+		hEmptyFunction.StoreToOffset(i, iInstructions[i], NumberType_Int8);
+	
+	Function_SetFunction(pFunction, hEmptyFunction.Address);
+	
+	hEmptyFunction.Disown();
+	delete hEmptyFunction;
 }
 
 void Function_CopyFrom(VScriptFunction pTo, VScriptFunction pFrom)

@@ -2,6 +2,15 @@
 {
 	"tf"
 	{
+		"Keys"
+		{
+			"OS"
+			{
+				"linux"		"linux"
+				"windows"	"windows"
+			}
+		}
+		
 		"Addresses"
 		{
 			"ScriptClassDesc_t::GetDescList"
