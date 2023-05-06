@@ -171,6 +171,9 @@ methodmap VScriptFunction < Address
 	// @param from             A function to copy from.
 	public native void CopyFrom(VScriptFunction from);
 	
+	// Register this as a global function until when g_pScriptVM has been reset.
+	public native void Register();
+	
 	// Creates an SDKCall with parameters auto filled
 	// 
 	// @return                 SDKCall handle, must be deleted when not needed.
@@ -247,7 +250,7 @@ methodmap VScriptExecute < Handle
 }
 
 /**
- * Deletes g_pScriptVM and creates a new one. This should be used after creating new functions.
+ * Deletes g_pScriptVM and creates a new one. This should be used when VScriptClass or VScriptFunction has been modified, including adding new functions to class
  */
 native void VScript_ResetScriptVM();
 
@@ -305,6 +308,29 @@ native VScriptClass VScript_GetClass(const char[] className);
  * @error                  Invalid class name
  */
 native VScriptFunction VScript_GetClassFunction(const char[] className, const char[] functionName);
+
+/**
+ * Get all global functions used for vscript
+ * 
+ * @return                 Arrays of VScriptFunction, handle must be deleted when not needed.
+ */
+native ArrayList VScript_GetAllGlobalFunctions();
+
+/**
+ * Gets VScriptFunction from a global
+ * 
+ * @param functionName     Function name.
+ * 
+ * @return                 Address of VScriptFunction
+ */
+native VScriptFunction VScript_GetGlobalFunction(const char[] functionName);
+
+/**
+ * Creates a new VScriptFunction as a pointer. VScriptFunction.Register should be called for function to come into effect.
+ * 
+ * @return                 Address of VScriptFunction
+ */
+native VScriptFunction VScript_CreateFunction();
 
 /**
  * Gets the HScript address of an entity
@@ -380,6 +406,7 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("VScriptFunction.ParameterCount.get");
 	MarkNativeAsOptional("VScriptFunction.GetParameter");
 	MarkNativeAsOptional("VScriptFunction.CopyFrom");
+	MarkNativeAsOptional("VScriptFunction.Register");
 	MarkNativeAsOptional("VScriptFunction.CreateSDKCall");
 	MarkNativeAsOptional("VScriptFunction.CreateDetour");
 	
@@ -395,6 +422,9 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("VScript_GetAllClasses");
 	MarkNativeAsOptional("VScript_GetClass");
 	MarkNativeAsOptional("VScript_GetClassFunction");
+	MarkNativeAsOptional("VScript_GetAllGlobalFunctions");
+	MarkNativeAsOptional("VScript_GetGlobalFunction");
+	MarkNativeAsOptional("VScript_CreateFunction");
 	MarkNativeAsOptional("VScript_EntityToHScript");
 	MarkNativeAsOptional("VScript_HScriptToEntity");
 	MarkNativeAsOptional("VScript_EntityExecuteFunction");

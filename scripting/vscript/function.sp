@@ -8,6 +8,8 @@ static int g_iFunctionBinding_Function;
 static int g_iFunctionBinding_Flags;
 static int g_iFunctionBinding_sizeof;
 
+static Handle g_hSDKCallRegisterFunction;
+
 enum ScriptFuncBindingFlags_t
 {
 	SF_MEMBER_FUNC	= 0x01,
@@ -24,6 +26,26 @@ void Function_LoadGamedata(GameData hGameData)
 	g_iFunctionBinding_Function = hGameData.GetOffset("ScriptFunctionBinding_t::m_pFunction");
 	g_iFunctionBinding_Flags = hGameData.GetOffset("ScriptFunctionBinding_t::m_flags");
 	g_iFunctionBinding_sizeof = hGameData.GetOffset("sizeof(ScriptFunctionBinding_t)");
+	
+	StartPrepSDKCall(SDKCall_Raw);
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CSquirrelVM::RegisterFunction");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// ScriptFunctionBinding_t *pScriptFunction
+	g_hSDKCallRegisterFunction = EndPrepSDKCall();
+	if (!g_hSDKCallRegisterFunction)
+		LogError("Failed to create call: CSquirrelVM::RegisterFunction");
+}
+
+VScriptFunction Function_Create()
+{
+	MemoryBlock hFunction = new MemoryBlock(g_iFunctionBinding_sizeof);
+	
+	VScriptFunction pFunction = view_as<VScriptFunction>(hFunction.Address);
+	
+	hFunction.Disown();
+	delete hFunction;
+	
+	Function_UpdateBinding(pFunction);
+	return pFunction;
 }
 
 void Function_Init(VScriptFunction pFunction)
@@ -109,7 +131,7 @@ Address Function_GetBinding(VScriptFunction pFunction)
 
 bool Function_UpdateBinding(VScriptFunction pFunction)
 {
-	Address pBinding = Class_FindNewBinding(pFunction);
+	Address pBinding = List_FindNewBinding(pFunction);
 	if (!pBinding)
 		return false;
 	
@@ -176,6 +198,11 @@ void Function_CopyFrom(VScriptFunction pTo, VScriptFunction pFrom)
 		StoreToAddress(pTo + view_as<Address>(i), LoadFromAddress(pFrom + view_as<Address>(i), NumberType_Int8), NumberType_Int8);
 }
 
+void Function_Register(VScriptFunction pFunction)
+{
+	SDKCall(g_hSDKCallRegisterFunction, GetScriptVM(), pFunction);
+}
+
 Handle Function_CreateSDKCall(VScriptFunction pFunction)
 {
 	StartPrepSDKCall(SDKCall_Entity);
@@ -208,4 +235,19 @@ DynamicDetour Function_CreateDetour(VScriptFunction pFunction)
 	}
 	
 	return hDetour;
+}
+
+bool Function_MatchesBinding(VScriptFunction pFunction, fieldtype_t nReturn, fieldtype_t[] nParams, int iParamCount)
+{
+	if (!Field_MatchesBinding(Function_GetReturnType(pFunction), nReturn))
+		return false;
+	
+	if (Function_GetParamCount(pFunction) != iParamCount)
+		return false;
+	
+	for (int j = 0; j < Function_GetParamCount(pFunction); j++)
+		if (!Field_MatchesBinding(Function_GetParam(pFunction, j), nParams[j]))
+			return false;
+	
+	return true;
 }

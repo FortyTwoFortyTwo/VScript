@@ -11,11 +11,11 @@ int g_iScriptVariant_union;
 int g_iScriptVariant_type;
 
 Handle g_hSDKCallInsertBefore;
+Handle g_hSDKCallVScriptServerInit;
 
 static Handle g_hSDKCallCompileScript;
 static Handle g_hSDKCallGetScriptInstance;
 static Handle g_hSDKCallGetInstanceValue;
-static Handle g_hSDKCallVScriptServerInit;
 static Handle g_hSDKCallVScriptServerTerm;
 
 const VScriptClass VScriptClass_Invalid = view_as<VScriptClass>(Address_Null);
@@ -26,6 +26,7 @@ const VScriptFunction VScriptFunction_Invalid = view_as<VScriptFunction>(Address
 #include "vscript/field.sp"
 #include "vscript/function.sp"
 #include "vscript/hscript.sp"
+#include "vscript/list.sp"
 #include "vscript/util.sp"
 #include "vscript/variant.sp"
 
@@ -34,7 +35,7 @@ public Plugin myinfo =
 	name = "VScript",
 	author = "42",
 	description = "Exposes VScript into Sourcemod",
-	version = "1.3.0",
+	version = "1.4.0",
 	url = "https://github.com/FortyTwoFortyTwo/VScript",
 };
 
@@ -64,6 +65,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScriptFunction.GetParam", Native_Function_GetParam);
 	CreateNative("VScriptFunction.SetParam", Native_Function_SetParam);
 	CreateNative("VScriptFunction.CopyFrom", Native_Function_CopyFrom);
+	CreateNative("VScriptFunction.Register", Native_Function_Register);
 	CreateNative("VScriptFunction.CreateSDKCall", Native_Function_CreateSDKCall);
 	CreateNative("VScriptFunction.CreateDetour", Native_Function_CreateDetour);
 	
@@ -86,6 +88,9 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScript_GetAllClasses", Native_GetAllClasses);
 	CreateNative("VScript_GetClass", Native_GetClass);
 	CreateNative("VScript_GetClassFunction", Native_GetClassFunction);
+	CreateNative("VScript_GetAllGlobalFunctions", Native_GetAllGlobalFunctions);
+	CreateNative("VScript_GetGlobalFunction", Native_GetGlobalFunction);
+	CreateNative("VScript_CreateFunction", Native_CreateFunction);
 	CreateNative("VScript_EntityToHScript", Native_EntityToHScript);
 	CreateNative("VScript_HScriptToEntity", Native_HScriptToEntity);
 	
@@ -111,6 +116,7 @@ public void OnPluginStart()
 	Execute_LoadGamedata(hGameData);
 	Function_LoadGamedata(hGameData);
 	HScript_LoadGamedata(hGameData);
+	List_LoadGamedata(hGameData);
 	
 	StartPrepSDKCall(SDKCall_Raw);
 	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CSquirrelVM::CompileScript");
@@ -159,6 +165,8 @@ public void OnPluginStart()
 		LogError("Failed to create call: VScriptServerTerm");
 	
 	delete hGameData;
+	
+	List_LoadDefaults();
 }
 
 public any Native_HScript_GetKey(Handle hPlugin, int iNumParams)
@@ -342,6 +350,12 @@ public any Native_Function_CopyFrom(Handle hPlugin, int iNumParams)
 	return 0;
 }
 
+public any Native_Function_Register(Handle hPlugin, int iNumParams)
+{
+	Function_Register(GetNativeCell(1));
+	return 0;
+}
+
 public any Native_Function_CreateSDKCall(Handle hPlugin, int iNumParams)
 {
 	Handle hSDKCall = Function_CreateSDKCall(GetNativeCell(1));
@@ -387,7 +401,7 @@ public any Native_Class_GetFunction(Handle hPlugin, int iNumParams)
 	char[] sBuffer = new char[iLength + 1];
 	GetNativeString(2, sBuffer, iLength + 1);
 	
-	return Class_GetFunction(GetNativeCell(1), sBuffer);
+	return Class_GetFunctionFromName(GetNativeCell(1), sBuffer);
 }
 
 public any Native_Class_CreateFunction(Handle hPlugin, int iNumParams)
@@ -516,7 +530,7 @@ public any Native_CreateTable(Handle hPlugin, int iNumParams)
 
 public any Native_GetAllClasses(Handle hPlugin, int iNumParams)
 {
-	ArrayList aList = Class_GetAll();
+	ArrayList aList = List_GetAllClasses().Clone();
 	
 	ArrayList aClone = view_as<ArrayList>(CloneHandle(aList, hPlugin));
 	delete aList;
@@ -531,7 +545,7 @@ public any Native_GetClass(Handle hPlugin, int iNumParams)
 	char[] sBuffer = new char[iLength + 1];
 	GetNativeString(1, sBuffer, iLength + 1);
 	
-	VScriptClass pClass = Class_Get(sBuffer);
+	VScriptClass pClass = List_GetClass(sBuffer);
 	if (!pClass)
 		return ThrowNativeError(SP_ERROR_NATIVE, "Could not find class name '%s'", sBuffer);
 	
@@ -550,11 +564,36 @@ public any Native_GetClassFunction(Handle hPlugin, int iNumParams)
 	GetNativeString(1, sNativeClass, iClassNameLength + 1);
 	GetNativeString(2, sNativeFunction, iFunctionNameLength + 1);
 	
-	VScriptClass pClass = Class_Get(sNativeClass);
+	VScriptClass pClass = List_GetClass(sNativeClass);
 	if (!pClass)
 		return ThrowNativeError(SP_ERROR_NATIVE, "Could not find class name '%s'", sNativeClass);
 	
-	return Class_GetFunction(pClass, sNativeFunction);
+	return Class_GetFunctionFromName(pClass, sNativeFunction);
+}
+
+public any Native_GetAllGlobalFunctions(Handle hPlugin, int iNumParams)
+{
+	ArrayList aList = List_GetAllGlobalFunctions().Clone();
+	
+	ArrayList aClone = view_as<ArrayList>(CloneHandle(aList, hPlugin));
+	delete aList;
+	return aClone;
+}
+
+public any Native_GetGlobalFunction(Handle hPlugin, int iNumParams)
+{
+	int iLength;
+	GetNativeStringLength(1, iLength);
+	
+	char[] sBuffer = new char[iLength + 1];
+	GetNativeString(1, sBuffer, iLength + 1);
+	
+	return List_GetFunction(sBuffer);
+}
+
+public any Native_CreateFunction(Handle hPlugin, int iNumParams)
+{
+	return Function_Create();
 }
 
 public any Native_EntityToHScript(Handle hPlugin, int iNumParams)
@@ -574,7 +613,7 @@ public any Native_HScriptToEntity(Handle hPlugin, int iNumParams)
 	
 	static Address pClassDesc;
 	if (!pClassDesc)
-		pClassDesc = Class_Get("CBaseEntity");
+		pClassDesc = List_GetClass("CBaseEntity");
 	
 	if (!pClassDesc)
 		ThrowError("Could not find script name CBaseEntity, file a bug report.");
