@@ -12,11 +12,11 @@ int g_iScriptVariant_type;
 
 Handle g_hSDKCallInsertBefore;
 Handle g_hSDKCallVScriptServerInit;
+Handle g_hSDKCallVScriptServerTerm;
 
 static Handle g_hSDKCallCompileScript;
 static Handle g_hSDKCallGetScriptInstance;
 static Handle g_hSDKCallGetInstanceValue;
-static Handle g_hSDKCallVScriptServerTerm;
 
 const VScriptClass VScriptClass_Invalid = view_as<VScriptClass>(Address_Null);
 const VScriptFunction VScriptFunction_Invalid = view_as<VScriptFunction>(Address_Null);
@@ -35,7 +35,7 @@ public Plugin myinfo =
 	name = "VScript",
 	author = "42",
 	description = "Exposes VScript into Sourcemod",
-	version = "1.4.0",
+	version = "1.5.0",
 	url = "https://github.com/FortyTwoFortyTwo/VScript",
 };
 

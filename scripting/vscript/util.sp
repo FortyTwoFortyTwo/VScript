@@ -3,6 +3,11 @@ HSCRIPT GetScriptVM()
 	return view_as<HSCRIPT>(LoadFromAddress(g_pToScriptVM, NumberType_Int32));
 }
 
+void SetScriptVM(HSCRIPT pScript)
+{
+	StoreToAddress(g_pToScriptVM, pScript, NumberType_Int32);
+}
+
 Address GetPointerAddressFromGamedata(GameData hGameData, const char[] sAddress)
 {
 	Address pGamedata = hGameData.GetAddress(sAddress);

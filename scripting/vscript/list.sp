@@ -1,6 +1,4 @@
-static ArrayList g_aDefaultGlobalFunctions;
 static ArrayList g_aGlobalFunctions;
-static ArrayList g_aDefaultClasses;
 static ArrayList g_aClasses;
 
 static DynamicHook g_hRegisterFunction;
@@ -13,12 +11,11 @@ void List_LoadGamedata(GameData hGameData)
 {
 	DynamicDetour hDetour;
 	
-	hDetour = DynamicDetour.FromConf(hGameData, "VScriptServerInit");
-	hDetour.Enable(Hook_Pre, List_ServerInitPre);
-	hDetour.Enable(Hook_Post, List_ServerInitPost);
-	
 	hDetour = DynamicDetour.FromConf(hGameData, "VScriptServerTerm");
 	hDetour.Enable(Hook_Post, List_ServerTermPost);
+	
+	hDetour = DynamicDetour.FromConf(hGameData, "ScriptCreateSquirrelVM");
+	hDetour.Enable(Hook_Post, List_CreateSquirrelPost);
 	
 	g_hRegisterFunction = DynamicHook.FromConf(hGameData, "CSquirrelVM::RegisterFunction");
 	g_hRegisterClass = DynamicHook.FromConf(hGameData, "CSquirrelVM::RegisterClass");
@@ -26,51 +23,22 @@ void List_LoadGamedata(GameData hGameData)
 
 void List_LoadDefaults()
 {
-	// This isnt perfect, were missing RandomInt and RandomFloat as its created in CreateVM
-	// If only there a simple way to hook new g_pScriptVM that was just created in SM 1.11......
-	
 	g_aGlobalFunctions = new ArrayList();
 	g_aClasses = new ArrayList();
 	
-	// Hook default stuffs now
-	List_HookScriptVM();
+	HSCRIPT pScriptVM = GetScriptVM();
 	
-	// Call VScriptServerInit without reset g_pScriptVM
+	// Create new vscriptvm and set back, so we can collect all of the default stuffs
+	SetScriptVM(view_as<HSCRIPT>(Address_Null));
 	SDKCall(g_hSDKCallVScriptServerInit);
+	SDKCall(g_hSDKCallVScriptServerTerm);
+	SetScriptVM(pScriptVM);
 	
-	// Copy all stuffs that were just hooked to default
-	g_aDefaultGlobalFunctions = g_aGlobalFunctions.Clone();
-	g_aDefaultClasses = g_aClasses.Clone();
-}
-
-void List_HookScriptVM()
-{
-	if (!g_iHookRegisterFunction)
-		g_iHookRegisterFunction = g_hRegisterFunction.HookRaw(Hook_Post, GetScriptVM(), List_RegisterFunction);
-	
-	if (!g_iHookRegisterClass)
-		g_iHookRegisterClass = g_hRegisterClass.HookRaw(Hook_Post, GetScriptVM(), List_RegisterClass);
-}
-
-MRESReturn List_ServerInitPre(DHookReturn hReturn)
-{
-	if (!GetScriptVM())
+	if (pScriptVM)
 	{
-		// New vm are being made, reset back to default
-		delete g_aGlobalFunctions;
-		delete g_aClasses;
-		
-		g_aGlobalFunctions = g_aDefaultGlobalFunctions.Clone();
-		g_aClasses = g_aDefaultClasses.Clone();
+		g_iHookRegisterFunction = g_hRegisterFunction.HookRaw(Hook_Post, pScriptVM, List_RegisterFunction);
+		g_iHookRegisterClass = g_hRegisterClass.HookRaw(Hook_Post, pScriptVM, List_RegisterClass);
 	}
-	
-	return MRES_Ignored;
-}
-
-MRESReturn List_ServerInitPost(DHookReturn hReturn)
-{
-	List_HookScriptVM();
-	return MRES_Ignored;
 }
 
 MRESReturn List_ServerTermPost()
@@ -90,15 +58,33 @@ MRESReturn List_ServerTermPost()
 	return MRES_Ignored;
 }
 
+MRESReturn List_CreateSquirrelPost(DHookReturn hReturn)
+{
+	Address pScriptVM = hReturn.Value;
+	
+	g_iHookRegisterFunction = g_hRegisterFunction.HookRaw(Hook_Post, pScriptVM, List_RegisterFunction);
+	g_iHookRegisterClass = g_hRegisterClass.HookRaw(Hook_Post, pScriptVM, List_RegisterClass);
+	
+	g_aGlobalFunctions.Clear();
+	g_aClasses.Clear();
+	return MRES_Ignored;
+}
+
 MRESReturn List_RegisterFunction(Address pScriptVM, DHookParam hParam)
 {
-	g_aGlobalFunctions.Push(hParam.Get(1));
+	VScriptFunction pFunction = hParam.Get(1);
+	if (g_aGlobalFunctions.FindValue(pFunction) == -1)
+		g_aGlobalFunctions.Push(pFunction);
+	
 	return MRES_Ignored;
 }
 
 MRESReturn List_RegisterClass(Address pScriptVM, DHookParam hParam)
 {
-	g_aClasses.Push(hParam.Get(1));
+	VScriptClass pClass = hParam.Get(1);
+	if (g_aClasses.FindValue(pClass) == -1)
+		g_aClasses.Push(pClass);
+	
 	return MRES_Ignored;
 }
 

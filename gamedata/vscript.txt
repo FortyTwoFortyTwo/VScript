@@ -33,7 +33,6 @@
 		{
 			"g_pScriptVM"	// Getting the very first mov of it in VScriptServerInit
 			{
-				"library"	"server"
 				"linux"		"\xA1\x2A\x2A\x2A\x2A\x85\xC0\x0F\x84\x2A\x2A\x2A\x2A\xA1\x2A\x2A\x2A\x2A\x8B\x70\x30"
 				"windows"	"\x8B\x15\x2A\x2A\x2A\x2A\x85\xD2\x75\x2A\x8B\x0D\x2A\x2A\x2A\x2A"
 			}
@@ -46,7 +45,6 @@
 			
 			"CBaseEntity::GetScriptInstance"
 			{
-				"library"	"server"
 				"linux"		"@_ZN11CBaseEntity17GetScriptInstanceEv"
 				"windows"	"\x55\x8B\xEC\x51\x53\x56\x57\x8B\xF9\x83\xBF\x28\x01\x00\x00\x00"
 			}
@@ -61,6 +59,13 @@
 			{
 				"linux"		"@_Z17VScriptServerTermv"
 				"windows"	"\x80\x3D\x2A\x2A\x2A\x2A\x00\x74\x2A\x8B\x0D\x2A\x2A\x2A\x2A\x85\xC9"
+			}
+			
+			"ScriptCreateSquirrelVM"
+			{
+				"library"	"vscript"
+				"linux"		"@_Z22ScriptCreateSquirrelVMv"
+				"windows"	"\x68\xD0\x00\x00\x00\xE8\x2A\x2A\x2A\x2A"
 			}
 		}
 		
@@ -219,19 +224,19 @@
 		
 		"Functions"
 		{
-			"VScriptServerInit"
-			{
-				"signature"		"VScriptServerInit"
-				"callconv"		"cdecl"
-				"return"		"bool"
-				"this"			"ignore"
-			}
-			
 			"VScriptServerTerm"
 			{
 				"signature"		"VScriptServerTerm"
 				"callconv"		"cdecl"
 				"return"		"void"
+				"this"			"ignore"
+			}
+			
+			"ScriptCreateSquirrelVM"
+			{
+				"signature"		"ScriptCreateSquirrelVM"
+				"callconv"		"cdecl"
+				"return"		"int"
 				"this"			"ignore"
 			}
 			
