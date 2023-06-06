@@ -65,12 +65,12 @@ SDKPassMethod Field_GetSDKPassMethod(fieldtype_t nField)
 	switch (nField)
 	{
 		case FIELD_FLOAT: return SDKPass_Plain;
-		case FIELD_VECTOR: return SDKPass_ByRef;
+		case FIELD_VECTOR: return SDKPass_ByValue;
 		case FIELD_INTEGER: return SDKPass_Plain;
 		case FIELD_BOOLEAN: return SDKPass_Plain;
 		case FIELD_CSTRING: return SDKPass_Pointer;
 		case FIELD_HSCRIPT: return SDKPass_Plain;
-		case FIELD_QANGLE: return SDKPass_ByRef;
+		case FIELD_QANGLE: return SDKPass_ByValue;
 	}
 	
 	ThrowError("Invalid field type '%s' for SDKPassMethod", Field_GetName(nField));
