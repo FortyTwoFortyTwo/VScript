@@ -80,6 +80,13 @@ methodmap HSCRIPT < Address
 	// @param value            String value to set.
 	public native void SetValueString(const char[] key, fieldtype_t field, const char[] value);
 	
+	// Sets a vector value to key
+	//
+	// @param key              Key name to set.
+	// @param field            Field to use to set.
+	// @param value            Vector value to set.
+	public native void SetValueVector(const char[] key, fieldtype_t field, const float value[3]);
+	
 	// Frees a HSCRIPT memory
 	public native void Release();
 }

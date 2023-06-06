@@ -35,7 +35,7 @@ public Plugin myinfo =
 	name = "VScript",
 	author = "42",
 	description = "Exposes VScript into Sourcemod",
-	version = "1.5.1",
+	version = "1.5.2",
 	url = "https://github.com/FortyTwoFortyTwo/VScript",
 };
 
@@ -47,6 +47,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("HSCRIPT.GetValueVector", Native_HScript_GetValueVector);
 	CreateNative("HSCRIPT.SetValue", Native_HScript_SetValue);
 	CreateNative("HSCRIPT.SetValueString", Native_HScript_SetValueString);
+	CreateNative("HSCRIPT.SetValueVector", Native_HScript_SetValueVector);
 	CreateNative("HSCRIPT.Release", Native_HScript_Release);
 	
 	CreateNative("VScriptFunction.GetScriptName", Native_Function_GetScriptName);
@@ -227,6 +228,12 @@ public any Native_HScript_SetValue(Handle hPlugin, int iNumParams)
 public any Native_HScript_SetValueString(Handle hPlugin, int iNumParams)
 {
 	HScript_NativeSetValue(SMField_String);
+	return 0;
+}
+
+public any Native_HScript_SetValueVector(Handle hPlugin, int iNumParams)
+{
+	HScript_NativeSetValue(SMField_Vector);
 	return 0;
 }
 

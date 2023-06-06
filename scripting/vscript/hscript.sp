@@ -149,7 +149,6 @@ void HScript_NativeSetValue(SMField nSMField)
 	
 	bool bResult
 	
-	// TODO supprot to set vector, creating it's pointers in SM is eeeeeeeee
 	switch (nSMField)
 	{
 		case SMField_Any:
@@ -169,6 +168,24 @@ void HScript_NativeSetValue(SMField nSMField)
 			GetNativeString(4, sValue, iLength + 1);
 			
 			bResult = HScript_SetValueString(GetNativeCell(1), sBuffer, sValue);
+		}
+		case SMField_Vector:
+		{
+			float vecVector[3];
+			GetNativeArray(4, vecVector, sizeof(vecVector));
+			
+			MemoryBlock pVector = new MemoryBlock(sizeof(vecVector) * 4);
+			for (int i = 0; i < sizeof(vecVector); i++)
+				pVector.StoreToOffset(i * 4, view_as<int>(vecVector[i]), NumberType_Int32);
+			
+			ScriptVariant_t pValue = new ScriptVariant_t();
+			pValue.nType = nField;
+			pValue.nValue = pVector.Address;
+			
+			bResult = HScript_SetValue(GetNativeCell(1), sBuffer, pValue);
+			
+			delete pVector;
+			delete pValue;
 		}
 	}
 	
