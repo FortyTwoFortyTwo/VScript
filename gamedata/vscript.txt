@@ -15,7 +15,7 @@
 		{
 			"g_pScriptVM"
 			{
-				"signature" "g_pScriptVM"
+				"signature" "VScriptServerTerm"	// g_pScriptVM is the first thing in this function after mov
 				
 				"linux"
 				{
@@ -31,12 +31,6 @@
 		
 		"Signatures"
 		{
-			"g_pScriptVM"	// Getting the very first mov of it in VScriptServerInit
-			{
-				"linux"		"\xA1\x2A\x2A\x2A\x2A\x85\xC0\x0F\x84\x2A\x2A\x2A\x2A\xA1\x2A\x2A\x2A\x2A\x8B\x70\x30"
-				"windows"	"\x8B\x15\x2A\x2A\x2A\x2A\x85\xD2\x75\x2A\x8B\x0D\x2A\x2A\x2A\x2A"
-			}
-			
 			"CUtlVector<ScriptFunctionBinding_t,CUtlMemory<ScriptFunctionBinding_t,int>>::InsertBefore"
 			{
 				"linux"		"@_ZN10CUtlVectorI23ScriptFunctionBinding_t10CUtlMemoryIS0_iEE12InsertBeforeEi"
@@ -55,10 +49,10 @@
 				"windows"	"\x55\x8B\xEC\xB8\x54\x2F\x00\x00"
 			}
 			
-			"VScriptServerTerm"
+			"VScriptServerTerm"	// Don't exist in windows, but rather in mid-function CVScriptGameSystem::LevelShutdownPostEntity
 			{
 				"linux"		"@_Z17VScriptServerTermv"
-				"windows"	"\x80\x3D\x2A\x2A\x2A\x2A\x00\x74\x2A\x8B\x0D\x2A\x2A\x2A\x2A\x85\xC9"
+				"windows"	"\x8B\x15\x2A\x2A\x2A\x2A\x85\xD2\x74\x2A\x8B\x0D\x2A\x2A\x2A\x2A\x52"
 			}
 			
 			"ScriptCreateSquirrelVM"
