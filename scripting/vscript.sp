@@ -41,7 +41,7 @@ public Plugin myinfo =
 	name = "VScript",
 	author = "42",
 	description = "Exposes VScript into Sourcemod",
-	version = "1.6.0",
+	version = "1.6.1",
 	url = "https://github.com/FortyTwoFortyTwo/VScript",
 };
 
