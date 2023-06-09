@@ -62,26 +62,17 @@ Handle CreateSDKCall(GameData hGameData, const char[] sClass, const char[] sFunc
 	StartPrepSDKCall(SDKCall_Raw);
 	PrepSDKCall_SetAddress(VTable_GetAddress(hGameData, sClass, sFunction));
 	
-	if (nParam1 != SDKType_Unknown)
-		PrepSDKCall_AddParameter(nParam1, GetSDKPassMethod(nParam1), VDECODE_FLAG_ALLOWNULL|VDECODE_FLAG_ALLOWNOTINGAME|VDECODE_FLAG_ALLOWWORLD, VENCODE_FLAG_COPYBACK);
+	SDKAddParameter(nParam1);
+	SDKAddParameter(nParam2);
+	SDKAddParameter(nParam3);
+	SDKAddParameter(nParam4);
+	SDKAddParameter(nParam5);
+	SDKAddParameter(nParam6);
 	
-	if (nParam2 != SDKType_Unknown)
-		PrepSDKCall_AddParameter(nParam2, GetSDKPassMethod(nParam2), VDECODE_FLAG_ALLOWNULL|VDECODE_FLAG_ALLOWNOTINGAME|VDECODE_FLAG_ALLOWWORLD, VENCODE_FLAG_COPYBACK);
-	
-	if (nParam3 != SDKType_Unknown)
-		PrepSDKCall_AddParameter(nParam3, GetSDKPassMethod(nParam3), VDECODE_FLAG_ALLOWNULL|VDECODE_FLAG_ALLOWNOTINGAME|VDECODE_FLAG_ALLOWWORLD, VENCODE_FLAG_COPYBACK);
-	
-	if (nParam4 != SDKType_Unknown)
-		PrepSDKCall_AddParameter(nParam4, GetSDKPassMethod(nParam4), VDECODE_FLAG_ALLOWNULL|VDECODE_FLAG_ALLOWNOTINGAME|VDECODE_FLAG_ALLOWWORLD, VENCODE_FLAG_COPYBACK);
-	
-	if (nParam5 != SDKType_Unknown)
-		PrepSDKCall_AddParameter(nParam5, GetSDKPassMethod(nParam5), VDECODE_FLAG_ALLOWNULL|VDECODE_FLAG_ALLOWNOTINGAME|VDECODE_FLAG_ALLOWWORLD, VENCODE_FLAG_COPYBACK);
-	
-	if (nParam6 != SDKType_Unknown)
-		PrepSDKCall_AddParameter(nParam6, GetSDKPassMethod(nParam6), VDECODE_FLAG_ALLOWNULL|VDECODE_FLAG_ALLOWNOTINGAME|VDECODE_FLAG_ALLOWWORLD, VENCODE_FLAG_COPYBACK);
-	
-	if (nReturn != SDKType_Unknown)
-		PrepSDKCall_SetReturnInfo(nReturn, GetSDKPassMethod(nReturn));
+	if (nReturn == SDKType_CBaseEntity || nReturn == SDKType_String)
+		PrepSDKCall_SetReturnInfo(nReturn, SDKPass_Pointer);
+	else if (nReturn != SDKType_Unknown)
+		PrepSDKCall_SetReturnInfo(nReturn, SDKPass_Plain);
 	
 	Handle hSDKCall = EndPrepSDKCall();
 	if (!hSDKCall)
@@ -90,11 +81,13 @@ Handle CreateSDKCall(GameData hGameData, const char[] sClass, const char[] sFunc
 	return hSDKCall;
 }
 
-static SDKPassMethod GetSDKPassMethod(SDKType nPass)
+static void SDKAddParameter(SDKType nParam)
 {
-	switch (nPass)
-	{
-		case SDKType_CBaseEntity, SDKType_String: return SDKPass_Pointer;
-		default: return SDKPass_Plain;
-	}
+	if (nParam == SDKType_Unknown)
+		return;
+	
+	if (nParam == SDKType_CBaseEntity || nParam == SDKType_String)
+		PrepSDKCall_AddParameter(nParam, SDKPass_Pointer, VDECODE_FLAG_ALLOWNULL|VDECODE_FLAG_ALLOWNOTINGAME|VDECODE_FLAG_ALLOWWORLD);	// Don't want VENCODE_FLAG_COPYBACK here
+	else
+		PrepSDKCall_AddParameter(nParam, SDKPass_Plain);
 }
