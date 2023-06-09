@@ -216,12 +216,6 @@
 				"windows"	"24"
 			}
 			
-			"IScriptVM::SetValueString"	// actually same name IScriptVM::SetValue but with different param
-			{
-				"linux"		"26"
-				"windows"	"27"
-			}
-			
 			"IScriptVM::SetValue"
 			{
 				"linux"		"27"

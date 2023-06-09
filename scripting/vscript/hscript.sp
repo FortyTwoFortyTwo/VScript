@@ -1,7 +1,6 @@
 static Handle g_hSDKCallCreateTable;
 static Handle g_hSDKCallGetKeyValue;
 static Handle g_hSDKCallGetValue;
-static Handle g_hSDKCallSetValueString;
 static Handle g_hSDKCallSetValue;
 static Handle g_hSDKCallReleaseValue;
 
@@ -10,7 +9,6 @@ void HScript_LoadGamedata(GameData hGameData)
 	g_hSDKCallCreateTable = CreateSDKCall(hGameData, "IScriptVM", "CreateTable", _, SDKType_PlainOldData);
 	g_hSDKCallGetKeyValue = CreateSDKCall(hGameData, "IScriptVM", "GetKeyValue", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData);
 	g_hSDKCallGetValue = CreateSDKCall(hGameData, "IScriptVM", "GetValue", SDKType_Bool, SDKType_PlainOldData, SDKType_String, SDKType_PlainOldData);
-	g_hSDKCallSetValueString = CreateSDKCall(hGameData, "IScriptVM", "SetValueString", SDKType_Bool, SDKType_PlainOldData, SDKType_String, SDKType_String);
 	g_hSDKCallSetValue = CreateSDKCall(hGameData, "IScriptVM", "SetValue", SDKType_Bool, SDKType_PlainOldData, SDKType_String, SDKType_PlainOldData);
 	g_hSDKCallReleaseValue = CreateSDKCall(hGameData, "IScriptVM", "ReleaseValue", _, SDKType_PlainOldData);
 }
@@ -77,11 +75,6 @@ ScriptVariant_t HScript_NativeGetValue(SMField nSMField)
 	return pValue;
 }
 
-bool HScript_SetValueString(HSCRIPT pHScript, const char[] sKey, const char[] sValue)
-{
-	return SDKCall(g_hSDKCallSetValueString, GetScriptVM(), pHScript, sKey, sValue);
-}
-
 bool HScript_SetValue(HSCRIPT pHScript, const char[] sKey, ScriptVariant_t pValue)
 {
 	return SDKCall(g_hSDKCallSetValue, GetScriptVM(), pHScript, sKey, pValue.Address);
@@ -99,47 +92,48 @@ void HScript_NativeSetValue(SMField nSMField)
 	if (Field_GetSMField(nField) != nSMField)
 		ThrowNativeError(SP_ERROR_NATIVE, "Invalid field use '%s'", Field_GetName(nField));
 	
-	bool bResult
+	ScriptVariant_t pValue = new ScriptVariant_t();
+	pValue.nType = nField;
+	
+	MemoryBlock pMemory;
 	
 	switch (nSMField)
 	{
 		case SMField_Any:
 		{
-			ScriptVariant_t pValue = new ScriptVariant_t();
-			pValue.nType = nField;
 			pValue.nValue = GetNativeCell(4);
-			
-			bResult = HScript_SetValue(GetNativeCell(1), sBuffer, pValue);
-			delete pValue;
 		}
 		case SMField_String:
 		{
 			GetNativeStringLength(4, iLength);
+			iLength++;
 			
-			char[] sValue = new char[iLength + 1];
-			GetNativeString(4, sValue, iLength + 1);
+			char[] sValue = new char[iLength];
+			GetNativeString(4, sValue, iLength);
 			
-			bResult = HScript_SetValueString(GetNativeCell(1), sBuffer, sValue);
+			pMemory = new MemoryBlock(iLength);
+			for (int i = 0; i < iLength; i++)
+				pMemory.StoreToOffset(i, sValue[i], NumberType_Int8);
+			
+			pValue.nValue = pMemory.Address;
 		}
 		case SMField_Vector:
 		{
 			float vecVector[3];
 			GetNativeArray(4, vecVector, sizeof(vecVector));
 			
-			MemoryBlock pVector = new MemoryBlock(sizeof(vecVector) * 4);
+			pMemory = new MemoryBlock(sizeof(vecVector) * 4);
 			for (int i = 0; i < sizeof(vecVector); i++)
-				pVector.StoreToOffset(i * 4, view_as<int>(vecVector[i]), NumberType_Int32);
+				pMemory.StoreToOffset(i * 4, view_as<int>(vecVector[i]), NumberType_Int32);
 			
-			ScriptVariant_t pValue = new ScriptVariant_t();
-			pValue.nType = nField;
-			pValue.nValue = pVector.Address;
-			
-			bResult = HScript_SetValue(GetNativeCell(1), sBuffer, pValue);
-			
-			delete pVector;
-			delete pValue;
+			pValue.nValue = pMemory.Address;
 		}
 	}
+	
+	bool bResult = HScript_SetValue(GetNativeCell(1), sBuffer, pValue);
+	
+	delete pMemory;
+	delete pValue;
 	
 	if (!bResult)
 		ThrowNativeError(SP_ERROR_NATIVE, "Invalid HSCRIPT object '%x'", GetNativeCell(1));
