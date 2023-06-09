@@ -88,19 +88,19 @@ void Function_SetDescription(VScriptFunction pFunction, int iParam)
 
 fieldtype_t Function_GetReturnType(VScriptFunction pFunction)
 {
-	return LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_ReturnType), NumberType_Int32);
+	return Field_GameToEnum(LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_ReturnType), NumberType_Int32));
 }
 
 bool Function_SetReturnType(VScriptFunction pFunction, fieldtype_t nField)
 {
-	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_ReturnType), nField, NumberType_Int32);
+	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_ReturnType), Field_EnumToGame(nField), NumberType_Int32);
 	return Function_UpdateBinding(pFunction);
 }
 
 fieldtype_t Function_GetParam(VScriptFunction pFunction, int iPosition)
 {
 	Address pData = LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Parameters), NumberType_Int32);
-	return LoadFromAddress(pData + view_as<Address>(4 * iPosition), NumberType_Int32);
+	return Field_GameToEnum(LoadFromAddress(pData + view_as<Address>(4 * iPosition), NumberType_Int32));
 }
 
 bool Function_SetParam(VScriptFunction pFunction, int iPosition, fieldtype_t nField)
@@ -109,7 +109,7 @@ bool Function_SetParam(VScriptFunction pFunction, int iPosition, fieldtype_t nFi
 	Memory_UtlVectorSetSize(pFunction + view_as<Address>(g_iFunctionBinding_Parameters), 4, iPosition + 1);
 	
 	Address pData = LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Parameters), NumberType_Int32);
-	StoreToAddress(pData + view_as<Address>(4 * iPosition), nField, NumberType_Int32);
+	StoreToAddress(pData + view_as<Address>(4 * iPosition), Field_EnumToGame(nField), NumberType_Int32);
 	return Function_UpdateBinding(pFunction);
 }
 

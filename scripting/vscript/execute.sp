@@ -97,7 +97,7 @@ ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
 			}
 		}
 		
-		hArgs.StoreToOffset((iParam * g_iScriptVariant_sizeof) + g_iScriptVariant_type, param.nType, NumberType_Int16);
+		hArgs.StoreToOffset((iParam * g_iScriptVariant_sizeof) + g_iScriptVariant_type, Field_EnumToGame(param.nType), NumberType_Int16);
 		hArgs.StoreToOffset((iParam * g_iScriptVariant_sizeof) + g_iScriptVariant_union, nValue, NumberType_Int32);
 	}
 	

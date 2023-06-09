@@ -109,12 +109,12 @@ methodmap ScriptVariant_t < MemoryBlock
 	{
 		public get()
 		{
-			return view_as<fieldtype_t>(this.LoadFromOffset(g_iScriptVariant_type, NumberType_Int16));
+			return Field_GameToEnum(this.LoadFromOffset(g_iScriptVariant_type, NumberType_Int16));
 		}
 		
 		public set(fieldtype_t nField)
 		{
-			this.StoreToOffset(g_iScriptVariant_type, nField, NumberType_Int16);
+			this.StoreToOffset(g_iScriptVariant_type, Field_EnumToGame(nField), NumberType_Int16);
 		}
 	}
 	

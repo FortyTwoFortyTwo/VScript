@@ -18,6 +18,9 @@ static Handle g_hSDKCallSetInstanceUniqeId;
 static Handle g_hSDKCallGetInstanceValue;
 static Handle g_hSDKCallGenerateUniqueKey;
 
+const SDKType SDKType_Unknown = view_as<SDKType>(-1);
+const SDKPassMethod SDKPass_Unknown = view_as<SDKPassMethod>(-1);
+
 const VScriptClass VScriptClass_Invalid = view_as<VScriptClass>(Address_Null);
 const VScriptFunction VScriptFunction_Invalid = view_as<VScriptFunction>(Address_Null);
 
@@ -117,6 +120,7 @@ public void OnPluginStart()
 	
 	Class_LoadGamedata(hGameData);
 	Execute_LoadGamedata(hGameData);
+	Field_LoadGamedata(hGameData);
 	Function_LoadGamedata(hGameData);
 	GameSystem_LoadGamedata(hGameData);
 	HScript_LoadGamedata(hGameData);

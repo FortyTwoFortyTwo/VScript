@@ -32,7 +32,7 @@ void GameSystem_LoadGamedata(GameData hGameData)
 		Address pAddress = LoadFromAddress(pFunction + view_as<Address>(iOffset), NumberType_Int32);
 		
 		// No idea whats the acceptable range should be
-		if ((g_bWindows && view_as<Address>(0x50000000) <= pAddress < view_as<Address>(0x64000000))
+		if ((g_bWindows && view_as<Address>(0x54000000) <= pAddress < view_as<Address>(0x64000000))
 			|| (!g_bWindows && pAddress < view_as<Address>(0x0) && pAddress > view_as<Address>(0xF0000000)))
 		{
 			Address pValue = LoadFromAddress(pAddress, NumberType_Int32);

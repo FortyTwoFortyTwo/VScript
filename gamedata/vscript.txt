@@ -25,6 +25,17 @@
 			// Extra virtual functions that exists for each games
 			"IGameSystem::ExtraOffsets"	""
 			"IScriptVM::ExtraOffsets"	""
+			
+			"FIELD_VOID"		"0"
+			"FIELD_FLOAT"		"1"
+			"FIELD_VECTOR"		"3"
+			"FIELD_INTEGER"		"5"
+			"FIELD_BOOLEAN"		"6"
+			"FIELD_TYPEUNKNOWN"	"0"	// Normally shouldn't be allowed, but TF2 have it
+			"FIELD_CSTRING"		"30"
+			"FIELD_HSCRIPT"		"31"
+			"FIELD_VARIANT"		"32"
+			"FIELD_QANGLE"		"39"
 		}
 		
 		"Offsets"
@@ -242,7 +253,18 @@
 			}
 		}
 	}
-/*	
+	
+	"csgo"
+	{
+		"Keys"
+		{
+			"FIELD_CSTRING"		"32"	// +2
+			"FIELD_HSCRIPT"		"33"	// +2
+			"FIELD_VARIANT"		"0"
+			"FIELD_QANGLE"		"0"
+		}
+	}
+	
 	"left4dead2"
 	{
 		"Keys"
@@ -260,9 +282,14 @@
 				"linux"		"6 8 16 31 33 37 38"
 				"windows"	"6 8 16 29 33 36 38"
 			}
+			
+			"FIELD_CSTRING"		"31"	// +1
+			"FIELD_HSCRIPT"		"32"	// +1
+			"FIELD_VARIANT"		"33"	// +1
+			"FIELD_QANGLE"		"40"	// +1
 		}
 	}
-*/	
+	
 	"tf"
 	{
 		"Keys"
@@ -272,6 +299,8 @@
 			
 			// 14 - IScriptVM::ReferenceScope
 			"IScriptVM::ExtraOffsets"	"14"
+			
+			"FIELD_TYPEUNKNOWN"	"29"
 		}
 		
 		"Offsets"

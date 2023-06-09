@@ -57,8 +57,6 @@ bool FunctionInstructionMatches(Address pFunction, int[] iInstructions, int iLen
 	return true;
 }
 
-const SDKType SDKType_Unknown = view_as<SDKType>(-1);
-
 Handle CreateSDKCall(GameData hGameData, const char[] sClass, const char[] sFunction, SDKType nReturn = SDKType_Unknown, SDKType nParam1 = SDKType_Unknown, SDKType nParam2 = SDKType_Unknown, SDKType nParam3 = SDKType_Unknown, SDKType nParam4 = SDKType_Unknown, SDKType nParam5 = SDKType_Unknown, SDKType nParam6 = SDKType_Unknown)
 {
 	StartPrepSDKCall(SDKCall_Raw);

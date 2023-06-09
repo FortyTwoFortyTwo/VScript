@@ -6,22 +6,20 @@
 #include <sdktools>
 #include <dhooks>
 
+// These field values does NOT reflect with actual game values, as it vaires between games.
+// This should only be used with this plugin natives.
 enum fieldtype_t
 {
-	FIELD_VOID = 0,
-	FIELD_FLOAT = 1,
-	
-	FIELD_VECTOR = 3,
-	
-	FIELD_INTEGER = 5,
-	FIELD_BOOLEAN = 6,
-	
-	FIELD_TYPEUNKNOWN = 29,
-	FIELD_CSTRING = 30,
-	FIELD_HSCRIPT = 31,
-	FIELD_VARIANT = 32,
-	
-	FIELD_QANGLE = 39,
+	FIELD_VOID,
+	FIELD_FLOAT,
+	FIELD_VECTOR,
+	FIELD_INTEGER,
+	FIELD_BOOLEAN,
+	FIELD_TYPEUNKNOWN,
+	FIELD_CSTRING,
+	FIELD_HSCRIPT,
+	FIELD_VARIANT,
+	FIELD_QANGLE,
 };
 
 enum ScriptStatus_t

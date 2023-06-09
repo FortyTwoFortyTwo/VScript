@@ -1,95 +1,98 @@
 enum SMField
 {
+	SMField_Unknwon,
 	SMField_Any,
 	SMField_String,
 	SMField_Vector,
 }
 
+const int FIELD_MAX = view_as<int>(FIELD_QANGLE) + 1;
+
+enum struct FieldInfo
+{
+	char sName[64];
+	SMField nSMField;
+	SDKType nSDKType;
+	SDKPassMethod nSDKPassMethod;
+	ReturnType nReturnType;
+	HookParamType nHookParamType;
+	int iGameValue;
+}
+
+static FieldInfo g_FieldInfos[FIELD_MAX] = {
+	{ "FIELD_VOID",			SMField_Unknwon,	SDKType_Unknown,		SDKPass_Unknown,	ReturnType_Void,	HookParamType_Unknown,		},
+	{ "FIELD_FLOAT",		SMField_Any,		SDKType_Float,			SDKPass_Plain,		ReturnType_Float,	HookParamType_Float,		},
+	{ "FIELD_VECTOR",		SMField_Vector,		SDKType_Vector,			SDKPass_ByValue,	ReturnType_Vector,	HookParamType_VectorPtr,	},
+	{ "FIELD_INTEGER",		SMField_Any,		SDKType_PlainOldData,	SDKPass_Plain,		ReturnType_Int,		HookParamType_Int,			},
+	{ "FIELD_BOOLEAN",		SMField_Any,		SDKType_Bool,			SDKPass_Plain,		ReturnType_Bool,	HookParamType_Bool,			},
+	{ "FIELD_TYPEUNKNOWN",	SMField_Unknwon,	SDKType_Unknown,		SDKPass_Unknown,	ReturnType_Unknown,	HookParamType_Unknown,		},
+	{ "FIELD_CSTRING",		SMField_String,		SDKType_String,			SDKPass_Pointer,	ReturnType_CharPtr,	HookParamType_CharPtr,		},
+	{ "FIELD_HSCRIPT",		SMField_Any,		SDKType_PlainOldData,	SDKPass_Plain,		ReturnType_Int,		HookParamType_Int,			},
+	{ "FIELD_VARIANT",		SMField_Unknwon,	SDKType_Unknown,		SDKPass_Unknown,	ReturnType_Unknown,	HookParamType_Unknown,		},
+	{ "FIELD_QANGLE",		SMField_Vector,		SDKType_QAngle,			SDKPass_ByValue,	ReturnType_Vector,	HookParamType_VectorPtr,	},
+};
+
+void Field_LoadGamedata(GameData hGameData)
+{
+	for (int i = 0; i < FIELD_MAX; i++)
+	{
+		char sKeyValue[12];
+		hGameData.GetKeyValue(g_FieldInfos[i].sName, sKeyValue, sizeof(sKeyValue));
+		g_FieldInfos[i].iGameValue = StringToInt(sKeyValue);
+	}
+}
+
+fieldtype_t Field_GameToEnum(int iField)
+{
+	for (int i = 0; i < FIELD_MAX; i++)
+		if (g_FieldInfos[i].iGameValue == iField)
+			return view_as<fieldtype_t>(i);
+	
+	LogError("Unknown field value '%d'", iField);
+	return FIELD_VOID;
+}
+
+int Field_EnumToGame(fieldtype_t nField)
+{
+	return g_FieldInfos[nField].iGameValue;
+}
+
 char[] Field_GetName(fieldtype_t nField)
 {
-	char sValue[64];
-	
-	switch (nField)
-	{
-		case FIELD_VOID: strcopy(sValue, sizeof(sValue), "void");
-		case FIELD_FLOAT: strcopy(sValue, sizeof(sValue), "float");
-		case FIELD_VECTOR: strcopy(sValue, sizeof(sValue), "vector");
-		case FIELD_INTEGER: strcopy(sValue, sizeof(sValue), "integer");
-		case FIELD_BOOLEAN: strcopy(sValue, sizeof(sValue), "boolean");
-		case FIELD_TYPEUNKNOWN: strcopy(sValue, sizeof(sValue), "type unknown");
-		case FIELD_CSTRING: strcopy(sValue, sizeof(sValue), "cstring");
-		case FIELD_HSCRIPT: strcopy(sValue, sizeof(sValue), "hscript");
-		case FIELD_VARIANT: strcopy(sValue, sizeof(sValue), "variant");
-		case FIELD_QANGLE: strcopy(sValue, sizeof(sValue), "qangle");
-		default: Format(sValue, sizeof(sValue), "unknown [%d]", nField);
-	}
-	
-	return sValue;
+	return g_FieldInfos[nField].sName;
 }
 
 SMField Field_GetSMField(fieldtype_t nField)
 {
-	switch (nField)
-	{
-		case FIELD_FLOAT, FIELD_INTEGER, FIELD_BOOLEAN, FIELD_HSCRIPT:
-			return SMField_Any;
-		case FIELD_CSTRING:
-			return SMField_String;
-		case FIELD_VECTOR, FIELD_QANGLE:
-			return SMField_Vector;
-	}
+	if (g_FieldInfos[nField].nSMField != SMField_Unknwon)
+		return g_FieldInfos[nField].nSMField;
 	
 	ThrowError("Invalid field type '%s'", Field_GetName(nField));
-	return SMField_Any;
+	return SMField_Unknwon;
 }
 
 SDKType Field_GetSDKType(fieldtype_t nField)
 {
-	switch (nField)
-	{
-		case FIELD_FLOAT: return SDKType_Float;
-		case FIELD_VECTOR: return SDKType_Vector;
-		case FIELD_INTEGER: return SDKType_PlainOldData;
-		case FIELD_BOOLEAN: return SDKType_Bool;
-		case FIELD_CSTRING: return SDKType_String;
-		case FIELD_HSCRIPT: return SDKType_PlainOldData;
-		case FIELD_QANGLE: return SDKType_QAngle;
-	}
+	if (g_FieldInfos[nField].nSDKType != SDKType_Unknown)
+		return g_FieldInfos[nField].nSDKType;
 	
 	ThrowError("Invalid field type '%s' for SDKType", Field_GetName(nField));
-	return SDKType_PlainOldData;
+	return SDKType_Unknown;
 }
 
 SDKPassMethod Field_GetSDKPassMethod(fieldtype_t nField)
 {
-	switch (nField)
-	{
-		case FIELD_FLOAT: return SDKPass_Plain;
-		case FIELD_VECTOR: return SDKPass_ByValue;
-		case FIELD_INTEGER: return SDKPass_Plain;
-		case FIELD_BOOLEAN: return SDKPass_Plain;
-		case FIELD_CSTRING: return SDKPass_Pointer;
-		case FIELD_HSCRIPT: return SDKPass_Plain;
-		case FIELD_QANGLE: return SDKPass_ByValue;
-	}
+	if (g_FieldInfos[nField].nSDKPassMethod != SDKPass_Unknown)
+		return g_FieldInfos[nField].nSDKPassMethod;
 	
 	ThrowError("Invalid field type '%s' for SDKPassMethod", Field_GetName(nField));
-	return SDKPass_Plain;
+	return SDKPass_Unknown;
 }
 
 ReturnType Field_GetReturnType(fieldtype_t nField)
 {
-	switch (nField)
-	{
-		case FIELD_VOID: return ReturnType_Void;
-		case FIELD_FLOAT: return ReturnType_Float;
-		case FIELD_VECTOR: return ReturnType_Vector;	// don't think we ever want ReturnType_VectorPtr, all should be byref
-		case FIELD_INTEGER: return ReturnType_Int;
-		case FIELD_BOOLEAN: return ReturnType_Bool;
-		case FIELD_CSTRING: return ReturnType_CharPtr;
-		case FIELD_HSCRIPT: return ReturnType_Int;
-		case FIELD_QANGLE: return ReturnType_Vector;	// same to vector?
-	}
+	if (g_FieldInfos[nField].nReturnType != ReturnType_Unknown)
+		return g_FieldInfos[nField].nReturnType;
 	
 	ThrowError("Invalid field type '%s' for ReturnType", Field_GetName(nField));
 	return ReturnType_Unknown;
@@ -97,16 +100,8 @@ ReturnType Field_GetReturnType(fieldtype_t nField)
 
 HookParamType Field_GetParamType(fieldtype_t nField)
 {
-	switch (nField)
-	{
-		case FIELD_FLOAT: return HookParamType_Float;
-		case FIELD_VECTOR: return HookParamType_VectorPtr;	// Ptr our only option
-		case FIELD_INTEGER: return HookParamType_Int;
-		case FIELD_BOOLEAN: return HookParamType_Bool;
-		case FIELD_CSTRING: return HookParamType_CharPtr;
-		case FIELD_HSCRIPT: return HookParamType_Int;
-		case FIELD_QANGLE: return HookParamType_VectorPtr;
-	}
+	if (g_FieldInfos[nField].nHookParamType != HookParamType_Unknown)
+		return g_FieldInfos[nField].nHookParamType;
 	
 	ThrowError("Invalid field type '%s' for HookParamType", Field_GetName(nField));
 	return HookParamType_Unknown;
