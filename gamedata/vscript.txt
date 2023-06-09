@@ -1,6 +1,6 @@
 "Games"
 {
-	"tf"
+	"#default"
 	{
 		"Keys"
 		{
@@ -9,62 +9,28 @@
 				"linux"		"linux"
 				"windows"	"windows"
 			}
-		}
-		
-		"Addresses"
-		{
-			"g_pScriptVM"
+			
+			"IGameSystem"
 			{
-				"signature" "VScriptServerTerm"	// g_pScriptVM is the first thing in this function after mov
-				
-				"linux"
-				{
-					"offset"	"1"
-				}
-				
-				"windows"
-				{
-					"offset"	"2"
-				}
-			}
-		}
-		
-		"Signatures"
-		{
-			"CUtlVector<ScriptFunctionBinding_t,CUtlMemory<ScriptFunctionBinding_t,int>>::InsertBefore"
-			{
-				"linux"		"@_ZN10CUtlVectorI23ScriptFunctionBinding_t10CUtlMemoryIS0_iEE12InsertBeforeEi"
-				"windows"	"\x55\x8B\xEC\x56\x8B\xF1\x57\x8B\x4E\x0C\x8B\x56\x04\x8D\x41\x01\x3B\xC2\x7E\x2A\x2B\xCA\x41\x51\x8B\xCE\xE8\x2A\x2A\x2A\x2A\xFF\x46\x0C\x8B\x56\x0C\x8B\x7D\x08\x2B\xD7\x8B\x0E\x4A\x89\x4E\x10\x85\xD2\x7E\x2A\x8B\xC7\xC1\xE0\x04\x2B\xC7"
+				"linux"		"18CVScriptGameSystem"
+				"windows"	"CVScriptGameSystem"
 			}
 			
-			"CBaseEntity::GetScriptInstance"
-			{
-				"linux"		"@_ZN11CBaseEntity17GetScriptInstanceEv"
-				"windows"	"\x55\x8B\xEC\x51\x53\x56\x57\x8B\xF9\x83\xBF\x28\x01\x00\x00\x00"
+			"IScriptVM"
+			{	
+				"linux"		"11CSquirrelVM"
+				"windows"	"CSquirrelVM"
 			}
 			
-			"VScriptServerInit"
-			{
-				"linux"		"@_Z17VScriptServerInitv"
-				"windows"	"\x55\x8B\xEC\xB8\x54\x2F\x00\x00"
-			}
-			
-			"VScriptServerTerm"	// Don't exist in windows, but rather in mid-function CVScriptGameSystem::LevelShutdownPostEntity
-			{
-				"linux"		"@_Z17VScriptServerTermv"
-				"windows"	"\x8B\x15\x2A\x2A\x2A\x2A\x85\xD2\x74\x2A\x8B\x0D\x2A\x2A\x2A\x2A\x52"
-			}
-			
-			"ScriptCreateSquirrelVM"
-			{
-				"library"	"vscript"
-				"linux"		"@_Z22ScriptCreateSquirrelVMv"
-				"windows"	"\x68\xD0\x00\x00\x00\xE8\x2A\x2A\x2A\x2A"
-			}
+			// Extra virtual functions that exists for each games
+			"IGameSystem::ExtraOffsets"	""
+			"IScriptVM::ExtraOffsets"	""
 		}
 		
 		"Offsets"
 		{
+			// All offsets are based on games with smallest offset numbers (e.g. CSGO)
+			
 			"ScriptClassDesc_t::m_pszScriptName"
 			{
 				"linux"		"0"
@@ -75,12 +41,6 @@
 			{
 				"linux"		"16"
 				"windows"	"16"
-			}
-			
-			"sizeof(ScriptFunctionBinding_t)"
-			{
-				"linux"		"60"
-				"windows"	"60"
 			}
 			
 			"ScriptFunctionBinding_t::m_pszScriptName"
@@ -127,14 +87,14 @@
 			
 			"ScriptFunctionBinding_t::m_flags"
 			{
-				"linux"		"56"
-				"windows"	"56"
+				"linux"		"44"
+				"windows"	"44"
 			}
 			
-			"sizeof(ScriptVariant_t)"
+			"sizeof(ScriptFunctionBinding_t)"
 			{
-				"linux"		"12"
-				"windows"	"12"
+				"linux"		"48"
+				"windows"	"48"
 			}
 			
 			"ScriptVariant_t::union"
@@ -149,119 +109,185 @@
 				"windows"	"8"
 			}
 			
-			"CSquirrelVM::CompileScript"	// vtable dumper got it wrong
+			"sizeof(ScriptVariant_t)"
+			{
+				"linux"		"12"
+				"windows"	"12"
+			}
+			
+			"CTFPlayer::GetScriptDesc"
+			{
+				"linux"		"13"
+				"windows"	"12"
+			}
+			
+			"IGameSystem::LevelInitPreEntity"
+			{
+				"linux"		"4"
+				"windows"	"4"
+			}
+			
+			"IGameSystem::LevelShutdownPostEntity"
+			{
+				"linux"		"7"
+				"windows"	"7"
+			}
+			
+			"IGameSystem::FrameUpdatePostEntityThink"
+			{
+				"linux"		"15"
+				"windows"	"14"
+			}
+			
+			"CVScriptGameSystem::m_bAllowEntityCreationInScripts"
+			{
+				"linux"		"12"
+				"windows"	"12"
+			}
+			
+			"IScriptVM::Init"
+			{
+				"linux"		"0"
+				"windows"	"0"
+			}
+			
+			"IScriptVM::Frame"
+			{
+				"linux"		"7"
+				"windows"	"7"
+			}
+			
+			"IScriptVM::CompileScript"	// vtable dumper got it wrong
 			{
 				"linux"		"8"
 				"windows"	"10"
 			}
 			
-			"CSquirrelVM::ExecuteFunction"
+			"IScriptVM::ExecuteFunction"
+			{
+				"linux"		"17"
+				"windows"	"17"
+			}
+			
+			"IScriptVM::RegisterFunction"
 			{
 				"linux"		"18"
 				"windows"	"18"
 			}
 			
-			"CSquirrelVM::RegisterFunction"
+			"IScriptVM::RegisterClass"
 			{
 				"linux"		"19"
 				"windows"	"19"
 			}
 			
-			"CSquirrelVM::RegisterClass"
+			"IScriptVM::RegisterInstance"
 			{
 				"linux"		"20"
 				"windows"	"20"
 			}
 			
-			"CSquirrelVM::GetInstanceValue"
+			"IScriptVM::SetInstanceUniqeId"
+			{
+				"linux"		"21"
+				"windows"	"21"
+			}
+			
+			"IScriptVM::GetInstanceValue"
+			{
+				"linux"		"23"
+				"windows"	"23"
+			}
+			
+			"IScriptVM::GenerateUniqueKey"
 			{
 				"linux"		"24"
 				"windows"	"24"
 			}
 			
-			"CSquirrelVM::SetValueString"	// actually same name CSquirrelVM::SetValue but with different param
+			"IScriptVM::SetValueString"	// actually same name IScriptVM::SetValue but with different param
 			{
-				"linux"		"27"
-				"windows"	"28"
-			}
-			
-			"CSquirrelVM::SetValue"
-			{
-				"linux"		"28"
+				"linux"		"26"
 				"windows"	"27"
 			}
 			
-			"CSquirrelVM::CreateTable"
+			"IScriptVM::SetValue"
 			{
-				"linux"		"29"
-				"windows"	"29"
+				"linux"		"27"
+				"windows"	"26"
 			}
 			
-			"CSquirrelVM::GetKeyValue"
+			"IScriptVM::CreateTable"
+			{
+				"linux"		"28"
+				"windows"	"28"
+			}
+			
+			"IScriptVM::GetKeyValue"
+			{
+				"linux"		"30"
+				"windows"	"30"
+			}
+			
+			"IScriptVM::GetValue"
 			{
 				"linux"		"31"
 				"windows"	"31"
 			}
 			
-			"CSquirrelVM::GetValue"
+			"IScriptVM::ReleaseValue"
 			{
 				"linux"		"32"
 				"windows"	"32"
 			}
-			
-			"CSquirrelVM::ReleaseValue"
+		}
+	}
+/*	
+	"left4dead2"
+	{
+		"Keys"
+		{
+			//   6 - IScriptVM::GetInternalVM
+			//   8 - IScriptVM::ForwardConsoleCommand
+			//  16 - IScriptVM::ReferenceScope
+			//31/29- IScriptVM::SetValue (integer version)
+			//  33 - IScriptVM::IsTable
+			//37/36- IScriptVM::GetValue (integer version)
+			//  38 - IScriptVM::GetScalarValue
+			// There are more after 41, but none of our offsets go beyond that yet
+			"IScriptVM::ExtraOffsets"
 			{
-				"linux"		"33"
-				"windows"	"33"
+				"linux"		"6 8 16 31 33 37 38"
+				"windows"	"6 8 16 29 33 36 38"
 			}
 		}
-		
-		"Functions"
+	}
+*/	
+	"tf"
+	{
+		"Keys"
 		{
-			"VScriptServerTerm"
+			//  6 - IGameSystem::LevelShutdownPreClearSteamAPIContext
+			"IGameSystem::ExtraOffsets"	"6"
+			
+			// 14 - IScriptVM::ReferenceScope
+			"IScriptVM::ExtraOffsets"	"14"
+		}
+		
+		"Offsets"
+		{
+			// TF2 have 12 extra bytes before flags
+			
+			"ScriptFunctionBinding_t::m_flags"
 			{
-				"signature"		"VScriptServerTerm"
-				"callconv"		"cdecl"
-				"return"		"void"
-				"this"			"ignore"
+				"linux"		"56"
+				"windows"	"56"
 			}
 			
-			"ScriptCreateSquirrelVM"
+			"sizeof(ScriptFunctionBinding_t)"
 			{
-				"signature"		"ScriptCreateSquirrelVM"
-				"callconv"		"cdecl"
-				"return"		"int"
-				"this"			"ignore"
-			}
-			
-			"CSquirrelVM::RegisterFunction"
-			{
-				"offset"	"CSquirrelVM::RegisterFunction"
-				"hooktype"	"raw"
-				"return"	"void"
-				"this"		"address"
-				"arguments"
-				{
-					"pScriptFunction"
-					{
-						"type"	"int"
-					}
-				}
-			}
-			
-			"CSquirrelVM::RegisterClass"
-			{
-				"offset"	"CSquirrelVM::RegisterClass"
-				"hooktype"	"raw"
-				"return"	"void"
-				"this"		"address"
-				"arguments"
-				{
-					"pScriptFunction"
-					{
-						"type"	"int"
-					}
-				}
+				"linux"		"60"
+				"windows"	"60"
 			}
 		}
 	}

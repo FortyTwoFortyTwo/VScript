@@ -17,18 +17,7 @@ static Handle g_hSDKCallExecuteFunction;
 
 void Execute_LoadGamedata(GameData hGameData)
 {
-	StartPrepSDKCall(SDKCall_Raw);
-	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CSquirrelVM::ExecuteFunction");
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// HSCRIPT hFunction
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// ScriptVariant_t *pArgs
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// int nArgs
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// ScriptVariant_t *pReturn
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// HSCRIPT hScope
-	PrepSDKCall_AddParameter(SDKType_Bool, SDKPass_Plain);			// bool bWait
-	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);	// ScriptStatus_t
-	g_hSDKCallExecuteFunction = EndPrepSDKCall();
-	if (!g_hSDKCallExecuteFunction)
-		LogError("Failed to create call: CSquirrelVM::ExecuteFunction");
+	g_hSDKCallExecuteFunction = CreateSDKCall(hGameData, "IScriptVM", "ExecuteFunction", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_Bool);
 }
 
 /* TODO execute a function from a scope, so we can pass scope param */

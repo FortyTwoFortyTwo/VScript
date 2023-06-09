@@ -2,6 +2,7 @@
 
 #include "include/vscript.inc"
 
+char g_sOperatingSystem[16];
 bool g_bWindows;
 
 Address g_pToScriptVM;
@@ -10,13 +11,12 @@ int g_iScriptVariant_sizeof;
 int g_iScriptVariant_union;
 int g_iScriptVariant_type;
 
-Handle g_hSDKCallInsertBefore;
-Handle g_hSDKCallVScriptServerInit;
-Handle g_hSDKCallVScriptServerTerm;
-
+static Handle g_hSDKGetScriptDesc;
 static Handle g_hSDKCallCompileScript;
-static Handle g_hSDKCallGetScriptInstance;
+static Handle g_hSDKCallRegisterInstance;
+static Handle g_hSDKCallSetInstanceUniqeId;
 static Handle g_hSDKCallGetInstanceValue;
+static Handle g_hSDKCallGenerateUniqueKey;
 
 const VScriptClass VScriptClass_Invalid = view_as<VScriptClass>(Address_Null);
 const VScriptFunction VScriptFunction_Invalid = view_as<VScriptFunction>(Address_Null);
@@ -25,17 +25,20 @@ const VScriptFunction VScriptFunction_Invalid = view_as<VScriptFunction>(Address
 #include "vscript/execute.sp"
 #include "vscript/field.sp"
 #include "vscript/function.sp"
+#include "vscript/gamesystem.sp"
 #include "vscript/hscript.sp"
 #include "vscript/list.sp"
+#include "vscript/memory.sp"
 #include "vscript/util.sp"
 #include "vscript/variant.sp"
+#include "vscript/vtable.sp"
 
 public Plugin myinfo =
 {
 	name = "VScript",
 	author = "42",
 	description = "Exposes VScript into Sourcemod",
-	version = "1.5.2",
+	version = "1.6.0",
 	url = "https://github.com/FortyTwoFortyTwo/VScript",
 };
 
@@ -103,71 +106,44 @@ public void OnPluginStart()
 {
 	GameData hGameData = new GameData("vscript");
 	
-	char sOS[16];
-	hGameData.GetKeyValue("OS", sOS, sizeof(sOS));
-	g_bWindows = StrEqual(sOS, "windows");
-	
-	g_pToScriptVM = GetPointerAddressFromGamedata(hGameData, "g_pScriptVM");
+	hGameData.GetKeyValue("OS", g_sOperatingSystem, sizeof(g_sOperatingSystem));
+	g_bWindows = StrEqual(g_sOperatingSystem, "windows");
 	
 	g_iScriptVariant_sizeof = hGameData.GetOffset("sizeof(ScriptVariant_t)");
 	g_iScriptVariant_union = hGameData.GetOffset("ScriptVariant_t::union");
 	g_iScriptVariant_type = hGameData.GetOffset("ScriptVariant_t::m_type");
 	
+	VTable_LoadGamedata(hGameData);
+	
 	Class_LoadGamedata(hGameData);
 	Execute_LoadGamedata(hGameData);
 	Function_LoadGamedata(hGameData);
+	GameSystem_LoadGamedata(hGameData);
 	HScript_LoadGamedata(hGameData);
 	List_LoadGamedata(hGameData);
 	
-	StartPrepSDKCall(SDKCall_Raw);
-	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CSquirrelVM::CompileScript");
-	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);	// const char *pszScript
-	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer, VDECODE_FLAG_ALLOWNULL);	// const char *pszId
-	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);	// HSCRIPT
-	g_hSDKCallCompileScript = EndPrepSDKCall();
-	if (!g_hSDKCallCompileScript)
-		LogError("Failed to create call: CSquirrelVM::CompileScript");
-	
 	StartPrepSDKCall(SDKCall_Entity);
-	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CBaseEntity::GetScriptInstance");
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CTFPlayer::GetScriptDesc");
 	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
-	g_hSDKCallGetScriptInstance = EndPrepSDKCall();
-	if (!g_hSDKCallGetScriptInstance)
-		LogError("Failed to create call: CBaseEntity::GetScriptInstance");
+	g_hSDKGetScriptDesc = EndPrepSDKCall();
+	if (!g_hSDKGetScriptDesc)
+		LogError("Failed to create SDKCall: CTFPlayer::GetScriptDesc");
 	
-	StartPrepSDKCall(SDKCall_Raw);
-	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CSquirrelVM::GetInstanceValue");
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// HSCRIPT hInstance
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// ScriptClassDesc_t *pExpectedType
-	PrepSDKCall_SetReturnInfo(SDKType_CBaseEntity, SDKPass_Pointer);
-	g_hSDKCallGetInstanceValue = EndPrepSDKCall();
-	if (!g_hSDKCallGetInstanceValue)
-		LogError("Failed to create call: CSquirrelVM::GetInstanceValue");
-	
-	StartPrepSDKCall(SDKCall_Raw);
-	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "CUtlVector<ScriptFunctionBinding_t,CUtlMemory<ScriptFunctionBinding_t,int>>::InsertBefore");
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
-	g_hSDKCallInsertBefore = EndPrepSDKCall();
-	if (!g_hSDKCallInsertBefore)
-		LogError("Failed to create SDKCall: CUtlVector<ScriptFunctionBinding_t,CUtlMemory<ScriptFunctionBinding_t,int>>::InsertBefore");
-	
-	StartPrepSDKCall(SDKCall_Static);
-	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "VScriptServerInit");
-	PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
-	g_hSDKCallVScriptServerInit = EndPrepSDKCall();
-	if (!g_hSDKCallVScriptServerInit)
-		LogError("Failed to create call: VScriptServerInit");
-	
-	StartPrepSDKCall(SDKCall_Static);
-	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, "VScriptServerTerm");
-	g_hSDKCallVScriptServerTerm = EndPrepSDKCall();
-	if (!g_hSDKCallVScriptServerTerm)
-		LogError("Failed to create call: VScriptServerTerm");
+	g_hSDKCallCompileScript = CreateSDKCall(hGameData, "IScriptVM", "CompileScript", SDKType_PlainOldData, SDKType_String, SDKType_String);
+	g_hSDKCallRegisterInstance = CreateSDKCall(hGameData, "IScriptVM", "RegisterInstance", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_CBaseEntity);
+	g_hSDKCallSetInstanceUniqeId = CreateSDKCall(hGameData, "IScriptVM", "SetInstanceUniqeId", _, SDKType_PlainOldData, SDKType_String);
+	g_hSDKCallGetInstanceValue = CreateSDKCall(hGameData, "IScriptVM", "GetInstanceValue", SDKType_CBaseEntity, SDKType_PlainOldData, SDKType_PlainOldData);
+	g_hSDKCallGenerateUniqueKey = CreateSDKCall(hGameData, "IScriptVM", "GenerateUniqueKey", SDKType_Bool, SDKType_String, SDKType_String, SDKType_PlainOldData);
 	
 	delete hGameData;
 	
 	List_LoadDefaults();
+	Memory_Init();
+}
+
+public void OnPluginEnd()
+{
+	Memory_DisownAll();
 }
 
 public any Native_HScript_GetKey(Handle hPlugin, int iNumParams)
@@ -466,8 +442,8 @@ public any Native_Execute_ReturnValueGet(Handle hPlugin, int iNumParams)
 
 public any Native_ResetScriptVM(Handle hPlugin, int iNumParams)
 {
-	SDKCall(g_hSDKCallVScriptServerTerm);
-	SDKCall(g_hSDKCallVScriptServerInit);
+	GameSystem_ServerTerm();
+	GameSystem_ServerInit();
 	return 0;
 }
 
@@ -607,16 +583,40 @@ public any Native_EntityToHScript(Handle hPlugin, int iNumParams)
 {
 	int iEntity = GetNativeCell(1);
 	if (iEntity == INVALID_ENT_REFERENCE)
-		return Address_Null;	// follows the same way to how ToHScript handles it
+		return Address_Null;	// follows same way to how ToHScript handles it
 	
-	return SDKCall(g_hSDKCallGetScriptInstance, iEntity);
+	// Below exact same as CBaseEntity::GetScriptInstance
+	
+	int iOffset = FindDataMapInfo(iEntity, "m_iszScriptId") - 4;
+	HSCRIPT pScriptInstance = view_as<HSCRIPT>(GetEntData(iEntity, iOffset));
+	if (!pScriptInstance)
+	{
+		char sId[1024];
+		GetEntPropString(iEntity, Prop_Data, "m_iszScriptId", sId, sizeof(sId));
+		if (!sId[0])
+		{
+			char sName[1024];
+			GetEntPropString(iEntity, Prop_Data, "m_iName", sName, sizeof(sName));
+			if (!sName[0])
+				GetEntityClassname(iEntity, sName, sizeof(sName));
+			
+			SDKCall(g_hSDKCallGenerateUniqueKey, GetScriptVM(), sName, sId, sizeof(sId));
+			SetEntPropString(iEntity, Prop_Data, "m_iszScriptId", sId);
+		}
+		
+		pScriptInstance = SDKCall(g_hSDKCallRegisterInstance, GetScriptVM(), SDKCall(g_hSDKGetScriptDesc, iEntity), iEntity);
+		SetEntData(iEntity, iOffset, pScriptInstance);
+		SDKCall(g_hSDKCallSetInstanceUniqeId, GetScriptVM(), pScriptInstance, sId);
+	}
+	
+	return pScriptInstance;
 }
 
 public any Native_HScriptToEntity(Handle hPlugin, int iNumParams)
 {
 	HSCRIPT pHScript = GetNativeCell(1);
 	if (pHScript == Address_Null)
-		return INVALID_ENT_REFERENCE;	// follows the same way to how ToEnt handles it
+		return INVALID_ENT_REFERENCE;	// follows same way to how ToEnt handles it
 	
 	static Address pClassDesc;
 	if (!pClassDesc)

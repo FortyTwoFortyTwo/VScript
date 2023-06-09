@@ -1,24 +1,18 @@
 static ArrayList g_aGlobalFunctions;
 static ArrayList g_aClasses;
 
-static DynamicHook g_hRegisterFunction;
-static DynamicHook g_hRegisterClass;
-
-static int g_iHookRegisterFunction;
-static int g_iHookRegisterClass;
-
 void List_LoadGamedata(GameData hGameData)
 {
 	DynamicDetour hDetour;
 	
-	hDetour = DynamicDetour.FromConf(hGameData, "VScriptServerTerm");
-	hDetour.Enable(Hook_Post, List_ServerTermPost);
+	hDetour = VTable_CreateDetour(hGameData, "IScriptVM", "Init", ReturnType_Bool);
+	hDetour.Enable(Hook_Pre, List_Init);
 	
-	hDetour = DynamicDetour.FromConf(hGameData, "ScriptCreateSquirrelVM");
-	hDetour.Enable(Hook_Post, List_CreateSquirrelPost);
+	hDetour = VTable_CreateDetour(hGameData, "IScriptVM", "RegisterFunction", _, HookParamType_Int);
+	hDetour.Enable(Hook_Pre, List_RegisterFunction);
 	
-	g_hRegisterFunction = DynamicHook.FromConf(hGameData, "CSquirrelVM::RegisterFunction");
-	g_hRegisterClass = DynamicHook.FromConf(hGameData, "CSquirrelVM::RegisterClass");
+	hDetour = VTable_CreateDetour(hGameData, "IScriptVM", "RegisterClass", ReturnType_Bool, HookParamType_Int);
+	hDetour.Enable(Hook_Pre, List_RegisterClass);
 }
 
 void List_LoadDefaults()
@@ -30,41 +24,13 @@ void List_LoadDefaults()
 	
 	// Create new vscriptvm and set back, so we can collect all of the default stuffs
 	SetScriptVM(view_as<HSCRIPT>(Address_Null));
-	SDKCall(g_hSDKCallVScriptServerInit);
-	SDKCall(g_hSDKCallVScriptServerTerm);
+	GameSystem_ServerInit();
+	GameSystem_ServerTerm();
 	SetScriptVM(pScriptVM);
-	
-	if (pScriptVM)
-	{
-		g_iHookRegisterFunction = g_hRegisterFunction.HookRaw(Hook_Post, pScriptVM, List_RegisterFunction);
-		g_iHookRegisterClass = g_hRegisterClass.HookRaw(Hook_Post, pScriptVM, List_RegisterClass);
-	}
 }
 
-MRESReturn List_ServerTermPost()
+MRESReturn List_Init(Address pScriptVM, DHookReturn hReturn)
 {
-	if (g_iHookRegisterFunction)
-	{
-		DynamicHook.RemoveHook(g_iHookRegisterFunction);
-		g_iHookRegisterFunction = INVALID_HOOK_ID;
-	}
-	
-	if (g_iHookRegisterClass)
-	{
-		DynamicHook.RemoveHook(g_iHookRegisterClass);
-		g_iHookRegisterClass = INVALID_HOOK_ID;
-	}
-	
-	return MRES_Ignored;
-}
-
-MRESReturn List_CreateSquirrelPost(DHookReturn hReturn)
-{
-	Address pScriptVM = hReturn.Value;
-	
-	g_iHookRegisterFunction = g_hRegisterFunction.HookRaw(Hook_Post, pScriptVM, List_RegisterFunction);
-	g_iHookRegisterClass = g_hRegisterClass.HookRaw(Hook_Post, pScriptVM, List_RegisterClass);
-	
 	g_aGlobalFunctions.Clear();
 	g_aClasses.Clear();
 	return MRES_Ignored;
@@ -79,7 +45,7 @@ MRESReturn List_RegisterFunction(Address pScriptVM, DHookParam hParam)
 	return MRES_Ignored;
 }
 
-MRESReturn List_RegisterClass(Address pScriptVM, DHookParam hParam)
+MRESReturn List_RegisterClass(Address pScriptVM, DHookReturn hReturn, DHookParam hParam)
 {
 	VScriptClass pClass = hParam.Get(1);
 	if (g_aClasses.FindValue(pClass) == -1)

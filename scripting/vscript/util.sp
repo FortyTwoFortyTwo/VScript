@@ -8,12 +8,6 @@ void SetScriptVM(HSCRIPT pScript)
 	StoreToAddress(g_pToScriptVM, pScript, NumberType_Int32);
 }
 
-Address GetPointerAddressFromGamedata(GameData hGameData, const char[] sAddress)
-{
-	Address pGamedata = hGameData.GetAddress(sAddress);
-	return LoadFromAddress(pGamedata, NumberType_Int32);
-}
-
 int LoadPointerStringFromAddress(Address pPointer, char[] sBuffer, int iMaxLen)
 {
 	Address pString = LoadFromAddress(pPointer, NumberType_Int32);
@@ -35,26 +29,6 @@ int LoadStringFromAddress(Address pString, char[] sBuffer, int iMaxLen)
 	return iChar;
 }
 
-stock int LoadPointerStringLengthFromAddress(Address pPointer)
-{
-	Address pString = LoadFromAddress(pPointer, NumberType_Int32);
-	return LoadStringLengthFromAddress(pString);
-}
-
-int LoadStringLengthFromAddress(Address pString)
-{
-	int iChar;
-	char sChar;
-	
-	do
-	{
-		sChar = view_as<int>(LoadFromAddress(pString + view_as<Address>(iChar), NumberType_Int8));
-	}
-	while (sChar && ++iChar);
-	
-	return iChar;
-}
-
 void StoreNativePointerStringToAddress(Address pAddress, int iParam)
 {
 	int iLength;
@@ -68,11 +42,7 @@ void StoreNativePointerStringToAddress(Address pAddress, int iParam)
 	for (int i = 0; i < iLength; i++)
 		hString.StoreToOffset(i, sBuffer[i], NumberType_Int8);
 	
-	StoreToAddress(pAddress, hString.Address, NumberType_Int32);
-	
-	// This makes string pointer never get deleted, possibly creating a memory leak if it gets overridden. meh, we can prob get away from it.
-	hString.Disown();
-	delete hString;
+	Memory_SetAddress(pAddress, hString);
 }
 
 bool FunctionInstructionMatches(Address pFunction, int[] iInstructions, int iLength)
@@ -85,4 +55,48 @@ bool FunctionInstructionMatches(Address pFunction, int[] iInstructions, int iLen
 			return false;
 	
 	return true;
+}
+
+const SDKType SDKType_Unknown = view_as<SDKType>(-1);
+
+Handle CreateSDKCall(GameData hGameData, const char[] sClass, const char[] sFunction, SDKType nReturn = SDKType_Unknown, SDKType nParam1 = SDKType_Unknown, SDKType nParam2 = SDKType_Unknown, SDKType nParam3 = SDKType_Unknown, SDKType nParam4 = SDKType_Unknown, SDKType nParam5 = SDKType_Unknown, SDKType nParam6 = SDKType_Unknown)
+{
+	StartPrepSDKCall(SDKCall_Raw);
+	PrepSDKCall_SetAddress(VTable_GetAddress(hGameData, sClass, sFunction));
+	
+	if (nParam1 != SDKType_Unknown)
+		PrepSDKCall_AddParameter(nParam1, GetSDKPassMethod(nParam1), VDECODE_FLAG_ALLOWNULL|VDECODE_FLAG_ALLOWNOTINGAME|VDECODE_FLAG_ALLOWWORLD, VENCODE_FLAG_COPYBACK);
+	
+	if (nParam2 != SDKType_Unknown)
+		PrepSDKCall_AddParameter(nParam2, GetSDKPassMethod(nParam2), VDECODE_FLAG_ALLOWNULL|VDECODE_FLAG_ALLOWNOTINGAME|VDECODE_FLAG_ALLOWWORLD, VENCODE_FLAG_COPYBACK);
+	
+	if (nParam3 != SDKType_Unknown)
+		PrepSDKCall_AddParameter(nParam3, GetSDKPassMethod(nParam3), VDECODE_FLAG_ALLOWNULL|VDECODE_FLAG_ALLOWNOTINGAME|VDECODE_FLAG_ALLOWWORLD, VENCODE_FLAG_COPYBACK);
+	
+	if (nParam4 != SDKType_Unknown)
+		PrepSDKCall_AddParameter(nParam4, GetSDKPassMethod(nParam4), VDECODE_FLAG_ALLOWNULL|VDECODE_FLAG_ALLOWNOTINGAME|VDECODE_FLAG_ALLOWWORLD, VENCODE_FLAG_COPYBACK);
+	
+	if (nParam5 != SDKType_Unknown)
+		PrepSDKCall_AddParameter(nParam5, GetSDKPassMethod(nParam5), VDECODE_FLAG_ALLOWNULL|VDECODE_FLAG_ALLOWNOTINGAME|VDECODE_FLAG_ALLOWWORLD, VENCODE_FLAG_COPYBACK);
+	
+	if (nParam6 != SDKType_Unknown)
+		PrepSDKCall_AddParameter(nParam6, GetSDKPassMethod(nParam6), VDECODE_FLAG_ALLOWNULL|VDECODE_FLAG_ALLOWNOTINGAME|VDECODE_FLAG_ALLOWWORLD, VENCODE_FLAG_COPYBACK);
+	
+	if (nReturn != SDKType_Unknown)
+		PrepSDKCall_SetReturnInfo(nReturn, GetSDKPassMethod(nReturn));
+	
+	Handle hSDKCall = EndPrepSDKCall();
+	if (!hSDKCall)
+		LogError("Failed to create SDKCall: %s::%s", sClass, sFunction);
+	
+	return hSDKCall;
+}
+
+static SDKPassMethod GetSDKPassMethod(SDKType nPass)
+{
+	switch (nPass)
+	{
+		case SDKType_CBaseEntity, SDKType_String: return SDKPass_Pointer;
+		default: return SDKPass_Plain;
+	}
 }

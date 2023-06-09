@@ -7,60 +7,12 @@ static Handle g_hSDKCallReleaseValue;
 
 void HScript_LoadGamedata(GameData hGameData)
 {
-	StartPrepSDKCall(SDKCall_Raw);
-	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CSquirrelVM::CreateTable");
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// ScriptVariant_t pValue
-	g_hSDKCallCreateTable = EndPrepSDKCall();
-	if (!g_hSDKCallCreateTable)
-		LogError("Failed to create call: CSquirrelVM::CreateTable");
-	
-	StartPrepSDKCall(SDKCall_Raw);
-	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CSquirrelVM::GetKeyValue");
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// HSCRIPT hScope
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// int nIterator
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// ScriptVariant_t pKey
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// ScriptVariant_t pValue
-	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
-	g_hSDKCallGetKeyValue = EndPrepSDKCall();
-	if (!g_hSDKCallGetKeyValue)
-		LogError("Failed to create call: CSquirrelVM::GetKeyValue");
-	
-	StartPrepSDKCall(SDKCall_Raw);
-	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CSquirrelVM::GetValue");
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// HSCRIPT hScope
-	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);		// const char *pszKey
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// ScriptVariant_t pValue
-	PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
-	g_hSDKCallGetValue = EndPrepSDKCall();
-	if (!g_hSDKCallGetValue)
-		LogError("Failed to create call: CSquirrelVM::GetValue");
-	
-	StartPrepSDKCall(SDKCall_Raw);
-	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CSquirrelVM::SetValueString");
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// HSCRIPT hScope
-	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);		// const char *pszKey
-	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);		// const char *pszValue
-	PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
-	g_hSDKCallSetValueString = EndPrepSDKCall();
-	if (!g_hSDKCallSetValueString)
-		LogError("Failed to create call: CSquirrelVM::SetValueString");
-	
-	StartPrepSDKCall(SDKCall_Raw);
-	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CSquirrelVM::SetValue");
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// HSCRIPT hScope
-	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);		// const char *pszKey
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// ScriptVariant_t pValue
-	PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
-	g_hSDKCallSetValue = EndPrepSDKCall();
-	if (!g_hSDKCallSetValue)
-		LogError("Failed to create call: CSquirrelVM::SetValue");
-	
-	StartPrepSDKCall(SDKCall_Raw);
-	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CSquirrelVM::ReleaseValue");
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// ScriptVariant_t pValue
-	g_hSDKCallReleaseValue = EndPrepSDKCall();
-	if (!g_hSDKCallReleaseValue)
-		LogError("Failed to create call: CSquirrelVM::ReleaseValue");
+	g_hSDKCallCreateTable = CreateSDKCall(hGameData, "IScriptVM", "CreateTable", _, SDKType_PlainOldData);
+	g_hSDKCallGetKeyValue = CreateSDKCall(hGameData, "IScriptVM", "GetKeyValue", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData);
+	g_hSDKCallGetValue = CreateSDKCall(hGameData, "IScriptVM", "GetValue", SDKType_Bool, SDKType_PlainOldData, SDKType_String, SDKType_PlainOldData);
+	g_hSDKCallSetValueString = CreateSDKCall(hGameData, "IScriptVM", "SetValueString", SDKType_Bool, SDKType_PlainOldData, SDKType_String, SDKType_String);
+	g_hSDKCallSetValue = CreateSDKCall(hGameData, "IScriptVM", "SetValue", SDKType_Bool, SDKType_PlainOldData, SDKType_String, SDKType_PlainOldData);
+	g_hSDKCallReleaseValue = CreateSDKCall(hGameData, "IScriptVM", "ReleaseValue", _, SDKType_PlainOldData);
 }
 
 HSCRIPT HScript_CreateTable()

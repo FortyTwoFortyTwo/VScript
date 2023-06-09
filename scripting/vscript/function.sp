@@ -27,16 +27,13 @@ void Function_LoadGamedata(GameData hGameData)
 	g_iFunctionBinding_Flags = hGameData.GetOffset("ScriptFunctionBinding_t::m_flags");
 	g_iFunctionBinding_sizeof = hGameData.GetOffset("sizeof(ScriptFunctionBinding_t)");
 	
-	StartPrepSDKCall(SDKCall_Raw);
-	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CSquirrelVM::RegisterFunction");
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);	// ScriptFunctionBinding_t *pScriptFunction
-	g_hSDKCallRegisterFunction = EndPrepSDKCall();
-	if (!g_hSDKCallRegisterFunction)
-		LogError("Failed to create call: CSquirrelVM::RegisterFunction");
+	g_hSDKCallRegisterFunction = CreateSDKCall(hGameData, "IScriptVM", "RegisterFunction", _, SDKType_PlainOldData);
 }
 
 VScriptFunction Function_Create()
 {
+	// TODO proper way to handle with memory?
+	
 	MemoryBlock hFunction = new MemoryBlock(g_iFunctionBinding_sizeof);
 	
 	VScriptFunction pFunction = view_as<VScriptFunction>(hFunction.Address);
@@ -108,11 +105,8 @@ fieldtype_t Function_GetParam(VScriptFunction pFunction, int iPosition)
 
 bool Function_SetParam(VScriptFunction pFunction, int iPosition, fieldtype_t nField)
 {
-	int iCount = Function_GetParamCount(pFunction);
-	
 	// Create any new needed params
-	for (int i = iCount; i <= iPosition; i++)
-		SDKCall(g_hSDKCallInsertBefore, pFunction + view_as<Address>(g_iFunctionBinding_Parameters), i);
+	Memory_UtlVectorSetSize(pFunction + view_as<Address>(g_iFunctionBinding_Parameters), 4, iPosition + 1);
 	
 	Address pData = LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Parameters), NumberType_Int32);
 	StoreToAddress(pData + view_as<Address>(4 * iPosition), nField, NumberType_Int32);
@@ -181,6 +175,8 @@ void Function_SetFunctionEmpty(VScriptFunction pFunction)
 	Address pAddress = Function_GetFunction(pFunction);
 	if (FunctionInstructionMatches(pAddress, iInstructions, sizeof(iInstructions)))
 		return;	// Yes, don't need to do anything
+	
+	// TODO proper way to handle this
 	
 	MemoryBlock hEmptyFunction = new MemoryBlock(sizeof(iInstructions));
 	for (int i = 0; i < sizeof(iInstructions); i++)

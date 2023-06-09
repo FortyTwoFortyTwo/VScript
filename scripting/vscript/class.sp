@@ -64,7 +64,7 @@ VScriptFunction Class_CreateFunction(VScriptClass pClass)
 	Address pFunctionBindings = pClass + view_as<Address>(g_iClassDesc_FunctionBindings);
 	int iFunctionCount = LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_FunctionBindings) + view_as<Address>(0x0C), NumberType_Int32);
 	
-	SDKCall(g_hSDKCallInsertBefore, pFunctionBindings, iFunctionCount);
+	Memory_UtlVectorSetSize(pFunctionBindings, g_iFunctionBinding_sizeof, iFunctionCount + 1);
 	
 	Address pData = LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_FunctionBindings), NumberType_Int32);
 	VScriptFunction pFunction = view_as<VScriptFunction>(pData + view_as<Address>(g_iFunctionBinding_sizeof * iFunctionCount));
