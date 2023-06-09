@@ -13,6 +13,7 @@ int g_iScriptVariant_type;
 
 static Handle g_hSDKGetScriptDesc;
 static Handle g_hSDKCallCompileScript;
+static Handle g_hSDKCallReleaseScript;
 static Handle g_hSDKCallRegisterInstance;
 static Handle g_hSDKCallSetInstanceUniqeId;
 static Handle g_hSDKCallGetInstanceValue;
@@ -91,6 +92,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScript_ResetScriptVM", Native_ResetScriptVM);
 	CreateNative("VScript_CompileScript", Native_CompileScript);
 	CreateNative("VScript_CompileScriptFile", Native_CompileScriptFile);
+	CreateNative("VScript_ReleaseScript", Native_ReleaseScript);
 	CreateNative("VScript_CreateTable", Native_CreateTable);
 	CreateNative("VScript_GetAllClasses", Native_GetAllClasses);
 	CreateNative("VScript_GetClass", Native_GetClass);
@@ -134,6 +136,7 @@ public void OnPluginStart()
 		LogError("Failed to create SDKCall: CTFPlayer::GetScriptDesc");
 	
 	g_hSDKCallCompileScript = CreateSDKCall(hGameData, "IScriptVM", "CompileScript", SDKType_PlainOldData, SDKType_String, SDKType_String);
+	g_hSDKCallReleaseScript = CreateSDKCall(hGameData, "IScriptVM", "ReleaseScript", _, SDKType_PlainOldData);
 	g_hSDKCallRegisterInstance = CreateSDKCall(hGameData, "IScriptVM", "RegisterInstance", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_CBaseEntity);
 	g_hSDKCallSetInstanceUniqeId = CreateSDKCall(hGameData, "IScriptVM", "SetInstanceUniqeId", _, SDKType_PlainOldData, SDKType_String);
 	g_hSDKCallGetInstanceValue = CreateSDKCall(hGameData, "IScriptVM", "GetInstanceValue", SDKType_CBaseEntity, SDKType_PlainOldData, SDKType_PlainOldData);
@@ -398,7 +401,10 @@ public any Native_Class_CreateFunction(Handle hPlugin, int iNumParams)
 
 public any Native_Execute(Handle hPlugin, int iNumParams)
 {
-	VScriptExecute aExecute = Execute_Create(GetNativeCell(1));
+	HSCRIPT hScript = GetNativeCell(1);
+	HSCRIPT hScope = iNumParams > 1 ? GetNativeCell(2) : view_as<HSCRIPT>(0);
+
+	VScriptExecute aExecute = Execute_Create(hScript, hScope);
 	
 	VScriptExecute aClone = view_as<VScriptExecute>(CloneHandle(aExecute, hPlugin));
 	delete aExecute;
@@ -508,6 +514,14 @@ public any Native_CompileScriptFile(Handle hPlugin, int iNumParams)
 		Format(sId, sizeof(sId), sFilepath[iIndex + 1]);
 		return SDKCall(g_hSDKCallCompileScript, GetScriptVM(), sScript, sId);
 	}
+}
+
+public any Native_ReleaseScript(Handle hPlugin, int iNumParams)
+{
+	HSCRIPT hScript = GetNativeCell(1);
+
+	SDKCall(g_hSDKCallReleaseScript, GetScriptVM(), hScript);
+	return 0;
 }
 
 public any Native_CreateTable(Handle hPlugin, int iNumParams)

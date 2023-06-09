@@ -221,7 +221,8 @@ methodmap VScriptExecute < Handle
 	// Creates a new handle to execute a script function
 	// 
 	// @param script           Script address to execute.
-	public native VScriptExecute(HSCRIPT script);
+	// @param scope            The script scope to execute the script inside of.
+	public native VScriptExecute(HSCRIPT script, HSCRIPT scope = view_as<HSCRIPT>(0));
 	
 	// Adds a new parameter at the end
 	// 
@@ -265,7 +266,7 @@ native void VScript_ResetScriptVM();
  * @param script           Script to compile
  * @param id               Optional ID to set
  * 
- * @return                 HSCRIPT of script, null if could not compile. This MUST be freed when not in use by using HSCRIPT.Release()
+ * @return                 HSCRIPT of script, null if could not compile. This MUST be freed when not in use by using VScript_ReleaseScript().
  */
 native HSCRIPT VScript_CompileScript(const char[] script, const char[] id = NULL_STRING);
 
@@ -274,10 +275,17 @@ native HSCRIPT VScript_CompileScript(const char[] script, const char[] id = NULL
  * 
  * @param filepath         Filepath to get a script, 'scripts/vscripts/' are automatically added to the filepath
  * 
- * @return                 HSCRIPT of script, null if could not compile. This MUST be freed when not in use by using HSCRIPT.Release()
+ * @return                 HSCRIPT of script, null if could not compile. This MUST be freed when not in use by using VScript_ReleaseScript().
  * @error                  Invalid filepath.
  */
 native HSCRIPT VScript_CompileScriptFile(const char[] filepath);
+
+/**
+ * Releases a compiled script.
+ * 
+ * @param hscript          HSCRIPT of compiled script
+ */
+native void VScript_ReleaseScript(HSCRIPT hscript);
 
 /**
  * Creates a new HSCRIPT table, it MUST be deleted when no longer needed by using HSCRIPT.Release()
@@ -423,6 +431,7 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("VScript_ResetScriptVM");
 	MarkNativeAsOptional("VScript_CompileScript");
 	MarkNativeAsOptional("VScript_CompileScriptFile");
+	MarkNativeAsOptional("VScript_ReleaseScript");
 	MarkNativeAsOptional("VScript_CreateTable");
 	MarkNativeAsOptional("VScript_GetAllClasses");
 	MarkNativeAsOptional("VScript_GetClass");
