@@ -170,14 +170,14 @@
 			
 			"IScriptVM::CompileScript"	// vtable dumper got it wrong
 			{
-				"linux"		"8"
-				"windows"	"10"
+				"linux"		"9"
+				"windows"	"11"
 			}
 			
 			"IScriptVM::ReleaseScript"
 			{
-				"linux"		"9"
-				"windows"	"11"
+				"linux"		"10"
+				"windows"	"12"
 			}
 			
 			"IScriptVM::ExecuteFunction"
@@ -323,18 +323,6 @@
 			{
 				"linux"		"60"
 				"windows"	"60"
-			}
-			
-			"IScriptVM::CompileScript"
-			{
-				"linux"		"9"
-				"windows"	"11"
-			}
-			
-			"IScriptVM::ReleaseScript"
-			{
-				"linux"		"10"
-				"windows"	"12"
 			}
 		}
 	}
