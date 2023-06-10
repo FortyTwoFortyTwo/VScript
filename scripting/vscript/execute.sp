@@ -11,6 +11,7 @@ enum struct Execute
 {
 	HSCRIPT pHScript;
 	ExecuteParam nReturn;
+	HSCRIPT hScope;
 }
 
 static Handle g_hSDKCallExecuteFunction;
@@ -20,14 +21,13 @@ void Execute_LoadGamedata(GameData hGameData)
 	g_hSDKCallExecuteFunction = CreateSDKCall(hGameData, "IScriptVM", "ExecuteFunction", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_Bool);
 }
 
-/* TODO execute a function from a scope, so we can pass scope param */
-
-VScriptExecute Execute_Create(HSCRIPT pHScript)
+VScriptExecute Execute_Create(HSCRIPT pHScript, HSCRIPT hScope)
 {
 	ArrayList aExecute = new ArrayList(sizeof(Execute));
 	
 	Execute execute;
 	execute.pHScript = pHScript;
+	execute.hScope = hScope;
 	aExecute.PushArray(execute);
 	return view_as<VScriptExecute>(aExecute);
 }
@@ -101,7 +101,7 @@ ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
 		hArgs.StoreToOffset((iParam * g_iScriptVariant_sizeof) + g_iScriptVariant_union, nValue, NumberType_Int32);
 	}
 	
-	ScriptStatus_t nStatus = SDKCall(g_hSDKCallExecuteFunction, GetScriptVM(), execute.pHScript, hArgs ? hArgs.Address : Address_Null, iNumParams, pReturn.Address, 0, true);
+	ScriptStatus_t nStatus = SDKCall(g_hSDKCallExecuteFunction, GetScriptVM(), execute.pHScript, hArgs ? hArgs.Address : Address_Null, iNumParams, pReturn.Address, execute.hScope, true);
 	
 	execute.nReturn.nType = pReturn.nType;
 	execute.nReturn.nValue = pReturn.nValue;

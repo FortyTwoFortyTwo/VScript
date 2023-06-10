@@ -55,6 +55,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("HSCRIPT.SetValueString", Native_HScript_SetValueString);
 	CreateNative("HSCRIPT.SetValueVector", Native_HScript_SetValueVector);
 	CreateNative("HSCRIPT.Release", Native_HScript_Release);
+	CreateNative("HSCRIPT.ReleaseScript", Native_HScript_ReleaseScript);
 	
 	CreateNative("VScriptFunction.GetScriptName", Native_Function_GetScriptName);
 	CreateNative("VScriptFunction.SetScriptName", Native_Function_SetScriptName);
@@ -220,6 +221,12 @@ public any Native_HScript_SetValueVector(Handle hPlugin, int iNumParams)
 public any Native_HScript_Release(Handle hPlugin, int iNumParams)
 {
 	HScript_ReleaseValue(GetNativeCell(1));
+	return 0;
+}
+
+public any Native_HScript_ReleaseScript(Handle hPlugin, int iNumParams)
+{
+	HScript_ReleaseScript(GetNativeCell(1));
 	return 0;
 }
 
@@ -398,7 +405,10 @@ public any Native_Class_CreateFunction(Handle hPlugin, int iNumParams)
 
 public any Native_Execute(Handle hPlugin, int iNumParams)
 {
-	VScriptExecute aExecute = Execute_Create(GetNativeCell(1));
+	HSCRIPT hScript = GetNativeCell(1);
+	HSCRIPT hScope = iNumParams > 1 ? GetNativeCell(2) : HSCRIPT_RootTable;
+
+	VScriptExecute aExecute = Execute_Create(hScript, hScope);
 	
 	VScriptExecute aClone = view_as<VScriptExecute>(CloneHandle(aExecute, hPlugin));
 	delete aExecute;
