@@ -342,6 +342,16 @@ native VScriptFunction VScript_GetGlobalFunction(const char[] functionName);
 native VScriptFunction VScript_CreateFunction();
 
 /**
+ * Gets the script scope of an entity
+ * 
+ * @param entity           Entity index.
+ * 
+ * @return                 Address of the HScript scope
+ * @error                  Invalid entity
+ */
+native HSCRIPT VScript_GetEntityScriptScope(int entity);
+
+/**
  * Gets the HScript address of an entity
  * 
  * @param entity           Entity index.
@@ -435,8 +445,8 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("VScript_GetAllGlobalFunctions");
 	MarkNativeAsOptional("VScript_GetGlobalFunction");
 	MarkNativeAsOptional("VScript_CreateFunction");
+	MarkNativeAsOptional("VScript_GetEntityScriptScope");
 	MarkNativeAsOptional("VScript_EntityToHScript");
 	MarkNativeAsOptional("VScript_HScriptToEntity");
-	MarkNativeAsOptional("VScript_EntityExecuteFunction");
 }
 #endif

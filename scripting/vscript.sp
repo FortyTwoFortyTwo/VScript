@@ -11,12 +11,8 @@ int g_iScriptVariant_sizeof;
 int g_iScriptVariant_union;
 int g_iScriptVariant_type;
 
-static Handle g_hSDKGetScriptDesc;
 static Handle g_hSDKCallCompileScript;
-static Handle g_hSDKCallRegisterInstance;
-static Handle g_hSDKCallSetInstanceUniqeId;
 static Handle g_hSDKCallGetInstanceValue;
-static Handle g_hSDKCallGenerateUniqueKey;
 
 const SDKType SDKType_Unknown = view_as<SDKType>(-1);
 const SDKPassMethod SDKPass_Unknown = view_as<SDKPassMethod>(-1);
@@ -25,6 +21,7 @@ const VScriptClass VScriptClass_Invalid = view_as<VScriptClass>(Address_Null);
 const VScriptFunction VScriptFunction_Invalid = view_as<VScriptFunction>(Address_Null);
 
 #include "vscript/class.sp"
+#include "vscript/entity.sp"
 #include "vscript/execute.sp"
 #include "vscript/field.sp"
 #include "vscript/function.sp"
@@ -41,7 +38,7 @@ public Plugin myinfo =
 	name = "VScript",
 	author = "42",
 	description = "Exposes VScript into Sourcemod",
-	version = "1.6.1",
+	version = "1.6.2",
 	url = "https://github.com/FortyTwoFortyTwo/VScript",
 };
 
@@ -99,6 +96,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScript_GetAllGlobalFunctions", Native_GetAllGlobalFunctions);
 	CreateNative("VScript_GetGlobalFunction", Native_GetGlobalFunction);
 	CreateNative("VScript_CreateFunction", Native_CreateFunction);
+	CreateNative("VScript_GetEntityScriptScope", Native_GetEntityScriptScope);
 	CreateNative("VScript_EntityToHScript", Native_EntityToHScript);
 	CreateNative("VScript_HScriptToEntity", Native_HScriptToEntity);
 	
@@ -120,6 +118,7 @@ public void OnPluginStart()
 	VTable_LoadGamedata(hGameData);
 	
 	Class_LoadGamedata(hGameData);
+	Entity_LoadGamedata(hGameData);
 	Execute_LoadGamedata(hGameData);
 	Field_LoadGamedata(hGameData);
 	Function_LoadGamedata(hGameData);
@@ -127,18 +126,8 @@ public void OnPluginStart()
 	HScript_LoadGamedata(hGameData);
 	List_LoadGamedata(hGameData);
 	
-	StartPrepSDKCall(SDKCall_Entity);
-	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CTFPlayer::GetScriptDesc");
-	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
-	g_hSDKGetScriptDesc = EndPrepSDKCall();
-	if (!g_hSDKGetScriptDesc)
-		LogError("Failed to create SDKCall: CTFPlayer::GetScriptDesc");
-	
 	g_hSDKCallCompileScript = CreateSDKCall(hGameData, "IScriptVM", "CompileScript", SDKType_PlainOldData, SDKType_String, SDKType_String);
-	g_hSDKCallRegisterInstance = CreateSDKCall(hGameData, "IScriptVM", "RegisterInstance", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_CBaseEntity);
-	g_hSDKCallSetInstanceUniqeId = CreateSDKCall(hGameData, "IScriptVM", "SetInstanceUniqeId", _, SDKType_PlainOldData, SDKType_String);
 	g_hSDKCallGetInstanceValue = CreateSDKCall(hGameData, "IScriptVM", "GetInstanceValue", SDKType_CBaseEntity, SDKType_PlainOldData, SDKType_PlainOldData);
-	g_hSDKCallGenerateUniqueKey = CreateSDKCall(hGameData, "IScriptVM", "GenerateUniqueKey", SDKType_Bool, SDKType_String, SDKType_String, SDKType_PlainOldData);
 	
 	delete hGameData;
 	
@@ -593,37 +582,25 @@ public any Native_CreateFunction(Handle hPlugin, int iNumParams)
 	return Function_Create();
 }
 
+public any Native_GetEntityScriptScope(Handle hPlugin, int iNumParams)
+{
+	int iEntity = GetNativeCell(1);
+	if (!IsValidEntity(iEntity))
+		ThrowNativeError(SP_ERROR_NATIVE, "Invalid entity index '%d'", iEntity);
+	
+	return Entity_GetScriptScope(iEntity);
+}
+
 public any Native_EntityToHScript(Handle hPlugin, int iNumParams)
 {
 	int iEntity = GetNativeCell(1);
 	if (iEntity == INVALID_ENT_REFERENCE)
 		return Address_Null;	// follows same way to how ToHScript handles it
 	
-	// Below exact same as CBaseEntity::GetScriptInstance
+	if (!IsValidEntity(iEntity))
+		ThrowNativeError(SP_ERROR_NATIVE, "Invalid entity index '%d'", iEntity);
 	
-	int iOffset = FindDataMapInfo(iEntity, "m_iszScriptId") - 4;
-	HSCRIPT pScriptInstance = view_as<HSCRIPT>(GetEntData(iEntity, iOffset));
-	if (!pScriptInstance)
-	{
-		char sId[1024];
-		GetEntPropString(iEntity, Prop_Data, "m_iszScriptId", sId, sizeof(sId));
-		if (!sId[0])
-		{
-			char sName[1024];
-			GetEntPropString(iEntity, Prop_Data, "m_iName", sName, sizeof(sName));
-			if (!sName[0])
-				GetEntityClassname(iEntity, sName, sizeof(sName));
-			
-			SDKCall(g_hSDKCallGenerateUniqueKey, GetScriptVM(), sName, sId, sizeof(sId));
-			SetEntPropString(iEntity, Prop_Data, "m_iszScriptId", sId);
-		}
-		
-		pScriptInstance = SDKCall(g_hSDKCallRegisterInstance, GetScriptVM(), SDKCall(g_hSDKGetScriptDesc, iEntity), iEntity);
-		SetEntData(iEntity, iOffset, pScriptInstance);
-		SDKCall(g_hSDKCallSetInstanceUniqeId, GetScriptVM(), pScriptInstance, sId);
-	}
-	
-	return pScriptInstance;
+	return Entity_GetScriptInstance(iEntity);
 }
 
 public any Native_HScriptToEntity(Handle hPlugin, int iNumParams)
