@@ -579,7 +579,9 @@ public any Native_GetGlobalFunction(Handle hPlugin, int iNumParams)
 
 public any Native_CreateFunction(Handle hPlugin, int iNumParams)
 {
-	return Function_Create();
+	VScriptFunction pFunction = Function_Create();
+	Function_Init(pFunction, false);
+	return pFunction;
 }
 
 public any Native_GetEntityScriptScope(Handle hPlugin, int iNumParams)

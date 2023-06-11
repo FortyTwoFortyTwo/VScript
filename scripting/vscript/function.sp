@@ -41,18 +41,19 @@ VScriptFunction Function_Create()
 	hFunction.Disown();
 	delete hFunction;
 	
-	Function_UpdateBinding(pFunction);
 	return pFunction;
 }
 
-void Function_Init(VScriptFunction pFunction)
+void Function_Init(VScriptFunction pFunction, bool bClass)
 {
 	// Not sure this is needed
 	for (int i = 0; i < g_iFunctionBinding_sizeof; i++)
 		StoreToAddress(pFunction + view_as<Address>(i), 0, NumberType_Int8);
 	
 	// Right now just need to set flags, currently we can only support member functions
-	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_Flags), SF_MEMBER_FUNC, NumberType_Int32);
+	if (bClass)
+		Function_SetFlags(pFunction, SF_MEMBER_FUNC);
+	
 	Function_UpdateBinding(pFunction);
 }
 
@@ -143,6 +144,16 @@ void Function_SetFunction(VScriptFunction pFunction, Address pFunc)
 	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_Function), pFunc, NumberType_Int32);
 }
 
+ScriptFuncBindingFlags_t Function_GetFlags(VScriptFunction pFunction)
+{
+	return LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Flags), NumberType_Int32);
+}
+
+void Function_SetFlags(VScriptFunction pFunction, ScriptFuncBindingFlags_t nFlags)
+{
+	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_Flags), nFlags, NumberType_Int32);
+}
+
 void Function_SetFunctionEmpty(VScriptFunction pFunction)
 {
 	int iCount = 0;
@@ -201,7 +212,11 @@ void Function_Register(VScriptFunction pFunction)
 
 Handle Function_CreateSDKCall(VScriptFunction pFunction)
 {
-	StartPrepSDKCall(SDKCall_Entity);
+	if (Function_GetFlags(pFunction) & SF_MEMBER_FUNC)
+		StartPrepSDKCall(SDKCall_Entity);
+	else
+		StartPrepSDKCall(SDKCall_Static);
+	
 	PrepSDKCall_SetAddress(Function_GetFunction(pFunction));
 	
 	int iCount = Function_GetParamCount(pFunction);
@@ -221,7 +236,12 @@ Handle Function_CreateSDKCall(VScriptFunction pFunction)
 DynamicDetour Function_CreateDetour(VScriptFunction pFunction)
 {
 	fieldtype_t nField = Function_GetReturnType(pFunction);
-	DynamicDetour hDetour = new DynamicDetour(Function_GetFunction(pFunction), CallConv_THISCALL, Field_GetReturnType(nField), ThisPointer_CBaseEntity);
+	
+	DynamicDetour hDetour;
+	if (Function_GetFlags(pFunction) & SF_MEMBER_FUNC)
+		hDetour = new DynamicDetour(Function_GetFunction(pFunction), CallConv_THISCALL, Field_GetReturnType(nField), ThisPointer_CBaseEntity);
+	else
+		hDetour = new DynamicDetour(Function_GetFunction(pFunction), CallConv_CDECL, Field_GetReturnType(nField), ThisPointer_Ignore);
 	
 	int iCount = Function_GetParamCount(pFunction);
 	for (int i = 0; i < iCount; i++)

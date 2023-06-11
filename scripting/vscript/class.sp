@@ -68,6 +68,6 @@ VScriptFunction Class_CreateFunction(VScriptClass pClass)
 	
 	Address pData = LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_FunctionBindings), NumberType_Int32);
 	VScriptFunction pFunction = view_as<VScriptFunction>(pData + view_as<Address>(g_iFunctionBinding_sizeof * iFunctionCount));
-	Function_Init(pFunction);
+	Function_Init(pFunction, true);
 	return pFunction;
 }
