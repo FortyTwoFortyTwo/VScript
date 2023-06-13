@@ -98,6 +98,7 @@ Address List_FindNewBinding(VScriptFunction pSearch)
 {
 	// Would be really tough to create new binding in pure SP, we'll have to yoink one from existing binding if return and param matches
 	
+	ScriptFuncBindingFlags_t nFlags = Function_GetFlags(pSearch);
 	fieldtype_t nReturn = Function_GetReturnType(pSearch);
 	int iParamCount = Function_GetParamCount(pSearch);
 	
@@ -112,7 +113,7 @@ Address List_FindNewBinding(VScriptFunction pSearch)
 		if (pFunction == pSearch)	// Don't want to pick itself as pSearch binding is assumed incorrect
 			continue;
 		
-		if (Function_MatchesBinding(pFunction, nReturn, nParams, iParamCount))
+		if (Function_MatchesBinding(pFunction, nFlags, nReturn, nParams, iParamCount))
 			return Function_GetBinding(pFunction);
 	}
 	
@@ -128,7 +129,7 @@ Address List_FindNewBinding(VScriptFunction pSearch)
 			if (pFunction == pSearch)	// Don't want to pick itself as pSearch binding is assumed incorrect
 				continue;
 			
-			if (Function_MatchesBinding(pFunction, nReturn, nParams, iParamCount))
+			if (Function_MatchesBinding(pFunction, nFlags, nReturn, nParams, iParamCount))
 				return Function_GetBinding(pFunction);
 		}
 	}

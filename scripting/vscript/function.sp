@@ -253,8 +253,11 @@ DynamicDetour Function_CreateDetour(VScriptFunction pFunction)
 	return hDetour;
 }
 
-bool Function_MatchesBinding(VScriptFunction pFunction, fieldtype_t nReturn, fieldtype_t[] nParams, int iParamCount)
+bool Function_MatchesBinding(VScriptFunction pFunction, ScriptFuncBindingFlags_t nFlags, fieldtype_t nReturn, fieldtype_t[] nParams, int iParamCount)
 {
+	if (Function_GetFlags(pFunction) != nFlags)
+		return false;
+	
 	if (!Field_MatchesBinding(Function_GetReturnType(pFunction), nReturn))
 		return false;
 	

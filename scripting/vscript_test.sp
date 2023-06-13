@@ -2,6 +2,7 @@
 
 #define TEST_ENTITY		0	// worldspawn
 #define TEST_INTEGER	322
+#define TEST_FLOAT		3.14159
 #define TEST_CSTRING	"Message"
 
 public Plugin myinfo =
@@ -17,6 +18,23 @@ public void OnPluginStart()
 {
 	VScriptFunction pFunction;
 	int iValue;
+	
+	//Test this first, because of resetting g_pScriptVM
+	pFunction = VScript_GetClassFunction("CBaseEntity", "BunchOfParams");
+	if (!pFunction)
+	{
+		pFunction = VScript_GetClass("CBaseEntity").CreateFunction();
+		pFunction.SetScriptName("BunchOfParams");
+		pFunction.SetParam(1, FIELD_INTEGER);
+		pFunction.SetParam(2, FIELD_FLOAT);
+		pFunction.SetParam(3, FIELD_CSTRING);
+		pFunction.SetFunctionEmpty();
+		VScript_ResetScriptVM();
+	}
+	
+	// Create a detour for newly created function
+	pFunction.CreateDetour().Enable(Hook_Pre, Detour_BunchOfParams);
+	SDKCall(pFunction.CreateSDKCall(), TEST_ENTITY, TEST_INTEGER, TEST_FLOAT, TEST_CSTRING);
 	
 	// Create AnotherRandomInt function that does the exact same as RandomInt
 	pFunction = VScript_GetGlobalFunction("AnotherRandomInt");
@@ -34,36 +52,34 @@ public void OnPluginStart()
 	hDetour.Disable(Hook_Post, Detour_RandomInt);
 	AssertInt(TEST_INTEGER, iValue);
 	
-	// TODO fix SetFunctionEmpty with return value not working correctly
-	
-	pFunction = VScript_GetGlobalFunction("GlobalFunction");
+	pFunction = VScript_GetGlobalFunction("ReturnAFunnyNumber");
 	if (!pFunction)
 	{
 		pFunction = VScript_CreateFunction();
-		pFunction.SetScriptName("GlobalFunction");
-		pFunction.SetParam(1, FIELD_INTEGER);
+		pFunction.SetScriptName("ReturnAFunnyNumber");
+		pFunction.Return = FIELD_INTEGER;
 		pFunction.SetFunctionEmpty();
 		pFunction.Register();
 	}
 	
-	// TODO Fix detour crash
-	//pFunction.CreateDetour().Enable(Hook_Post, Detour_GlobalFunction);
-	SDKCall(pFunction.CreateSDKCall(), TEST_INTEGER);
+	pFunction.CreateDetour().Enable(Hook_Pre, Detour_ReturnAFunnyNumber);
+	iValue = SDKCall(pFunction.CreateSDKCall());
+	AssertInt(TEST_INTEGER, iValue);
 	
-	pFunction = VScript_GetClassFunction("CBaseEntity", "CoolFunction");
+	pFunction = VScript_GetGlobalFunction("CoolFunction");
 	if (!pFunction)
 	{
-		pFunction = VScript_GetClass("CBaseEntity").CreateFunction();
+		pFunction = VScript_CreateFunction();
 		pFunction.SetScriptName("CoolFunction");
 		pFunction.SetParam(1, FIELD_CSTRING);
+		pFunction.Return = FIELD_INTEGER;
 		pFunction.SetFunctionEmpty();
-		
-		VScript_ResetScriptVM();
+		pFunction.Register();
 	}
 	
-	// Create a detour for newly created function
-	pFunction.CreateDetour().Enable(Hook_Post, Detour_CoolFunction);
-	SDKCall(pFunction.CreateSDKCall(), TEST_ENTITY, TEST_CSTRING);
+	pFunction.CreateDetour().Enable(Hook_Pre, Detour_CoolFunction);
+	iValue = SDKCall(pFunction.CreateSDKCall(), TEST_CSTRING);
+//	AssertInt(TEST_INTEGER, iValue);	// TODO fix this, it works fine in vscript but CreateSDKCall got something wrong
 	
 	CheckFunctions(VScript_GetAllGlobalFunctions());
 	
@@ -109,27 +125,44 @@ public MRESReturn Detour_RandomInt(DHookReturn hReturn, DHookParam hParam)
 	return MRES_Ignored;
 }
 
-public MRESReturn Detour_GlobalFunction(DHookParam hParam)
+public MRESReturn Detour_ReturnAFunnyNumber(DHookReturn hReturn)
 {
-	AssertInt(TEST_INTEGER, hParam.Get(1));
-	return MRES_Ignored;
+	hReturn.Value = TEST_INTEGER;
+	return MRES_Supercede;
 }
 
-public MRESReturn Detour_CoolFunction(int iEntity, DHookParam hParam)
+public MRESReturn Detour_BunchOfParams(int iEntity, DHookParam hParam)
 {
-	AssertInt(TEST_ENTITY, iEntity);
+	AssertInt(TEST_INTEGER, hParam.Get(1));
+	AssertFloat(TEST_FLOAT, hParam.Get(2));
 	
+	char sBuffer[256];
+	hParam.GetString(3, sBuffer, sizeof(sBuffer));
+	AssertString(TEST_CSTRING, sBuffer);
+	
+	return MRES_Supercede;
+}
+
+public MRESReturn Detour_CoolFunction(DHookReturn hReturn, DHookParam hParam)
+{
 	char sBuffer[256];
 	hParam.GetString(1, sBuffer, sizeof(sBuffer));
 	AssertString(TEST_CSTRING, sBuffer);
 	
-	return MRES_Ignored;
+	hReturn.Value = TEST_INTEGER;
+	return MRES_Supercede;
 }
 
 void AssertInt(any nValue1, any nValue2)
 {
 	if (nValue1 != nValue2)
 		ThrowError("Expected int '%d', found '%d'", nValue1, nValue2);
+}
+
+void AssertFloat(any nValue1, any nValue2)
+{
+	if (nValue1 != nValue2)
+		ThrowError("Expected float '%f', found '%f'", nValue1, nValue2);
 }
 
 void AssertString(const char[] sValue1, const char[] sValue2)

@@ -42,6 +42,16 @@ char[] Memory_AddressToString(Address pAddress)
 	return sBuffer;
 }
 
+/*
+CUtlVector<Data> {
+    Data *m_pMemory;		// +0	Ptr to items
+    int m_nAllocationCount;	// +4	Amount of allocated space
+    int m_nGrowSize;		// +8	Size by which memory grows
+    int m_Size;				// +12	Number of items in vector
+    Data *m_pElements;		// +16	Same as m_pMemory, used for debugging
+}
+*/
+
 void Memory_UtlVectorSetSize(Address pUtlVector, int iSize, int iCount)
 {
 	int iAllocationCount = LoadFromAddress(pUtlVector + view_as<Address>(4), NumberType_Int32);
@@ -60,6 +70,8 @@ void Memory_UtlVectorSetSize(Address pUtlVector, int iSize, int iCount)
 		
 		iAllocationCount = iCount;
 		StoreToAddress(pUtlVector + view_as<Address>(4), iAllocationCount, NumberType_Int32);
+		
 		Memory_SetAddress(pUtlVector + view_as<Address>(0), hMemory);
+		StoreToAddress(pUtlVector + view_as<Address>(16), hMemory.Address, NumberType_Int32);
 	}
 }
