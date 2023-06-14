@@ -137,7 +137,7 @@ methodmap VScriptFunction < Address
 	public native void SetDescription(const char[] value);
 	
 	// Gets the address of the binding
-	// Binding gets automatically updated when return and params is updated when possible.
+	// Binding gets automatically updated when SetFunctionEmpty is called when possible.
 	property Address Binding
 	{
 		public native get();

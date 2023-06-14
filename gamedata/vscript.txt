@@ -31,7 +31,7 @@
 			"FIELD_VECTOR"		"3"
 			"FIELD_INTEGER"		"5"
 			"FIELD_BOOLEAN"		"6"
-			"FIELD_TYPEUNKNOWN"	"0"	// Normally shouldn't be allowed, but TF2 have it
+			"FIELD_TYPEUNKNOWN"	"29"	// Normally shouldn't be allowed, but some functions have it
 			"FIELD_CSTRING"		"30"
 			"FIELD_HSCRIPT"		"31"
 			"FIELD_VARIANT"		"32"
@@ -264,6 +264,7 @@
 	{
 		"Keys"
 		{
+			"FIELD_TYPEUNKNOWN"	"31"	// +2
 			"FIELD_CSTRING"		"32"	// +2
 			"FIELD_HSCRIPT"		"33"	// +2
 			"FIELD_VARIANT"		"0"
@@ -289,6 +290,7 @@
 				"windows"	"6 8 16 29 33 36 38"
 			}
 			
+			"FIELD_TYPEUNKNOWN"	"30"	// +1
 			"FIELD_CSTRING"		"31"	// +1
 			"FIELD_HSCRIPT"		"32"	// +1
 			"FIELD_VARIANT"		"33"	// +1

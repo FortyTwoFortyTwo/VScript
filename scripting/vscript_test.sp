@@ -19,14 +19,18 @@ public void OnPluginStart()
 	VScriptFunction pFunction;
 	int iValue;
 	
+	// Ensure that CBaseEntity is registered in L4D2
+	SetVariantString("self.ValidateScriptScope()");
+	AcceptEntityInput(TEST_ENTITY, "RunScriptCode");
+	
 	//Test this first, because of resetting g_pScriptVM
 	pFunction = VScript_GetClassFunction("CBaseEntity", "BunchOfParams");
 	if (!pFunction)
 	{
 		pFunction = VScript_GetClass("CBaseEntity").CreateFunction();
 		pFunction.SetScriptName("BunchOfParams");
-		pFunction.SetParam(1, FIELD_INTEGER);
-		pFunction.SetParam(2, FIELD_FLOAT);
+		pFunction.SetParam(1, FIELD_FLOAT);
+		pFunction.SetParam(2, FIELD_INTEGER);
 		pFunction.SetParam(3, FIELD_CSTRING);
 		pFunction.SetFunctionEmpty();
 		VScript_ResetScriptVM();
@@ -34,7 +38,7 @@ public void OnPluginStart()
 	
 	// Create a detour for newly created function
 	pFunction.CreateDetour().Enable(Hook_Pre, Detour_BunchOfParams);
-	SDKCall(pFunction.CreateSDKCall(), TEST_ENTITY, TEST_INTEGER, TEST_FLOAT, TEST_CSTRING);
+	SDKCall(pFunction.CreateSDKCall(), TEST_ENTITY, TEST_FLOAT, TEST_INTEGER, TEST_CSTRING);
 	
 	// Create AnotherRandomInt function that does the exact same as RandomInt
 	pFunction = VScript_GetGlobalFunction("AnotherRandomInt");
@@ -174,8 +178,8 @@ public MRESReturn Detour_ReturnAFunnyNumber(DHookReturn hReturn)
 
 public MRESReturn Detour_BunchOfParams(int iEntity, DHookParam hParam)
 {
-	AssertInt(TEST_INTEGER, hParam.Get(1));
-	AssertFloat(TEST_FLOAT, hParam.Get(2));
+	AssertFloat(TEST_FLOAT, hParam.Get(1));
+	AssertInt(TEST_INTEGER, hParam.Get(2));
 	
 	char sBuffer[256];
 	hParam.GetString(3, sBuffer, sizeof(sBuffer));

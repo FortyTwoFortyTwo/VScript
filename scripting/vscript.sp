@@ -38,7 +38,7 @@ public Plugin myinfo =
 	name = "VScript",
 	author = "42",
 	description = "Exposes VScript into Sourcemod",
-	version = "1.6.3",
+	version = "1.6.4",
 	url = "https://github.com/FortyTwoFortyTwo/VScript",
 };
 
@@ -298,6 +298,10 @@ public any Native_Function_FunctionSet(Handle hPlugin, int iNumParams)
 
 public any Native_Function_SetFunctionEmpty(Handle hPlugin, int iNumParams)
 {
+	VScriptFunction pFunction = GetNativeCell(1);
+	if (!Function_UpdateBinding(pFunction))
+		ThrowNativeError(SP_ERROR_NATIVE, "Could not find new binding with function '%08X'", pFunction);
+	
 	Function_SetFunctionEmpty(GetNativeCell(1));
 	return 0;
 }
@@ -309,9 +313,7 @@ public any Native_Function_ReturnGet(Handle hPlugin, int iNumParams)
 
 public any Native_Function_ReturnSet(Handle hPlugin, int iNumParams)
 {
-	if (!Function_SetReturnType(GetNativeCell(1), GetNativeCell(2)))
-		return ThrowNativeError(SP_ERROR_NATIVE, "Could not find new binding with return field '%s'", Field_GetName(GetNativeCell(2)));
-	
+	Function_SetReturnType(GetNativeCell(1), GetNativeCell(2));
 	return 0;
 }
 
@@ -334,9 +336,7 @@ public any Native_Function_GetParam(Handle hPlugin, int iNumParams)
 
 public any Native_Function_SetParam(Handle hPlugin, int iNumParams)
 {
-	if (!Function_SetParam(GetNativeCell(1), GetNativeCell(2) - 1, GetNativeCell(3)))
-		return ThrowNativeError(SP_ERROR_NATIVE, "Could not find new binding with parameter number '%d' and field '%s'", GetNativeCell(2), Field_GetName(GetNativeCell(3)));
-	
+	Function_SetParam(GetNativeCell(1), GetNativeCell(2) - 1, GetNativeCell(3));
 	return 0;
 }
 

@@ -48,7 +48,7 @@ fieldtype_t Field_GameToEnum(int iField)
 		if (g_FieldInfos[i].iGameValue == iField)
 			return view_as<fieldtype_t>(i);
 	
-	LogError("Unknown field value '%d'", iField);
+	ThrowError("Unknown field value '%d'", iField);
 	return FIELD_VOID;
 }
 
