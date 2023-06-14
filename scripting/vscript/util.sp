@@ -45,6 +45,22 @@ void StoreNativePointerStringToAddress(Address pAddress, int iParam)
 	Memory_SetAddress(pAddress, hString);
 }
 
+MemoryBlock StoreNativeStringToMemory(int iParam)
+{
+	int iLength;
+	GetNativeStringLength(iParam, iLength);
+	iLength++;
+	
+	char[] sBuffer = new char[iLength];
+	GetNativeString(iParam, sBuffer, iLength);
+	
+	MemoryBlock hString = Memory_Create(iLength);
+	for (int i = 0; i < iLength; i++)
+		hString.StoreToOffset(i, sBuffer[i], NumberType_Int8);
+	
+	return hString;
+}
+
 bool FunctionInstructionMatches(Address pFunction, int[] iInstructions, int iLength)
 {
 	if (!pFunction)

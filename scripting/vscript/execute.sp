@@ -3,8 +3,16 @@
 enum struct ExecuteParam
 {
 	fieldtype_t nType;
-	any nValue;
-	float vecValue[3];
+	any nValue;			// int
+	Address pValue;		// string
+	float vecValue[3];	// vector
+	
+	void Delete()
+	{
+		// Should ideally also be called when VScriptExecute is deleted
+		if (this.pValue)
+			Memory_DeleteAddress(this.pValue);
+	}
 }
 
 enum struct Execute
@@ -37,7 +45,7 @@ void Execute_GetInfo(VScriptExecute aExecute, Execute execute)
 	view_as<ArrayList>(aExecute).GetArray(0, execute);
 }
 
-void Execute_SetInfo(VScriptExecute aExecute, Execute execute)
+static void Execute_SetInfo(VScriptExecute aExecute, Execute execute)
 {
 	view_as<ArrayList>(aExecute).SetArray(0, execute);
 }
@@ -54,12 +62,16 @@ void Execute_AddParam(VScriptExecute aExecute, ExecuteParam param)
 
 void Execute_SetParam(VScriptExecute aExecute, int iParam, ExecuteParam param)
 {
-	for (int i = Execute_GetParamCount(aExecute) + 1; i < iParam; i++)
+	for (int i = Execute_GetParamCount(aExecute) + 1; i <= iParam; i++)
 	{
 		// Fill any new params between as void
 		ExecuteParam nothing;
 		view_as<ArrayList>(aExecute).PushArray(nothing);
 	}
+	
+	ExecuteParam del;
+	view_as<ArrayList>(aExecute).GetArray(iParam, del);
+	del.Delete();
 	
 	view_as<ArrayList>(aExecute).SetArray(iParam, param);
 }
@@ -76,6 +88,8 @@ ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
 	if (iNumParams)
 		hArgs = new MemoryBlock(iNumParams * g_iScriptVariant_sizeof);
 	
+	MemoryBlock[] hValue = new MemoryBlock[iNumParams];
+	
 	for (int iParam = 0; iParam < iNumParams; iParam++)
 	{
 		ExecuteParam param;
@@ -91,9 +105,15 @@ ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
 			}
 			case SMField_String:
 			{
+				nValue = param.pValue;
 			}
 			case SMField_Vector:
 			{
+				hValue[iParam] = new MemoryBlock(sizeof(param.vecValue) * 4);
+				for (int i = 0; i < sizeof(param.vecValue); i++)
+					hValue[iParam].StoreToOffset(i * 4, view_as<int>(param.vecValue[i]), NumberType_Int32);
+				
+				nValue = hValue[iParam].Address;
 			}
 		}
 		
@@ -103,11 +123,31 @@ ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
 	
 	ScriptStatus_t nStatus = SDKCall(g_hSDKCallExecuteFunction, GetScriptVM(), execute.pHScript, hArgs ? hArgs.Address : Address_Null, iNumParams, pReturn.Address, execute.hScope, true);
 	
+	if (pReturn.nType != FIELD_VOID)
+	{
+		switch (Field_GetSMField(pReturn.nType))
+		{
+			case SMField_Any:
+			{
+				execute.nReturn.nValue = pReturn.nValue;
+			}
+			case SMField_String:
+			{
+				execute.nReturn.pValue = pReturn.nValue;
+			}
+			case SMField_Vector:
+			{
+				pReturn.GetVector(execute.nReturn.vecValue);
+			}
+		}
+	}
+	
 	execute.nReturn.nType = pReturn.nType;
-	execute.nReturn.nValue = pReturn.nValue;
 	Execute_SetInfo(aExecute, execute);
 	
 	delete hArgs, pReturn;
+	for (int i = 0; i < iNumParams; i++)
+		delete hValue[i];
 	
 	return nStatus;
 }

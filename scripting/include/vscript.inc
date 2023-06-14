@@ -233,12 +233,38 @@ methodmap VScriptExecute < Handle
 	// @param value            Value to set.
 	public native void AddParam(fieldtype_t type, any value);
 	
-	// Sets a specific parameter with value
+	// Adds a new string parameter at the end
+	// 
+	// @param type             Type of field to set.
+	// @param value            String value to set.
+	public native void AddParamString(fieldtype_t type, const char[] value);
+	
+	// Adds a new vector parameter at the end
+	// 
+	// @param type             Type of field to set.
+	// @param value            Vector value to set.
+	public native void AddParamVector(fieldtype_t type, const float value[3]);
+	
+	// Sets a given parameter with value
 	// 
 	// @param param            Parameter to set.
 	// @param type             Type of field to set.
 	// @param value            Value to set.
 	public native void SetParam(int param, fieldtype_t type, any value);
+	
+	// Sets a given parameter with string value
+	// 
+	// @param param            Parameter to set.
+	// @param type             Type of field to set.
+	// @param value            String value to set.
+	public native void SetParamString(int param, fieldtype_t type, const char[] value);
+	
+	// Sets a given parameter with vector value
+	// 
+	// @param param            Parameter to set.
+	// @param type             Type of field to set.
+	// @param value            Vector value to set.
+	public native void SetParamVector(int param, fieldtype_t type, const float value[3]);
 	
 	// Executes a function
 	//
@@ -256,6 +282,18 @@ methodmap VScriptExecute < Handle
 	{
 		public native get();
 	}
+	
+	// Gets a return string value
+	// 
+	// @param buffer           Buffer to store string.
+	// @param length           Size of buffer.
+	public native void GetReturnString(char[] buffer, int length);
+	
+	// Gets a return vector value
+	// 
+	// @param buffer           Buffer to store vector.
+	// @param length           Size of buffer.
+	public native void GetReturnVector(float buffer[3]);
 }
 
 /**

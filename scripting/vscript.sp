@@ -38,7 +38,7 @@ public Plugin myinfo =
 	name = "VScript",
 	author = "42",
 	description = "Exposes VScript into Sourcemod",
-	version = "1.6.2",
+	version = "1.6.3",
 	url = "https://github.com/FortyTwoFortyTwo/VScript",
 };
 
@@ -81,10 +81,16 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	
 	CreateNative("VScriptExecute.VScriptExecute", Native_Execute);
 	CreateNative("VScriptExecute.AddParam", Native_Execute_AddParam);
+	CreateNative("VScriptExecute.AddParamString", Native_Execute_AddParamString);
+	CreateNative("VScriptExecute.AddParamVector", Native_Execute_AddParamVector);
 	CreateNative("VScriptExecute.SetParam", Native_Execute_SetParam);
+	CreateNative("VScriptExecute.SetParamString", Native_Execute_SetParamString);
+	CreateNative("VScriptExecute.SetParamVector", Native_Execute_SetParamVector);
 	CreateNative("VScriptExecute.Execute", Native_Execute_Execute);
 	CreateNative("VScriptExecute.ReturnType.get", Native_Execute_ReturnTypeGet);
 	CreateNative("VScriptExecute.ReturnValue.get", Native_Execute_ReturnValueGet);
+	CreateNative("VScriptExecute.GetReturnString", Native_Execute_GetReturnString);
+	CreateNative("VScriptExecute.GetReturnVector", Native_Execute_GetReturnVector);
 	
 	CreateNative("VScript_ResetScriptVM", Native_ResetScriptVM);
 	CreateNative("VScript_CompileScript", Native_CompileScript);
@@ -413,11 +419,47 @@ public any Native_Execute_AddParam(Handle hPlugin, int iNumParams)
 	return 0;
 }
 
+public any Native_Execute_AddParamString(Handle hPlugin, int iNumParams)
+{
+	ExecuteParam param;
+	param.nType = GetNativeCell(2);
+	param.pValue = StoreNativeStringToMemory(3).Address;
+	Execute_AddParam(GetNativeCell(1), param);
+	return 0;
+}
+
+public any Native_Execute_AddParamVector(Handle hPlugin, int iNumParams)
+{
+	ExecuteParam param;
+	param.nType = GetNativeCell(2);
+	GetNativeArray(3, param.vecValue, sizeof(param.vecValue));
+	Execute_AddParam(GetNativeCell(1), param);
+	return 0;
+}
+
 public any Native_Execute_SetParam(Handle hPlugin, int iNumParams)
 {
 	ExecuteParam param;
 	param.nType = GetNativeCell(3);
 	param.nValue = GetNativeCell(4);
+	Execute_SetParam(GetNativeCell(1), GetNativeCell(2), param);
+	return 0;
+}
+
+public any Native_Execute_SetParamString(Handle hPlugin, int iNumParams)
+{
+	ExecuteParam param;
+	param.nType = GetNativeCell(3);
+	param.pValue = StoreNativeStringToMemory(4).Address;
+	Execute_SetParam(GetNativeCell(1), GetNativeCell(2), param);
+	return 0;
+}
+
+public any Native_Execute_SetParamVector(Handle hPlugin, int iNumParams)
+{
+	ExecuteParam param;
+	param.nType = GetNativeCell(3);
+	GetNativeArray(4, param.vecValue, sizeof(param.vecValue));
 	Execute_SetParam(GetNativeCell(1), GetNativeCell(2), param);
 	return 0;
 }
@@ -441,6 +483,28 @@ public any Native_Execute_ReturnValueGet(Handle hPlugin, int iNumParams)
 	Execute_GetInfo(GetNativeCell(1), execute);
 	
 	return execute.nReturn.nValue;
+}
+
+public any Native_Execute_GetReturnString(Handle hPlugin, int iNumParams)
+{
+	Execute execute;
+	Execute_GetInfo(GetNativeCell(1), execute);
+	
+	int iLength = GetNativeCell(3);
+	char[] sBuffer = new char[iLength];
+	LoadStringFromAddress(execute.nReturn.pValue, sBuffer, iLength);
+	SetNativeString(2, sBuffer, iLength);
+	return 0;
+}
+
+public any Native_Execute_GetReturnVector(Handle hPlugin, int iNumParams)
+{
+	Execute execute;
+	Execute_GetInfo(GetNativeCell(1), execute);
+	float vecValue[3];
+	vecValue = execute.nReturn.vecValue;
+	SetNativeArray(2, vecValue, sizeof(vecValue));
+	return 0;
 }
 
 public any Native_ResetScriptVM(Handle hPlugin, int iNumParams)

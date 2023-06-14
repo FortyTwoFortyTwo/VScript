@@ -93,6 +93,39 @@ public void OnPluginStart()
 	
 	delete aList;
 	
+	// Test compile script with param and returns
+	
+	HSCRIPT pCompile = VScript_CompileScript("function ReturnParam(param) { return param } ReturnParam(0)");
+	
+	VScriptExecute hExecute = new VScriptExecute(pCompile);
+	hExecute.Execute();
+	delete hExecute;
+	
+	// Since were executing it with null scope, function is there
+	HSCRIPT pReturnParam = HSCRIPT_RootTable.GetValue("ReturnParam");
+	hExecute = new VScriptExecute(pReturnParam);
+	
+	hExecute.SetParam(1, FIELD_FLOAT, TEST_FLOAT);
+	hExecute.Execute();
+	AssertFloat(TEST_FLOAT, hExecute.ReturnValue);
+	
+	hExecute.SetParamString(1, FIELD_CSTRING, TEST_CSTRING);
+	hExecute.Execute();
+	char sBuffer[256];
+	hExecute.GetReturnString(sBuffer, sizeof(sBuffer));
+	AssertString(TEST_CSTRING, sBuffer);
+	
+	hExecute.SetParamVector(1, FIELD_VECTOR, {1.0, 2.0, 3.0});
+	hExecute.Execute();
+	float vecResult[3];
+	hExecute.GetReturnVector(vecResult);
+	if (vecResult[0] != 1.0 || vecResult[1] != 2.0 || vecResult[2] != 3.0)
+		ThrowError("Invalid vector result [%.2f, %.2f, %.2f]", vecResult[0], vecResult[1], vecResult[2]);
+	
+	delete hExecute;
+	
+	pCompile.ReleaseScript();
+	
 	PrintToServer("All tests passed!");
 }
 
