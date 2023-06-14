@@ -8,8 +8,11 @@ void Memory_Init()
 void Memory_DeleteAddress(Address pAddress)
 {
 	MemoryBlock hMemory;
-	if (g_mMemoryBlocks.GetValue(Memory_AddressToString(pAddress), hMemory))
-		delete hMemory;
+	if (!g_mMemoryBlocks.GetValue(Memory_AddressToString(pAddress), hMemory))
+		return;
+	
+	delete hMemory;
+	g_mMemoryBlocks.Remove(Memory_AddressToString(pAddress));
 }
 
 MemoryBlock Memory_Create(int iSize)
