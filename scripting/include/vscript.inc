@@ -438,21 +438,13 @@ public SharedPlugin __pl_vscript =
 #if !defined REQUIRE_PLUGIN
 public void __pl_vscript_SetNTVOptional()
 {
-	MarkNativeAsOptional("ScriptVariant_t.ScriptVariant_t");
-	MarkNativeAsOptional("ScriptVariant_t.Value.get");
-	MarkNativeAsOptional("ScriptVariant_t.Value.set");
-	MarkNativeAsOptional("ScriptVariant_t.GetString");
-	MarkNativeAsOptional("ScriptVariant_t.GetVector");
-	MarkNativeAsOptional("ScriptVariant_t.Type.get");
-	MarkNativeAsOptional("ScriptVariant_t.Type.set");
-	
-	MarkNativeAsOptional("HSCRIPT.ExecuteFunction");
 	MarkNativeAsOptional("HSCRIPT.GetKey");
 	MarkNativeAsOptional("HSCRIPT.GetValue");
 	MarkNativeAsOptional("HSCRIPT.GetValueString");
 	MarkNativeAsOptional("HSCRIPT.GetValueVector");
 	MarkNativeAsOptional("HSCRIPT.SetValue");
 	MarkNativeAsOptional("HSCRIPT.SetValueString");
+	MarkNativeAsOptional("HSCRIPT.SetValueVector");
 	MarkNativeAsOptional("HSCRIPT.Release");
 	MarkNativeAsOptional("HSCRIPT.ReleaseScript");
 
@@ -472,6 +464,19 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("VScriptClass.GetAllFunctions");
 	MarkNativeAsOptional("VScriptClass.GetFunction");
 	MarkNativeAsOptional("VScriptClass.CreateFunction");
+	
+	MarkNativeAsOptional("VScriptExecute.VScriptExecute");
+	MarkNativeAsOptional("VScriptExecute.AddParam");
+	MarkNativeAsOptional("VScriptExecute.AddParamString");
+	MarkNativeAsOptional("VScriptExecute.AddParamVector");
+	MarkNativeAsOptional("VScriptExecute.SetParam");
+	MarkNativeAsOptional("VScriptExecute.SetParamString");
+	MarkNativeAsOptional("VScriptExecute.SetParamVector");
+	MarkNativeAsOptional("VScriptExecute.Execute");
+	MarkNativeAsOptional("VScriptExecute.ReturnType.get");
+	MarkNativeAsOptional("VScriptExecute.ReturnValue.get");
+	MarkNativeAsOptional("VScriptExecute.GetReturnString");
+	MarkNativeAsOptional("VScriptExecute.GetReturnVector");
 	
 	MarkNativeAsOptional("VScript_ResetScriptVM");
 	MarkNativeAsOptional("VScript_CompileScript");
