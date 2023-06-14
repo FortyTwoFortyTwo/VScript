@@ -1,6 +1,8 @@
 static ArrayList g_aGlobalFunctions;
 static ArrayList g_aClasses;
 
+static Address g_pEmptyString;
+
 void List_LoadGamedata(GameData hGameData)
 {
 	DynamicDetour hDetour;
@@ -42,6 +44,15 @@ MRESReturn List_RegisterFunction(Address pScriptVM, DHookParam hParam)
 	if (g_aGlobalFunctions.FindValue(pFunction) == -1)
 		g_aGlobalFunctions.Push(pFunction);
 	
+	// Get an empty string if we need one
+	if (!g_pEmptyString)
+	{
+		char sDesc[32];
+		Address pString = Function_GetDescription(pFunction, sDesc, sizeof(sDesc));
+		if (pString && !sDesc[0])
+			g_pEmptyString = pString;
+	}
+	
 	return MRES_Ignored;
 }
 
@@ -55,6 +66,11 @@ MRESReturn List_RegisterClass(Address pScriptVM, DHookReturn hReturn, DHookParam
 		g_aClasses.Push(pClass);
 	
 	return MRES_Ignored;
+}
+
+Address List_GetEmptyString()
+{
+	return g_pEmptyString;
 }
 
 ArrayList List_GetAllGlobalFunctions()

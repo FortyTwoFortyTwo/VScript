@@ -46,9 +46,10 @@ VScriptFunction Function_Create()
 
 void Function_Init(VScriptFunction pFunction, bool bClass)
 {
-	// Not sure this is needed
-	for (int i = 0; i < g_iFunctionBinding_sizeof; i++)
-		StoreToAddress(pFunction + view_as<Address>(i), 0, NumberType_Int8);
+	// Set strings as empty, but not null
+	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_ScriptName), List_GetEmptyString(), NumberType_Int32);
+	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_FunctionName), List_GetEmptyString(), NumberType_Int32);
+	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_Description), List_GetEmptyString(), NumberType_Int32);
 	
 	// Right now just need to set flags, currently we can only support member functions
 	if (bClass)
@@ -75,9 +76,11 @@ void Function_SetFunctionName(VScriptFunction pFunction, int iParam)
 	StoreNativePointerStringToAddress(pFunction + view_as<Address>(g_iFunctionBinding_FunctionName), iParam);
 }
 
-void Function_GetDescription(VScriptFunction pFunction, char[] sBuffer, int iLength)
+Address Function_GetDescription(VScriptFunction pFunction, char[] sBuffer, int iLength)
 {
-	LoadPointerStringFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Description), sBuffer, iLength);
+	Address pString = LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Description), NumberType_Int32);
+	LoadStringFromAddress(pString, sBuffer, iLength);
+	return pString;
 }
 
 void Function_SetDescription(VScriptFunction pFunction, int iParam)
