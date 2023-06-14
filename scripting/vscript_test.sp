@@ -81,6 +81,14 @@ public void OnPluginStart()
 	iValue = SDKCall(pFunction.CreateSDKCall(), TEST_CSTRING);
 //	AssertInt(TEST_INTEGER, iValue);	// TODO fix this, it works fine in vscript but CreateSDKCall got something wrong
 	
+	// Test out instance function
+	pFunction = VScript_GetClassFunction("CEntities", "FindByClassname");
+	pFunction.CreateDetour().Enable(Hook_Pre, Detour_FindByClassname);
+	
+	HSCRIPT pEntities = HSCRIPT_RootTable.GetValue("Entities");
+	iValue = SDKCall(pFunction.CreateSDKCall(), pEntities.Instance, 0, "worldspawn");
+	AssertInt(TEST_ENTITY, iValue);
+	
 	CheckFunctions(VScript_GetAllGlobalFunctions());
 	
 	ArrayList aList = VScript_GetAllClasses();
@@ -184,6 +192,16 @@ public MRESReturn Detour_CoolFunction(DHookReturn hReturn, DHookParam hParam)
 	
 	hReturn.Value = TEST_INTEGER;
 	return MRES_Supercede;
+}
+
+public MRESReturn Detour_FindByClassname(Address pThis, DHookReturn hReturn, DHookParam hParam)
+{
+	AssertInt(0, hParam.Get(1));
+	
+	char sBuffer[256];
+	hParam.GetString(2, sBuffer, sizeof(sBuffer));
+	AssertString("worldspawn", sBuffer);
+	return MRES_Ignored;
 }
 
 void AssertInt(any nValue1, any nValue2)

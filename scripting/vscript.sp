@@ -12,7 +12,7 @@ int g_iScriptVariant_union;
 int g_iScriptVariant_type;
 
 static Handle g_hSDKCallCompileScript;
-static Handle g_hSDKCallGetInstanceValue;
+static Handle g_hSDKCallGetInstanceEntity;
 
 const SDKType SDKType_Unknown = view_as<SDKType>(-1);
 const SDKPassMethod SDKPass_Unknown = view_as<SDKPassMethod>(-1);
@@ -51,6 +51,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("HSCRIPT.SetValue", Native_HScript_SetValue);
 	CreateNative("HSCRIPT.SetValueString", Native_HScript_SetValueString);
 	CreateNative("HSCRIPT.SetValueVector", Native_HScript_SetValueVector);
+	CreateNative("HSCRIPT.Instance.get", Native_HScript_InstanceGet);
 	CreateNative("HSCRIPT.Release", Native_HScript_Release);
 	CreateNative("HSCRIPT.ReleaseScript", Native_HScript_ReleaseScript);
 	
@@ -78,6 +79,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScriptClass.GetAllFunctions", Native_Class_GetAllFunctions);
 	CreateNative("VScriptClass.GetFunction", Native_Class_GetFunction);
 	CreateNative("VScriptClass.CreateFunction", Native_Class_CreateFunction);
+	CreateNative("VScriptClass.IsDerivedFrom", Native_Class_IsDerivedFrom);
 	
 	CreateNative("VScriptExecute.VScriptExecute", Native_Execute);
 	CreateNative("VScriptExecute.AddParam", Native_Execute_AddParam);
@@ -133,7 +135,7 @@ public void OnPluginStart()
 	List_LoadGamedata(hGameData);
 	
 	g_hSDKCallCompileScript = CreateSDKCall(hGameData, "IScriptVM", "CompileScript", SDKType_PlainOldData, SDKType_String, SDKType_String);
-	g_hSDKCallGetInstanceValue = CreateSDKCall(hGameData, "IScriptVM", "GetInstanceValue", SDKType_CBaseEntity, SDKType_PlainOldData, SDKType_PlainOldData);
+	g_hSDKCallGetInstanceEntity = CreateSDKCall(hGameData, "IScriptVM", "GetInstanceValue", SDKType_CBaseEntity, SDKType_PlainOldData, SDKType_PlainOldData);
 	
 	delete hGameData;
 	
@@ -211,6 +213,11 @@ public any Native_HScript_SetValueVector(Handle hPlugin, int iNumParams)
 {
 	HScript_NativeSetValue(SMField_Vector);
 	return 0;
+}
+
+public any Native_HScript_InstanceGet(Handle hPlugin, int iNumParams)
+{
+	return HScript_GetInstanceValue(GetNativeCell(1));
 }
 
 public any Native_HScript_Release(Handle hPlugin, int iNumParams)
@@ -396,6 +403,11 @@ public any Native_Class_GetFunction(Handle hPlugin, int iNumParams)
 public any Native_Class_CreateFunction(Handle hPlugin, int iNumParams)
 {
 	return Class_CreateFunction(GetNativeCell(1));
+}
+
+public any Native_Class_IsDerivedFrom(Handle hPlugin, int iNumParams)
+{
+	return Class_IsDerivedFrom(GetNativeCell(1), GetNativeCell(2));
 }
 
 public any Native_Execute(Handle hPlugin, int iNumParams)
@@ -682,5 +694,5 @@ public any Native_HScriptToEntity(Handle hPlugin, int iNumParams)
 	if (!pClassDesc)
 		ThrowError("Could not find script name CBaseEntity, file a bug report.");
 	
-	return SDKCall(g_hSDKCallGetInstanceValue, GetScriptVM(), pHScript, pClassDesc);
+	return SDKCall(g_hSDKCallGetInstanceEntity, GetScriptVM(), pHScript, pClassDesc);
 }

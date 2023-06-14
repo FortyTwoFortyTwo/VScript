@@ -1,4 +1,5 @@
 static int g_iClassDesc_ScriptName;
+static int g_iClassDesc_BaseDesc;
 static int g_iClassDesc_FunctionBindings;
 
 static int g_iFunctionBinding_sizeof;
@@ -6,6 +7,7 @@ static int g_iFunctionBinding_sizeof;
 void Class_LoadGamedata(GameData hGameData)
 {
 	g_iClassDesc_ScriptName = hGameData.GetOffset("ScriptClassDesc_t::m_pszScriptName");
+	g_iClassDesc_BaseDesc = hGameData.GetOffset("ScriptClassDesc_t::m_pBaseDesc");
 	g_iClassDesc_FunctionBindings = hGameData.GetOffset("ScriptClassDesc_t::m_FunctionBindings");
 	
 	g_iFunctionBinding_sizeof = hGameData.GetOffset("sizeof(ScriptFunctionBinding_t)");
@@ -70,4 +72,23 @@ VScriptFunction Class_CreateFunction(VScriptClass pClass)
 	VScriptFunction pFunction = view_as<VScriptFunction>(pData + view_as<Address>(g_iFunctionBinding_sizeof * iFunctionCount));
 	Function_Init(pFunction, true);
 	return pFunction;
+}
+
+bool Class_IsDerivedFrom(VScriptClass pClass, VScriptClass pBase)
+{
+	// Dunno why game would not allow this, but we can allow it
+	if (pClass == pBase)
+		return true;
+	
+	// CSquirrelVM::IsClassDerivedFrom
+	VScriptClass pType = LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_BaseDesc), NumberType_Int32);
+	while (pType)
+	{
+		if (pType == pBase)
+			return true;
+		
+		pType = LoadFromAddress(pType + view_as<Address>(g_iClassDesc_BaseDesc), NumberType_Int32);
+	}
+	
+	return false;
 }

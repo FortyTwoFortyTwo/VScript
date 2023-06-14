@@ -9,10 +9,10 @@ void List_LoadGamedata(GameData hGameData)
 	hDetour.Enable(Hook_Pre, List_Init);
 	
 	hDetour = VTable_CreateDetour(hGameData, "IScriptVM", "RegisterFunction", _, HookParamType_Int);
-	hDetour.Enable(Hook_Pre, List_RegisterFunction);
+	hDetour.Enable(Hook_Post, List_RegisterFunction);
 	
 	hDetour = VTable_CreateDetour(hGameData, "IScriptVM", "RegisterClass", ReturnType_Bool, HookParamType_Int);
-	hDetour.Enable(Hook_Pre, List_RegisterClass);
+	hDetour.Enable(Hook_Post, List_RegisterClass);
 }
 
 void List_LoadDefaults()
@@ -47,6 +47,9 @@ MRESReturn List_RegisterFunction(Address pScriptVM, DHookParam hParam)
 
 MRESReturn List_RegisterClass(Address pScriptVM, DHookReturn hReturn, DHookParam hParam)
 {
+	if (hReturn.Value == false)
+		return MRES_Ignored;
+	
 	VScriptClass pClass = hParam.Get(1);
 	if (g_aClasses.FindValue(pClass) == -1)
 		g_aClasses.Push(pClass);
@@ -89,6 +92,21 @@ VScriptClass List_GetClass(const char[] sName)
 		Class_GetScriptName(pClass, sScriptName, sizeof(sScriptName));
 		if (StrEqual(sScriptName, sName))
 			return pClass;
+	}
+	
+	return VScriptClass_Invalid;
+}
+
+VScriptClass List_GetClassFromFunction(VScriptFunction pFunction)
+{
+	for (int i = 0; i < g_aClasses.Length; i++)
+	{
+		VScriptClass pClass = g_aClasses.Get(i);
+		
+		int iFunctionCount = Class_GetFunctionCount(pClass);
+		for (int j = 0; j < iFunctionCount; j++)
+			if (Class_GetFunctionFromIndex(pClass, j) == pFunction)
+				return pClass;
 	}
 	
 	return VScriptClass_Invalid;

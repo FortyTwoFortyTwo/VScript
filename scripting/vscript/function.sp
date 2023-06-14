@@ -212,10 +212,12 @@ void Function_Register(VScriptFunction pFunction)
 
 Handle Function_CreateSDKCall(VScriptFunction pFunction)
 {
-	if (Function_GetFlags(pFunction) & SF_MEMBER_FUNC)
+	if (!(Function_GetFlags(pFunction) & SF_MEMBER_FUNC))
+		StartPrepSDKCall(SDKCall_Static);
+	else if (Class_IsDerivedFrom(List_GetClassFromFunction(pFunction), List_GetClass("CBaseEntity")))
 		StartPrepSDKCall(SDKCall_Entity);
 	else
-		StartPrepSDKCall(SDKCall_Static);
+		StartPrepSDKCall(SDKCall_Raw);
 	
 	PrepSDKCall_SetAddress(Function_GetFunction(pFunction));
 	
@@ -238,10 +240,12 @@ DynamicDetour Function_CreateDetour(VScriptFunction pFunction)
 	fieldtype_t nField = Function_GetReturnType(pFunction);
 	
 	DynamicDetour hDetour;
-	if (Function_GetFlags(pFunction) & SF_MEMBER_FUNC)
+	if (!(Function_GetFlags(pFunction) & SF_MEMBER_FUNC))
+		hDetour = new DynamicDetour(Function_GetFunction(pFunction), CallConv_CDECL, Field_GetReturnType(nField), ThisPointer_Ignore);
+	else if (Class_IsDerivedFrom(List_GetClassFromFunction(pFunction), List_GetClass("CBaseEntity")))
 		hDetour = new DynamicDetour(Function_GetFunction(pFunction), CallConv_THISCALL, Field_GetReturnType(nField), ThisPointer_CBaseEntity);
 	else
-		hDetour = new DynamicDetour(Function_GetFunction(pFunction), CallConv_CDECL, Field_GetReturnType(nField), ThisPointer_Ignore);
+		hDetour = new DynamicDetour(Function_GetFunction(pFunction), CallConv_THISCALL, Field_GetReturnType(nField), ThisPointer_Address);
 	
 	int iCount = Function_GetParamCount(pFunction);
 	for (int i = 0; i < iCount; i++)

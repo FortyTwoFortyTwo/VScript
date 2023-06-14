@@ -3,6 +3,7 @@ static Handle g_hSDKCallGetKeyValue;
 static Handle g_hSDKCallGetValue;
 static Handle g_hSDKCallSetValue;
 static Handle g_hSDKCallReleaseValue;
+static Handle g_hSDKCallGetInstanceValue;
 static Handle g_hSDKCallReleaseScript;
 
 void HScript_LoadGamedata(GameData hGameData)
@@ -12,6 +13,7 @@ void HScript_LoadGamedata(GameData hGameData)
 	g_hSDKCallGetValue = CreateSDKCall(hGameData, "IScriptVM", "GetValue", SDKType_Bool, SDKType_PlainOldData, SDKType_String, SDKType_PlainOldData);
 	g_hSDKCallSetValue = CreateSDKCall(hGameData, "IScriptVM", "SetValue", SDKType_Bool, SDKType_PlainOldData, SDKType_String, SDKType_PlainOldData);
 	g_hSDKCallReleaseValue = CreateSDKCall(hGameData, "IScriptVM", "ReleaseValue", _, SDKType_PlainOldData);
+	g_hSDKCallGetInstanceValue = CreateSDKCall(hGameData, "IScriptVM", "GetInstanceValue", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData);
 	g_hSDKCallReleaseScript = CreateSDKCall(hGameData, "IScriptVM", "ReleaseScript", _, SDKType_PlainOldData);
 }
 
@@ -149,6 +151,11 @@ void HScript_ReleaseValue(HSCRIPT pHScript)
 	
 	SDKCall(g_hSDKCallReleaseValue, GetScriptVM(), pValue.Address);
 	delete pValue;
+}
+
+Address HScript_GetInstanceValue(HSCRIPT pHScript)
+{
+	return SDKCall(g_hSDKCallGetInstanceValue, GetScriptVM(), pHScript, 0);
 }
 
 void HScript_ReleaseScript(HSCRIPT pHScript)

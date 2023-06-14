@@ -85,6 +85,12 @@ methodmap HSCRIPT < Address
 	// @param value            Vector value to set.
 	public native void SetValueVector(const char[] key, fieldtype_t field, const float value[3]);
 	
+	// Get the address of instance
+	property Address Instance
+	{
+		public native get();
+	}
+	
 	// Frees a HSCRIPT memory
 	public native void Release();
 
@@ -217,6 +223,12 @@ methodmap VScriptClass < Address
 	// @param functionName     Function name.
 	// @return                 Address of VScriptFunction.
 	public native VScriptFunction CreateFunction();
+	
+	// Return whenever if this class function is derived from other class base
+	// 
+	// @param base             Function base to find if derived at.
+	// @return                 True if derived from, false otherwise.
+	public native bool IsDerivedFrom(VScriptClass base);
 }
 
 methodmap VScriptExecute < Handle
@@ -445,6 +457,7 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("HSCRIPT.SetValue");
 	MarkNativeAsOptional("HSCRIPT.SetValueString");
 	MarkNativeAsOptional("HSCRIPT.SetValueVector");
+	MarkNativeAsOptional("HSCRIPT.Instance.get");
 	MarkNativeAsOptional("HSCRIPT.Release");
 	MarkNativeAsOptional("HSCRIPT.ReleaseScript");
 
@@ -464,6 +477,7 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("VScriptClass.GetAllFunctions");
 	MarkNativeAsOptional("VScriptClass.GetFunction");
 	MarkNativeAsOptional("VScriptClass.CreateFunction");
+	MarkNativeAsOptional("VScriptClass.IsDerivedFrom");
 	
 	MarkNativeAsOptional("VScriptExecute.VScriptExecute");
 	MarkNativeAsOptional("VScriptExecute.AddParam");

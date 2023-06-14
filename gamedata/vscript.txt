@@ -48,6 +48,12 @@
 				"windows"	"0"
 			}
 			
+			"ScriptClassDesc_t::m_pBaseDesc"
+			{
+				"linux"		"12"
+				"windows"	"12"
+			}
+			
 			"ScriptClassDesc_t::m_FunctionBindings"
 			{
 				"linux"		"16"
