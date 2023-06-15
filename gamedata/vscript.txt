@@ -122,14 +122,14 @@
 			
 			"ScriptVariant_t::m_type"
 			{
-				"linux"		"8"
-				"windows"	"8"
+				"linux"		"4"
+				"windows"	"4"
 			}
 			
 			"sizeof(ScriptVariant_t)"
 			{
-				"linux"		"12"
-				"windows"	"12"
+				"linux"		"8"
+				"windows"	"8"
 			}
 			
 			"CTFPlayer::GetScriptDesc"
@@ -256,6 +256,32 @@
 			{
 				"linux"		"33"
 				"windows"	"33"
+			}
+		}
+	}
+	
+	"#default"
+	{
+		"#supported"
+		{
+			"game"	"left4dead2"
+			"game"	"tf"
+		}
+		
+		// L4D2 and TF2 have an extra +4 offset at pos 4
+		
+		"Offsets"
+		{
+			"ScriptVariant_t::m_type"
+			{
+				"linux"		"8"
+				"windows"	"8"
+			}
+			
+			"sizeof(ScriptVariant_t)"
+			{
+				"linux"		"12"
+				"windows"	"12"
 			}
 		}
 	}

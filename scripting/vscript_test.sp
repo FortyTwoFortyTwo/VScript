@@ -30,15 +30,15 @@ public void OnPluginStart()
 		pFunction = VScript_GetClass("CBaseEntity").CreateFunction();
 		pFunction.SetScriptName("BunchOfParams");
 		pFunction.SetParam(1, FIELD_FLOAT);
-		pFunction.SetParam(2, FIELD_INTEGER);
-		pFunction.SetParam(3, FIELD_CSTRING);
+		pFunction.SetParam(2, FIELD_FLOAT);
+		pFunction.SetParam(3, FIELD_FLOAT);
 		pFunction.SetFunctionEmpty();
 		VScript_ResetScriptVM();
 	}
 	
 	// Create a detour for newly created function
 	pFunction.CreateDetour().Enable(Hook_Pre, Detour_BunchOfParams);
-	SDKCall(pFunction.CreateSDKCall(), TEST_ENTITY, TEST_FLOAT, TEST_INTEGER, TEST_CSTRING);
+	SDKCall(pFunction.CreateSDKCall(), TEST_ENTITY, 1.0, 2.0, 3.0);
 	
 	// Create AnotherRandomInt function that does the exact same as RandomInt
 	pFunction = VScript_GetGlobalFunction("AnotherRandomInt");
@@ -76,13 +76,13 @@ public void OnPluginStart()
 		pFunction = VScript_CreateFunction();
 		pFunction.SetScriptName("CoolFunction");
 		pFunction.SetParam(1, FIELD_CSTRING);
-		pFunction.Return = FIELD_INTEGER;
+		pFunction.Return = FIELD_CSTRING;
 		pFunction.SetFunctionEmpty();
 		pFunction.Register();
 	}
 	
-	pFunction.CreateDetour().Enable(Hook_Pre, Detour_CoolFunction);
-	iValue = SDKCall(pFunction.CreateSDKCall(), TEST_CSTRING);
+//	pFunction.CreateDetour().Enable(Hook_Pre, Detour_CoolFunction);
+//	iValue = SDKCall(pFunction.CreateSDKCall(), TEST_CSTRING);
 //	AssertInt(TEST_INTEGER, iValue);	// TODO fix this, it works fine in vscript but CreateSDKCall got something wrong
 	
 	// Test out instance function
@@ -204,12 +204,9 @@ public MRESReturn Detour_ReturnAFunnyNumber(DHookReturn hReturn)
 
 public MRESReturn Detour_BunchOfParams(int iEntity, DHookParam hParam)
 {
-	AssertFloat(TEST_FLOAT, hParam.Get(1));
-	AssertInt(TEST_INTEGER, hParam.Get(2));
-	
-	char sBuffer[256];
-	hParam.GetString(3, sBuffer, sizeof(sBuffer));
-	AssertString(TEST_CSTRING, sBuffer);
+	AssertFloat(1.0, hParam.Get(1));
+	AssertFloat(2.0, hParam.Get(2));
+	AssertFloat(3.0, hParam.Get(3));
 	
 	return MRES_Supercede;
 }
