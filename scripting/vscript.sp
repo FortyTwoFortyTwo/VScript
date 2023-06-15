@@ -14,6 +14,8 @@ int g_iScriptVariant_type;
 static Handle g_hSDKCallCompileScript;
 static Handle g_hSDKCallGetInstanceEntity;
 
+const HSCRIPT INVALID_HSCRIPT = view_as<HSCRIPT>(-1);
+
 const SDKType SDKType_Unknown = view_as<SDKType>(-1);
 const SDKPassMethod SDKPass_Unknown = view_as<SDKPassMethod>(-1);
 
@@ -38,7 +40,7 @@ public Plugin myinfo =
 	name = "VScript",
 	author = "42",
 	description = "Exposes VScript into Sourcemod",
-	version = "1.6.4",
+	version = "1.6.5",
 	url = "https://github.com/FortyTwoFortyTwo/VScript",
 };
 
@@ -46,11 +48,16 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 {
 	CreateNative("HSCRIPT.GetKey", Native_HScript_GetKey);
 	CreateNative("HSCRIPT.GetValue", Native_HScript_GetValue);
+	CreateNative("HSCRIPT.GetValueField", Native_HScript_GetValueField);
 	CreateNative("HSCRIPT.GetValueString", Native_HScript_GetValueString);
 	CreateNative("HSCRIPT.GetValueVector", Native_HScript_GetValueVector);
+	CreateNative("HSCRIPT.IsValueNull", Native_HScript_IsValueNull);
 	CreateNative("HSCRIPT.SetValue", Native_HScript_SetValue);
 	CreateNative("HSCRIPT.SetValueString", Native_HScript_SetValueString);
 	CreateNative("HSCRIPT.SetValueVector", Native_HScript_SetValueVector);
+	CreateNative("HSCRIPT.SetValueNull", Native_HScript_SetValueNull);
+	CreateNative("HSCRIPT.ValueExists", Native_HScript_ValueExists);
+	CreateNative("HSCRIPT.ClearValue", Native_HScript_ClearValue);
 	CreateNative("HSCRIPT.Instance.get", Native_HScript_InstanceGet);
 	CreateNative("HSCRIPT.Release", Native_HScript_Release);
 	CreateNative("HSCRIPT.ReleaseScript", Native_HScript_ReleaseScript);
@@ -164,6 +171,14 @@ public any Native_HScript_GetKey(Handle hPlugin, int iNumParams)
 	return iIterator;
 }
 
+public any Native_HScript_GetValueField(Handle hPlugin, int iNumParams)
+{
+	ScriptVariant_t pValue = HScript_NativeGetValue();
+	fieldtype_t nType = pValue.nType;
+	delete pValue;
+	return nType;
+}
+
 public any Native_HScript_GetValue(Handle hPlugin, int iNumParams)
 {
 	ScriptVariant_t pValue = HScript_NativeGetValue(SMField_Any);
@@ -197,6 +212,15 @@ public any Native_HScript_GetValueVector(Handle hPlugin, int iNumParams)
 	return 0;
 }
 
+public any Native_HScript_IsValueNull(Handle hPlugin, int iNumParams)
+{
+	ScriptVariant_t pValue = HScript_NativeGetValueEx(true);
+	
+	bool bNull = pValue.nType == FIELD_VOID;
+	delete pValue;
+	return bNull;
+}
+
 public any Native_HScript_SetValue(Handle hPlugin, int iNumParams)
 {
 	HScript_NativeSetValue(SMField_Any);
@@ -212,6 +236,36 @@ public any Native_HScript_SetValueString(Handle hPlugin, int iNumParams)
 public any Native_HScript_SetValueVector(Handle hPlugin, int iNumParams)
 {
 	HScript_NativeSetValue(SMField_Vector);
+	return 0;
+}
+
+public any Native_HScript_SetValueNull(Handle hPlugin, int iNumParams)
+{
+	HScript_NativeSetValue(SMField_Unknwon);
+	return 0;
+}
+
+public any Native_HScript_ValueExists(Handle hPlugin, int iNumParams)
+{
+	ScriptVariant_t pValue = HScript_NativeGetValueEx(false);
+	if (pValue)
+	{
+		delete pValue;
+		return true;
+	}
+	
+	return false;
+}
+
+public any Native_HScript_ClearValue(Handle hPlugin, int iNumParams)
+{
+	int iLength;
+	GetNativeStringLength(2, iLength);
+	
+	char[] sBuffer = new char[iLength + 1];
+	GetNativeString(2, sBuffer, iLength + 1);
+	
+	HScript_ClearValue(GetNativeCell(1), sBuffer);
 	return 0;
 }
 

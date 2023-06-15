@@ -138,6 +138,32 @@ public void OnPluginStart()
 	
 	pCompile.ReleaseScript();
 	
+	// Test table stuffs
+	pCompile = VScript_CompileScript("return { thing = 322, empty = null, }");
+	hExecute = new VScriptExecute(pCompile);
+	hExecute.Execute();
+	HSCRIPT pTable = hExecute.ReturnValue;
+	delete hExecute;
+	
+	AssertInt(322, pTable.GetValue("thing"));
+	AssertInt(1, pTable.ValueExists("empty"));
+	AssertInt(1, pTable.IsValueNull("empty"));
+	
+	AssertInt(0, pTable.ValueExists(TEST_CSTRING));
+	pTable.SetValue(TEST_CSTRING, FIELD_INTEGER, TEST_INTEGER);
+	AssertInt(1, pTable.ValueExists(TEST_CSTRING));
+	AssertInt(FIELD_INTEGER, pTable.GetValueField(TEST_CSTRING));
+	
+	AssertInt(0, pTable.IsValueNull(TEST_CSTRING));
+	pTable.SetValueNull(TEST_CSTRING);
+	AssertInt(1, pTable.IsValueNull(TEST_CSTRING));
+	
+	pTable.ClearValue(TEST_CSTRING);
+	AssertInt(0, pTable.ValueExists(TEST_CSTRING));
+	
+	pTable.Release();
+	pCompile.ReleaseScript();
+	
 	PrintToServer("All tests passed!");
 }
 

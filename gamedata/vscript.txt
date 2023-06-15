@@ -257,6 +257,12 @@
 				"linux"		"32"
 				"windows"	"32"
 			}
+			
+			"IScriptVM::ClearValue"
+			{
+				"linux"		"33"
+				"windows"	"33"
+			}
 		}
 	}
 	

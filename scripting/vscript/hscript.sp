@@ -3,6 +3,7 @@ static Handle g_hSDKCallGetKeyValue;
 static Handle g_hSDKCallGetValue;
 static Handle g_hSDKCallSetValue;
 static Handle g_hSDKCallReleaseValue;
+static Handle g_hSDKCallClearValue;
 static Handle g_hSDKCallGetInstanceValue;
 static Handle g_hSDKCallReleaseScript;
 
@@ -13,6 +14,7 @@ void HScript_LoadGamedata(GameData hGameData)
 	g_hSDKCallGetValue = CreateSDKCall(hGameData, "IScriptVM", "GetValue", SDKType_Bool, SDKType_PlainOldData, SDKType_String, SDKType_PlainOldData);
 	g_hSDKCallSetValue = CreateSDKCall(hGameData, "IScriptVM", "SetValue", SDKType_Bool, SDKType_PlainOldData, SDKType_String, SDKType_PlainOldData);
 	g_hSDKCallReleaseValue = CreateSDKCall(hGameData, "IScriptVM", "ReleaseValue", _, SDKType_PlainOldData);
+	g_hSDKCallClearValue = CreateSDKCall(hGameData, "IScriptVM", "ClearValue", SDKType_Bool, SDKType_PlainOldData, SDKType_String);
 	g_hSDKCallGetInstanceValue = CreateSDKCall(hGameData, "IScriptVM", "GetInstanceValue", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData);
 	g_hSDKCallReleaseScript = CreateSDKCall(hGameData, "IScriptVM", "ReleaseScript", _, SDKType_PlainOldData);
 }
@@ -27,6 +29,11 @@ HSCRIPT HScript_CreateTable()
 	return pHScript;
 }
 
+int HScript_GetKeyValue(HSCRIPT pHScript, int iIterator, ScriptVariant_t pKey, ScriptVariant_t pValue)
+{
+	return SDKCall(g_hSDKCallGetKeyValue, GetScriptVM(), pHScript, iIterator, pKey.Address, pValue.Address);
+}
+
 int HScript_GetKey(HSCRIPT pHScript, int iIterator, char[] sKey, int iLength, fieldtype_t &nField)
 {
 	// if pHScript is null, g_pScriptVM is used instead
@@ -34,7 +41,7 @@ int HScript_GetKey(HSCRIPT pHScript, int iIterator, char[] sKey, int iLength, fi
 	ScriptVariant_t pKey = new ScriptVariant_t();
 	ScriptVariant_t pValue = new ScriptVariant_t();
 	
-	iIterator = SDKCall(g_hSDKCallGetKeyValue, GetScriptVM(), pHScript, iIterator, pKey.Address, pValue.Address);
+	iIterator = HScript_GetKeyValue(pHScript, iIterator, pKey, pValue);
 	
 	if (iIterator != -1)
 	{
@@ -52,7 +59,7 @@ bool HScript_GetValue(HSCRIPT pHScript, const char[] sKey, ScriptVariant_t pValu
 	return SDKCall(g_hSDKCallGetValue, GetScriptVM(), pHScript, sKey, pValue.Address);
 }
 
-ScriptVariant_t HScript_NativeGetValue(SMField nSMField)
+ScriptVariant_t HScript_NativeGetValue(SMField nSMField = SMField_Unknwon)
 {
 	int iLength;
 	GetNativeStringLength(2, iLength);
@@ -69,6 +76,9 @@ ScriptVariant_t HScript_NativeGetValue(SMField nSMField)
 		ThrowNativeError(SP_ERROR_NATIVE, "Key name '%s' either don't exist or value is null", sBuffer);
 	}
 	
+	if (nSMField == SMField_Unknwon)
+		return pValue;	// skip field check
+	
 	fieldtype_t nField = pValue.nType;
 	if (Field_GetSMField(nField) != nSMField)
 	{
@@ -77,6 +87,41 @@ ScriptVariant_t HScript_NativeGetValue(SMField nSMField)
 	}
 	
 	return pValue;
+}
+
+ScriptVariant_t HScript_NativeGetValueEx(bool bError)
+{
+	// Same as HScript_NativeGetValue, but can get null values,
+	// IScriptVM::ValueExists and IScriptVM::GetValue have no way to tell the difference between null and actually not existing
+	HSCRIPT pHScript = GetNativeCell(1);
+	
+	int iLength;
+	GetNativeStringLength(2, iLength);
+	
+	char[] sKey = new char[iLength + 1];
+	GetNativeString(2, sKey, iLength + 1);
+	
+	ScriptVariant_t pKey = new ScriptVariant_t();
+	ScriptVariant_t pValue = new ScriptVariant_t();
+	
+	int iIterator;
+	while ((iIterator = HScript_GetKeyValue(pHScript, iIterator, pKey, pValue)) != -1)
+	{
+		char[] sBuffer = new char[iLength + 2];
+		pKey.GetString(sBuffer, iLength + 2);
+		if (!StrEqual(sKey, sBuffer))
+			continue;
+		
+		delete pKey;
+		return pValue;
+	}
+	
+	delete pKey, pValue;
+	
+	if (bError)
+		ThrowNativeError(SP_ERROR_NATIVE, "Key name '%s' don't exist", sKey);
+	
+	return null;
 }
 
 bool HScript_SetValue(HSCRIPT pHScript, const char[] sKey, ScriptVariant_t pValue)
@@ -92,9 +137,14 @@ void HScript_NativeSetValue(SMField nSMField)
 	char[] sBuffer = new char[iLength + 1];
 	GetNativeString(2, sBuffer, iLength + 1);
 	
-	fieldtype_t nField = GetNativeCell(3);
-	if (Field_GetSMField(nField) != nSMField)
-		ThrowNativeError(SP_ERROR_NATIVE, "Invalid field use '%s'", Field_GetName(nField));
+	// HSCRIPT.SetValueNull used SMField_Unknwon, which is just setting void field
+	fieldtype_t nField = FIELD_VOID;
+	if (nSMField != SMField_Unknwon)
+	{
+		nField = GetNativeCell(3);
+		if (Field_GetSMField(nField) != nSMField)
+			ThrowNativeError(SP_ERROR_NATIVE, "Invalid field use '%s'", Field_GetName(nField));
+	}
 	
 	ScriptVariant_t pValue = new ScriptVariant_t();
 	pValue.nType = nField;
@@ -151,6 +201,11 @@ void HScript_ReleaseValue(HSCRIPT pHScript)
 	
 	SDKCall(g_hSDKCallReleaseValue, GetScriptVM(), pValue.Address);
 	delete pValue;
+}
+
+void HScript_ClearValue(HSCRIPT pHScript, const char[] sKey)
+{
+	SDKCall(g_hSDKCallClearValue, GetScriptVM(), pHScript, sKey);
 }
 
 Address HScript_GetInstanceValue(HSCRIPT pHScript)

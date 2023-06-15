@@ -38,9 +38,16 @@ methodmap HSCRIPT < Address
 	// @param interator        Interator number, 0 for the first key.
 	// @param buffer           Buffer to store name.
 	// @param length           Size of buffer.
-	// @param field            Field type value to store.
+	// @param field            Field type value to store, FIELD_VOID if null.
 	// @return                 Interator number to get next key, -1 if there is no more to interator through.
 	public native int GetKey(int interator, char[] buffer, int length, fieldtype_t &field = FIELD_VOID);
+	
+	// Gets the field value from key
+	//
+	// @param key              Key name to get.
+	// @return                 Value of the key.
+	// @error                  Invalid key name or value is null.
+	public native fieldtype_t GetValueField(const char[] key);
 	
 	// Gets the value from key
 	//
@@ -64,6 +71,13 @@ methodmap HSCRIPT < Address
 	// @error                  Invalid key name or field usage.
 	public native void GetValueVector(const char[] key, float buffer[3]);
 	
+	// Returns whenever key value is null
+	//
+	// @param key              Key name to test.
+	// @return                 True is value is null, false otherwise.
+	// @error                  Invalid key name.
+	public native bool IsValueNull(const char[] key);
+	
 	// Sets a value to key
 	//
 	// @param key              Key name to set.
@@ -84,6 +98,22 @@ methodmap HSCRIPT < Address
 	// @param field            Field to use to set.
 	// @param value            Vector value to set.
 	public native void SetValueVector(const char[] key, fieldtype_t field, const float value[3]);
+	
+	// Sets a null value to key
+	//
+	// @param key              Key name to set.
+	public native void SetValueNull(const char[] key);
+	
+	// Returns whenever key name exists, key with null value returns true
+	//
+	// @param key              Key name to test.
+	// @return                 True if key exists, false otherwise.
+	public native bool ValueExists(const char[] key);
+	
+	// Clears a key and it's value
+	//
+	// @param key              Key name to clear.
+	public native void ClearValue(const char[] key);
 	
 	// Get the address of instance
 	property Address Instance
@@ -451,12 +481,17 @@ public SharedPlugin __pl_vscript =
 public void __pl_vscript_SetNTVOptional()
 {
 	MarkNativeAsOptional("HSCRIPT.GetKey");
+	MarkNativeAsOptional("HSCRIPT.GetValueField");
 	MarkNativeAsOptional("HSCRIPT.GetValue");
 	MarkNativeAsOptional("HSCRIPT.GetValueString");
 	MarkNativeAsOptional("HSCRIPT.GetValueVector");
+	MarkNativeAsOptional("HSCRIPT.IsValueNull");
 	MarkNativeAsOptional("HSCRIPT.SetValue");
 	MarkNativeAsOptional("HSCRIPT.SetValueString");
 	MarkNativeAsOptional("HSCRIPT.SetValueVector");
+	MarkNativeAsOptional("HSCRIPT.SetValueNull");
+	MarkNativeAsOptional("HSCRIPT.ValueExists");
+	MarkNativeAsOptional("HSCRIPT.ClearValue");
 	MarkNativeAsOptional("HSCRIPT.Instance.get");
 	MarkNativeAsOptional("HSCRIPT.Release");
 	MarkNativeAsOptional("HSCRIPT.ReleaseScript");
