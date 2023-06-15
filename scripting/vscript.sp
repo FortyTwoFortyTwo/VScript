@@ -575,6 +575,10 @@ public any Native_Execute_GetReturnVector(Handle hPlugin, int iNumParams)
 
 public any Native_ResetScriptVM(Handle hPlugin, int iNumParams)
 {
+	int iEntity = INVALID_ENT_REFERENCE;
+	while ((iEntity = FindEntityByClassname(iEntity, "*")) != INVALID_ENT_REFERENCE)
+		Entity_Clear(iEntity);
+	
 	GameSystem_ServerTerm();
 	GameSystem_ServerInit();
 	return 0;

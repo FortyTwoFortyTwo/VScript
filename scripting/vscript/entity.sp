@@ -3,6 +3,21 @@ static Handle g_hSDKCallRegisterInstance;
 static Handle g_hSDKCallSetInstanceUniqeId;
 static Handle g_hSDKCallGenerateUniqueKey;
 
+static int g_iOffsetScriptScope;
+static int g_iOffsetScriptInstance;
+static int g_iOffsetScriptModelKeyValues;
+
+/*
+	CBaseEntity props for offsets
+
+	string_t		m_iszVScripts;
+	string_t		m_iszScriptThinkFunction;
+	CScriptScope	m_ScriptScope;
+	HSCRIPT			m_hScriptInstance;
+	string_t		m_iszScriptId;
+	CScriptKeyValues *m_pScriptModelKeyValues;
+*/
+
 void Entity_LoadGamedata(GameData hGameData)
 {
 	StartPrepSDKCall(SDKCall_Entity);
@@ -15,30 +30,33 @@ void Entity_LoadGamedata(GameData hGameData)
 	g_hSDKCallRegisterInstance = CreateSDKCall(hGameData, "IScriptVM", "RegisterInstance", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_CBaseEntity);
 	g_hSDKCallSetInstanceUniqeId = CreateSDKCall(hGameData, "IScriptVM", "SetInstanceUniqeId", _, SDKType_PlainOldData, SDKType_String);
 	g_hSDKCallGenerateUniqueKey = CreateSDKCall(hGameData, "IScriptVM", "GenerateUniqueKey", SDKType_Bool, SDKType_String, SDKType_String, SDKType_PlainOldData);
+	
+	// m_ScriptScope right below m_iszScriptThinkFunction
+	g_iOffsetScriptScope = FindDataMapInfo(0, "m_iszScriptThinkFunction");
+	if (g_iOffsetScriptScope == -1)
+		ThrowError("Could not get offset for CBaseEntity::m_ScriptScope, file a bug report.");
+	else
+		g_iOffsetScriptScope += 4;
+	
+	// m_hScriptInstance right above m_iszScriptId
+	int iOffset = FindDataMapInfo(0, "m_iszScriptId");
+	if (iOffset == -1)
+		ThrowError("Could not get offset for CBaseEntity::m_hScriptInstance, file a bug report.");
+	
+	g_iOffsetScriptInstance = iOffset - 4;
+	g_iOffsetScriptModelKeyValues = iOffset + 4;
 }
 
 HSCRIPT Entity_GetScriptScope(int iEntity)
 {
-	static int iOffset = -1;
-	if (iOffset == -1)
-	{
-		// m_ScriptScope is right below m_iszScriptThinkFunction
-		iOffset = FindDataMapInfo(iEntity, "m_iszScriptThinkFunction");
-		if (iOffset == -1)
-			ThrowError("Could not get offset for CBaseEntity::m_ScriptScope, file a bug report.");
-		
-		iOffset += 4;
-	}
-	
-	return view_as<HSCRIPT>(GetEntData(iEntity, iOffset));
+	return view_as<HSCRIPT>(GetEntData(iEntity, g_iOffsetScriptScope));
 }
 
 HSCRIPT Entity_GetScriptInstance(int iEntity)
 {
 	// Below exact same as CBaseEntity::GetScriptInstance
 	
-	int iOffset = FindDataMapInfo(iEntity, "m_iszScriptId") - 4;
-	HSCRIPT pScriptInstance = view_as<HSCRIPT>(GetEntData(iEntity, iOffset));
+	HSCRIPT pScriptInstance = view_as<HSCRIPT>(GetEntData(iEntity, g_iOffsetScriptInstance));
 	if (!pScriptInstance)
 	{
 		char sId[1024];
@@ -55,9 +73,18 @@ HSCRIPT Entity_GetScriptInstance(int iEntity)
 		}
 		
 		pScriptInstance = SDKCall(g_hSDKCallRegisterInstance, GetScriptVM(), SDKCall(g_hSDKGetScriptDesc, iEntity), iEntity);
-		SetEntData(iEntity, iOffset, pScriptInstance);
+		SetEntData(iEntity, g_iOffsetScriptInstance, pScriptInstance);
 		SDKCall(g_hSDKCallSetInstanceUniqeId, GetScriptVM(), pScriptInstance, sId);
 	}
 	
 	return pScriptInstance;
+}
+
+void Entity_Clear(int iEntity)
+{
+	// Reset all between m_iszVScripts and m_pScriptModelKeyValues
+	for (int iOffset = FindDataMapInfo(iEntity, "m_iszVScripts"); iOffset <= g_iOffsetScriptModelKeyValues; iOffset += 4)
+		SetEntData(iEntity, iOffset, 0);
+	
+	SetEntData(iEntity, g_iOffsetScriptScope, INVALID_HSCRIPT);
 }

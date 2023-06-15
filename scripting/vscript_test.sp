@@ -19,10 +19,6 @@ public void OnPluginStart()
 	VScriptFunction pFunction;
 	int iValue;
 	
-	// Ensure that CBaseEntity is registered in L4D2
-	SetVariantString("self.ValidateScriptScope()");
-	AcceptEntityInput(TEST_ENTITY, "RunScriptCode");
-	
 	//Test this first, because of resetting g_pScriptVM
 	pFunction = VScript_GetClassFunction("CBaseEntity", "BunchOfParams");
 	if (!pFunction)
@@ -35,6 +31,10 @@ public void OnPluginStart()
 		pFunction.SetFunctionEmpty();
 		VScript_ResetScriptVM();
 	}
+	
+	// Ensure that CBaseEntity is registered in L4D2
+	SetVariantString("self.ValidateScriptScope()");
+	AcceptEntityInput(TEST_ENTITY, "RunScriptCode");
 	
 	// Create a detour for newly created function
 	pFunction.CreateDetour().Enable(Hook_Pre, Detour_BunchOfParams);
