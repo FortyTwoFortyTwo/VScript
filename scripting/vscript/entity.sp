@@ -82,9 +82,8 @@ HSCRIPT Entity_GetScriptInstance(int iEntity)
 
 void Entity_Clear(int iEntity)
 {
-	// Reset all between m_iszVScripts and m_pScriptModelKeyValues
-	for (int iOffset = FindDataMapInfo(iEntity, "m_iszVScripts"); iOffset <= g_iOffsetScriptModelKeyValues; iOffset += 4)
-		SetEntData(iEntity, iOffset, 0);
-	
 	SetEntData(iEntity, g_iOffsetScriptScope, INVALID_HSCRIPT);
+	SetEntData(iEntity, g_iOffsetScriptInstance, Address_Null);
+	SetEntData(iEntity, g_iOffsetScriptModelKeyValues, Address_Null);
+	SetEntPropString(iEntity, Prop_Data, "m_iszScriptId", NULL_STRING);
 }
