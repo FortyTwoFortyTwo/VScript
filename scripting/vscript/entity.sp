@@ -21,11 +21,11 @@ static int g_iOffsetScriptModelKeyValues;
 void Entity_LoadGamedata(GameData hGameData)
 {
 	StartPrepSDKCall(SDKCall_Entity);
-	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CTFPlayer::GetScriptDesc");
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Virtual, "CBaseEntity::GetScriptDesc");
 	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
 	g_hSDKGetScriptDesc = EndPrepSDKCall();
 	if (!g_hSDKGetScriptDesc)
-		LogError("Failed to create SDKCall: CTFPlayer::GetScriptDesc");
+		LogError("Failed to create SDKCall: CBaseEntity::GetScriptDesc");
 	
 	g_hSDKCallRegisterInstance = CreateSDKCall(hGameData, "IScriptVM", "RegisterInstance", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_CBaseEntity);
 	g_hSDKCallSetInstanceUniqeId = CreateSDKCall(hGameData, "IScriptVM", "SetInstanceUniqeId", _, SDKType_PlainOldData, SDKType_String);

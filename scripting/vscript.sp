@@ -357,7 +357,7 @@ public any Native_Function_SetFunctionEmpty(Handle hPlugin, int iNumParams)
 {
 	VScriptFunction pFunction = GetNativeCell(1);
 	if (!Function_UpdateBinding(pFunction))
-		ThrowNativeError(SP_ERROR_NATIVE, "Could not find new binding with function '%08X'", pFunction);
+		ThrowNativeError(SP_ERROR_NATIVE, "Could not find new binding with function '0x%08X'", pFunction);
 	
 	Function_SetFunctionEmpty(GetNativeCell(1));
 	return 0;

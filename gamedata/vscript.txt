@@ -132,7 +132,7 @@
 				"windows"	"8"
 			}
 			
-			"CTFPlayer::GetScriptDesc"
+			"CBaseEntity::GetScriptDesc"
 			{
 				"linux"		"13"
 				"windows"	"12"
