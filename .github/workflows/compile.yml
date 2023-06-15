@@ -1,0 +1,29 @@
+name: Compile
+
+on: pull_request
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+  
+    strategy:
+      matrix:
+        version: ["1.12"]
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      
+      - name: Environments
+        run: |
+          echo "SM_VERSION=${{ matrix.version }}" >> $GITHUB_ENV
+      
+      - name: Install
+        run: |
+          bash scripts/install.sh
+      
+      - name: Compile
+        run: |
+          cd build/addons/sourcemod/scripting
+          ./spcomp -E vscript.sp -o ../plugins/vscript.smx
+          ./spcomp -E vscript_test.sp -o ../plugins/vscript_test.smx

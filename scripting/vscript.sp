@@ -2,6 +2,9 @@
 
 #include "include/vscript.inc"
 
+#define PLUGIN_VERSION			"1.6.5"
+#define PLUGIN_VERSION_REVISION	"manual"
+
 char g_sOperatingSystem[16];
 bool g_bWindows;
 
@@ -39,8 +42,8 @@ public Plugin myinfo =
 {
 	name = "VScript",
 	author = "42",
-	description = "Exposes VScript into Sourcemod",
-	version = "1.6.5",
+	description = "Exposes VScript features into SourceMod",
+	version = PLUGIN_VERSION ... "." ... PLUGIN_VERSION_REVISION,
 	url = "https://github.com/FortyTwoFortyTwo/VScript",
 };
 
