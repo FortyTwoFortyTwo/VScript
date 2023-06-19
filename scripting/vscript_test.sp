@@ -14,7 +14,7 @@ public Plugin myinfo =
 	url = "https://github.com/FortyTwoFortyTwo/VScript",
 };
 
-public void OnPluginStart()
+public void OnMapStart()
 {
 	VScriptFunction pFunction;
 	int iValue;
