@@ -2,7 +2,7 @@
 
 #include "include/vscript.inc"
 
-#define PLUGIN_VERSION			"1.6.5"
+#define PLUGIN_VERSION			"1.7.0"
 #define PLUGIN_VERSION_REVISION	"manual"
 
 char g_sOperatingSystem[16];
@@ -25,6 +25,7 @@ const SDKPassMethod SDKPass_Unknown = view_as<SDKPassMethod>(-1);
 const VScriptClass VScriptClass_Invalid = view_as<VScriptClass>(Address_Null);
 const VScriptFunction VScriptFunction_Invalid = view_as<VScriptFunction>(Address_Null);
 
+#include "vscript/binding.sp"
 #include "vscript/class.sp"
 #include "vscript/entity.sp"
 #include "vscript/execute.sp"
@@ -135,6 +136,7 @@ public void OnPluginStart()
 	
 	VTable_LoadGamedata(hGameData);
 	
+	Binding_LoadGamedata(hGameData);
 	Class_LoadGamedata(hGameData);
 	Entity_LoadGamedata(hGameData);
 	Execute_LoadGamedata(hGameData);
@@ -150,6 +152,7 @@ public void OnPluginStart()
 	delete hGameData;
 	
 	List_LoadDefaults();
+	Binding_UpdateFunctions();
 	Memory_Init();
 }
 
@@ -356,10 +359,8 @@ public any Native_Function_FunctionSet(Handle hPlugin, int iNumParams)
 public any Native_Function_SetFunctionEmpty(Handle hPlugin, int iNumParams)
 {
 	VScriptFunction pFunction = GetNativeCell(1);
-	if (!Function_UpdateBinding(pFunction))
-		ThrowNativeError(SP_ERROR_NATIVE, "Could not find new binding with function '0x%08X'", pFunction);
-	
-	Function_SetFunctionEmpty(GetNativeCell(1));
+	Function_SetFunctionEmpty(pFunction);
+	Binding_SetCustom(pFunction);
 	return 0;
 }
 

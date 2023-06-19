@@ -135,14 +135,9 @@ Address Function_GetBinding(VScriptFunction pFunction)
 	return LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Binding), NumberType_Int32);
 }
 
-bool Function_UpdateBinding(VScriptFunction pFunction)
+void Function_SetBinding(VScriptFunction pFunction, Address pBinding)
 {
-	Address pBinding = List_FindNewBinding(pFunction);
-	if (!pBinding)
-		return false;
-	
 	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_Binding), pBinding, NumberType_Int32);
-	return true;
 }
 
 Address Function_GetFunction(VScriptFunction pFunction)
@@ -167,47 +162,8 @@ void Function_SetFlags(VScriptFunction pFunction, ScriptFuncBindingFlags_t nFlag
 
 void Function_SetFunctionEmpty(VScriptFunction pFunction)
 {
-	int iCount = 0;
-	int iInstructions[5];
-	if (Function_GetReturnType(pFunction) != FIELD_VOID)
-	{
-		// Set return value as 0
-		iInstructions[iCount++] = 0x31;
-		iInstructions[iCount++] = 0xC0;
-	}
-	
-	int iParamCount = Function_GetParamCount(pFunction);
-	if (iParamCount && g_bWindows)
-	{
-		// Return with param count
-		iInstructions[iCount++] = 0xC2;
-		iInstructions[iCount++] = (iParamCount * 4);
-		iInstructions[iCount++] = 0x00;
-	}
-	else
-	{
-		// Return with no param
-		iInstructions[iCount++] = 0xC3;
-	}
-	
-	for (int i = iCount; i < sizeof(iInstructions); i++)
-		iInstructions[i] = 0x90;	// Fill the rest as skip
-	
-	// Does function already match?
-	Address pAddress = Function_GetFunction(pFunction);
-	if (FunctionInstructionMatches(pAddress, iInstructions, sizeof(iInstructions)))
-		return;	// Yes, don't need to do anything
-	
-	// TODO proper way to handle this
-	
-	MemoryBlock hEmptyFunction = new MemoryBlock(sizeof(iInstructions));
-	for (int i = 0; i < sizeof(iInstructions); i++)
-		hEmptyFunction.StoreToOffset(i, iInstructions[i], NumberType_Int8);
-	
-	Function_SetFunction(pFunction, hEmptyFunction.Address);
-	
-	hEmptyFunction.Disown();
-	delete hEmptyFunction;
+	Address pAddress = Memory_CreateEmptyFunction(Function_GetReturnType(pFunction) != FIELD_VOID);
+	Function_SetFunction(pFunction, pAddress);
 }
 
 void Function_CopyFrom(VScriptFunction pTo, VScriptFunction pFrom)
@@ -262,26 +218,9 @@ DynamicDetour Function_CreateDetour(VScriptFunction pFunction)
 	for (int i = 0; i < iCount; i++)
 	{
 		nField = Function_GetParam(pFunction, i);
-		hDetour.AddParam(Field_GetParamType(nField));
+		HookParamType nType = Field_GetParamType(nField);
+		hDetour.AddParam(nType, nType == HookParamType_Object ? Field_GetSize(nField) : -1);
 	}
 	
 	return hDetour;
-}
-
-bool Function_MatchesBinding(VScriptFunction pFunction, ScriptFuncBindingFlags_t nFlags, fieldtype_t nReturn, fieldtype_t[] nParams, int iParamCount)
-{
-	if (Function_GetFlags(pFunction) != nFlags)
-		return false;
-	
-	if (!Field_MatchesBinding(Function_GetReturnType(pFunction), nReturn))
-		return false;
-	
-	if (Function_GetParamCount(pFunction) != iParamCount)
-		return false;
-	
-	for (int j = 0; j < Function_GetParamCount(pFunction); j++)
-		if (!Field_MatchesBinding(Function_GetParam(pFunction, j), nParams[j]))
-			return false;
-	
-	return true;
 }

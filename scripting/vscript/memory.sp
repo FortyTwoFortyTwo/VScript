@@ -85,3 +85,50 @@ void Memory_UtlVectorSetSize(Address pUtlVector, int iSize, int iCount)
 		StoreToAddress(pUtlVector + view_as<Address>(16), hMemory.Address, NumberType_Int32);
 	}
 }
+
+Address Memory_CreateEmptyFunction(bool bReturn)
+{
+	int iInstructions[8];
+	Memory_GetEmptyFunctionInstructions(iInstructions, bReturn);
+	
+	// TODO proper way to handle this
+	
+	MemoryBlock hEmptyFunction = new MemoryBlock(sizeof(iInstructions));
+	for (int i = 0; i < sizeof(iInstructions); i++)
+		hEmptyFunction.StoreToOffset(i, iInstructions[i], NumberType_Int8);
+	
+	Address pAddress = hEmptyFunction.Address;
+	hEmptyFunction.Disown();
+	delete hEmptyFunction;
+	return pAddress;
+}
+
+bool Memory_IsEmptyFunction(Address pFunction, bool bReturn)
+{
+	int iInstructions[8];
+	Memory_GetEmptyFunctionInstructions(iInstructions, bReturn);
+	for (int i = 0; i < sizeof(iInstructions); i++)
+	{
+		if (LoadFromAddress(pFunction + view_as<Address>(i), NumberType_Int8) != iInstructions[i])
+			return false;
+	}
+	
+	return true;
+}
+
+static void Memory_GetEmptyFunctionInstructions(int iInstructions[8], bool bReturn)
+{
+	int iCount = 0;
+	if (bReturn)
+	{
+		// Set return value as 0
+		iInstructions[iCount++] = 0x31;
+		iInstructions[iCount++] = 0xC0;
+	}
+	
+	// Return
+	iInstructions[iCount++] = 0xC3;
+	
+	for (int i = iCount; i < sizeof(iInstructions); i++)
+		iInstructions[i] = 0x90;	// Fill the rest as skip
+}

@@ -61,18 +61,6 @@ MemoryBlock StoreNativeStringToMemory(int iParam)
 	return hString;
 }
 
-bool FunctionInstructionMatches(Address pFunction, int[] iInstructions, int iLength)
-{
-	if (!pFunction)
-		return false;
-	
-	for (int i = 0; i < iLength; i++)
-		if (LoadFromAddress(pFunction + view_as<Address>(i), NumberType_Int8) != iInstructions[i])
-			return false;
-	
-	return true;
-}
-
 Handle CreateSDKCall(GameData hGameData, const char[] sClass, const char[] sFunction, SDKType nReturn = SDKType_Unknown, SDKType nParam1 = SDKType_Unknown, SDKType nParam2 = SDKType_Unknown, SDKType nParam3 = SDKType_Unknown, SDKType nParam4 = SDKType_Unknown, SDKType nParam5 = SDKType_Unknown, SDKType nParam6 = SDKType_Unknown)
 {
 	StartPrepSDKCall(SDKCall_Raw);

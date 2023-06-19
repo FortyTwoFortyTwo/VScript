@@ -132,6 +132,12 @@
 				"windows"	"8"
 			}
 			
+			"sizeof(ScriptFunctionBindingStorageType_t)"
+			{
+				"linux"		"4"
+				"windows"	"4"
+			}
+			
 			"CBaseEntity::GetScriptDesc"
 			{
 				"linux"		"13"
@@ -337,7 +343,7 @@
 		
 		"Offsets"
 		{
-			// TF2 have 12 extra bytes before flags
+			// TF2 have m_pFunction sized 16 bytes, giving 12 extra bytes
 			
 			"ScriptFunctionBinding_t::m_flags"
 			{
@@ -349,6 +355,12 @@
 			{
 				"linux"		"60"
 				"windows"	"60"
+			}
+			
+			"sizeof(ScriptFunctionBindingStorageType_t)"
+			{
+				"linux"		"16"
+				"windows"	"16"
 			}
 		}
 	}

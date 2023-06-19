@@ -16,20 +16,22 @@ enum struct FieldInfo
 	SDKPassMethod nSDKPassMethod;
 	ReturnType nReturnType;
 	HookParamType nHookParamType;
+	int iSize;
+	
 	int iGameValue;
 }
 
 static FieldInfo g_FieldInfos[FIELD_MAX] = {
-	{ "FIELD_VOID",			SMField_Unknwon,	SDKType_Unknown,		SDKPass_Unknown,	ReturnType_Void,	HookParamType_Unknown,		},
-	{ "FIELD_FLOAT",		SMField_Any,		SDKType_Float,			SDKPass_Plain,		ReturnType_Float,	HookParamType_Float,		},
-	{ "FIELD_VECTOR",		SMField_Vector,		SDKType_Vector,			SDKPass_ByValue,	ReturnType_Vector,	HookParamType_VectorPtr,	},
-	{ "FIELD_INTEGER",		SMField_Any,		SDKType_PlainOldData,	SDKPass_Plain,		ReturnType_Int,		HookParamType_Int,			},
-	{ "FIELD_BOOLEAN",		SMField_Any,		SDKType_Bool,			SDKPass_Plain,		ReturnType_Bool,	HookParamType_Bool,			},
-	{ "FIELD_TYPEUNKNOWN",	SMField_Unknwon,	SDKType_Unknown,		SDKPass_Unknown,	ReturnType_Unknown,	HookParamType_Unknown,		},
-	{ "FIELD_CSTRING",		SMField_String,		SDKType_String,			SDKPass_Pointer,	ReturnType_CharPtr,	HookParamType_CharPtr,		},
-	{ "FIELD_HSCRIPT",		SMField_Any,		SDKType_PlainOldData,	SDKPass_Plain,		ReturnType_Int,		HookParamType_Int,			},
-	{ "FIELD_VARIANT",		SMField_Unknwon,	SDKType_Unknown,		SDKPass_Unknown,	ReturnType_Unknown,	HookParamType_Unknown,		},
-	{ "FIELD_QANGLE",		SMField_Vector,		SDKType_QAngle,			SDKPass_ByValue,	ReturnType_Vector,	HookParamType_VectorPtr,	},
+	{ "FIELD_VOID",			SMField_Unknwon,	SDKType_Unknown,		SDKPass_Unknown,	ReturnType_Void,	HookParamType_Unknown,	-1	},
+	{ "FIELD_FLOAT",		SMField_Any,		SDKType_Float,			SDKPass_Plain,		ReturnType_Float,	HookParamType_Float,	4	},
+	{ "FIELD_VECTOR",		SMField_Vector,		SDKType_Vector,			SDKPass_ByValue,	ReturnType_Vector,	HookParamType_Object,	12	},
+	{ "FIELD_INTEGER",		SMField_Any,		SDKType_PlainOldData,	SDKPass_Plain,		ReturnType_Int,		HookParamType_Int,		4	},
+	{ "FIELD_BOOLEAN",		SMField_Any,		SDKType_Bool,			SDKPass_Plain,		ReturnType_Bool,	HookParamType_Bool,		4	},
+	{ "FIELD_TYPEUNKNOWN",	SMField_Unknwon,	SDKType_Unknown,		SDKPass_Unknown,	ReturnType_Unknown,	HookParamType_Unknown,	-1	},
+	{ "FIELD_CSTRING",		SMField_String,		SDKType_String,			SDKPass_Pointer,	ReturnType_CharPtr,	HookParamType_CharPtr,	4	},
+	{ "FIELD_HSCRIPT",		SMField_Any,		SDKType_PlainOldData,	SDKPass_Plain,		ReturnType_Int,		HookParamType_Int,		4	},
+	{ "FIELD_VARIANT",		SMField_Unknwon,	SDKType_Unknown,		SDKPass_Unknown,	ReturnType_Unknown,	HookParamType_Unknown,	-1	},
+	{ "FIELD_QANGLE",		SMField_Vector,		SDKType_QAngle,			SDKPass_ByValue,	ReturnType_Vector,	HookParamType_Object,	12	},
 };
 
 void Field_LoadGamedata(GameData hGameData)
@@ -107,15 +109,11 @@ HookParamType Field_GetParamType(fieldtype_t nField)
 	return HookParamType_Unknown;
 }
 
-bool Field_MatchesBinding(fieldtype_t nField1, fieldtype_t nField2)
+int Field_GetSize(fieldtype_t nField)
 {
-	// cstring and hscript are pointers, same thing
-	if ((nField1 == FIELD_CSTRING || nField1 == FIELD_HSCRIPT) && (nField2 == FIELD_CSTRING || nField2 == FIELD_HSCRIPT))
-		return true;
+	if (g_FieldInfos[nField].iSize != -1)
+		return g_FieldInfos[nField].iSize;
 	
-	// don't know reason behind this, but C++ views it the same for binding
-	if ((nField1 == FIELD_VECTOR || nField1 == FIELD_TYPEUNKNOWN) && (nField2 == FIELD_VECTOR || nField2 == FIELD_TYPEUNKNOWN))
-		return true;
-	
-	return nField1 == nField2;
+	ThrowError("Invalid field type '%s' for size", Field_GetName(nField));
+	return -1;
 }
