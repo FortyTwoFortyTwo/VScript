@@ -44,7 +44,7 @@ void Binding_CheckFunctions(ArrayList aList)
 	for (int i = 0; i < iLength; i++)
 	{
 		VScriptFunction pFunction = aList.Get(i);
-		if (Memory_IsEmptyFunction(Function_GetFunction(pFunction), true))
+		if (Memory_IsEmptyFunction(Function_GetBinding(pFunction), true))
 			Binding_SetCustom(pFunction);
 	}
 }
