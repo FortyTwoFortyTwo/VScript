@@ -29,6 +29,31 @@ int LoadStringFromAddress(Address pString, char[] sBuffer, int iMaxLen)
 	return iChar;
 }
 
+int LoadStringLengthFromAddress(Address pString)
+{
+	int iChar;
+	char sChar;
+	
+	do
+	{
+		sChar = view_as<int>(LoadFromAddress(pString + view_as<Address>(iChar), NumberType_Int8));
+		iChar++;
+	}
+	while (sChar);
+	
+	return iChar;
+}
+
+MemoryBlock CreateStringMemory(const char[] sBuffer)
+{
+	int iLength = strlen(sBuffer);
+	MemoryBlock hString = new MemoryBlock(iLength);
+	for (int i = 0; i < iLength; i++)
+		hString.StoreToOffset(i, sBuffer[i], NumberType_Int8);
+	
+	return hString;
+}
+
 void StoreNativePointerStringToAddress(Address pAddress, int iParam)
 {
 	int iLength;
@@ -38,10 +63,7 @@ void StoreNativePointerStringToAddress(Address pAddress, int iParam)
 	char[] sBuffer = new char[iLength];
 	GetNativeString(iParam, sBuffer, iLength);
 	
-	MemoryBlock hString = new MemoryBlock(iLength);
-	for (int i = 0; i < iLength; i++)
-		hString.StoreToOffset(i, sBuffer[i], NumberType_Int8);
-	
+	MemoryBlock hString = CreateStringMemory(sBuffer);
 	Memory_SetAddress(pAddress, hString);
 }
 
@@ -54,11 +76,22 @@ MemoryBlock StoreNativeStringToMemory(int iParam)
 	char[] sBuffer = new char[iLength];
 	GetNativeString(iParam, sBuffer, iLength);
 	
-	MemoryBlock hString = Memory_Create(iLength);
-	for (int i = 0; i < iLength; i++)
-		hString.StoreToOffset(i, sBuffer[i], NumberType_Int8);
+	return CreateStringMemory(sBuffer);
+}
+
+void LoadVectorFromAddress(Address pVector, float vecBuffer[3])
+{
+	for (int i = 0; i < sizeof(vecBuffer); i++)
+		vecBuffer[i] = LoadFromAddress(pVector + view_as<Address>(i * 4), NumberType_Int32);
+}
+
+MemoryBlock CreateVectorMemory(float vecBuffer[3])
+{
+	MemoryBlock hVector = new MemoryBlock(sizeof(vecBuffer) * 4);
+	for (int i = 0; i < sizeof(vecBuffer); i++)
+		hVector.StoreToOffset(i * 4, view_as<int>(vecBuffer[i]), NumberType_Int32);
 	
-	return hString;
+	return hVector;
 }
 
 Handle CreateSDKCall(GameData hGameData, const char[] sClass, const char[] sFunction, SDKType nReturn = SDKType_Unknown, SDKType nParam1 = SDKType_Unknown, SDKType nParam2 = SDKType_Unknown, SDKType nParam3 = SDKType_Unknown, SDKType nParam4 = SDKType_Unknown, SDKType nParam5 = SDKType_Unknown, SDKType nParam6 = SDKType_Unknown)

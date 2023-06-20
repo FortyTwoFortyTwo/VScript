@@ -149,7 +149,7 @@ void HScript_NativeSetValue(SMField nSMField)
 	ScriptVariant_t pValue = new ScriptVariant_t();
 	pValue.nType = nField;
 	
-	MemoryBlock pMemory;
+	MemoryBlock hMemory;
 	
 	switch (nSMField)
 	{
@@ -164,29 +164,21 @@ void HScript_NativeSetValue(SMField nSMField)
 			
 			char[] sValue = new char[iLength];
 			GetNativeString(4, sValue, iLength);
-			
-			pMemory = new MemoryBlock(iLength);
-			for (int i = 0; i < iLength; i++)
-				pMemory.StoreToOffset(i, sValue[i], NumberType_Int8);
-			
-			pValue.nValue = pMemory.Address;
+			hMemory = CreateStringMemory(sValue);
+			pValue.nValue = hMemory.Address;
 		}
 		case SMField_Vector:
 		{
 			float vecVector[3];
 			GetNativeArray(4, vecVector, sizeof(vecVector));
-			
-			pMemory = new MemoryBlock(sizeof(vecVector) * 4);
-			for (int i = 0; i < sizeof(vecVector); i++)
-				pMemory.StoreToOffset(i * 4, view_as<int>(vecVector[i]), NumberType_Int32);
-			
-			pValue.nValue = pMemory.Address;
+			hMemory = CreateVectorMemory(vecVector);
+			pValue.nValue = hMemory.Address;
 		}
 	}
 	
 	bool bResult = HScript_SetValue(GetNativeCell(1), sBuffer, pValue);
 	
-	delete pMemory;
+	delete hMemory;
 	delete pValue;
 	
 	if (!bResult)

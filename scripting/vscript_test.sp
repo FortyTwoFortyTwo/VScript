@@ -45,27 +45,37 @@ public void OnMapStart()
 		pFunction.SetParam(1, FIELD_INTEGER);
 		pFunction.SetParam(2, FIELD_FLOAT);
 		pFunction.SetParam(3, FIELD_BOOLEAN);
-		pFunction.SetParam(4, FIELD_VECTOR);
+		pFunction.SetParam(4, FIELD_CSTRING);
+		pFunction.SetParam(5, FIELD_VECTOR);
 		
 		pFunction.Return = FIELD_FLOAT;
 		pFunction.SetFunctionEmpty();
 		VScript_ResetScriptVM();
 	}
 	
-	// TODO fix FIELD_CSTRING param causing return to go wrong
-	
 	// Create a detour for newly created function
 	pFunction.CreateDetour().Enable(Hook_Pre, Detour_BunchOfParams);
 	
 	// Test with SDKCall
-	float flValue = SDKCall(pFunction.CreateSDKCall(), TEST_ENTITY, TEST_INTEGER, TEST_FLOAT, TEST_BOOLEAN, TEST_VECTOR);
+	float flValue = SDKCall(pFunction.CreateSDKCall(), TEST_ENTITY, TEST_INTEGER, TEST_FLOAT, TEST_BOOLEAN, TEST_CSTRING, TEST_VECTOR);
 	AssertFloat(TEST_FLOAT, flValue);
 	
 	// Test again but with vscript
-	// TODO fix returns
-	Format(sBuffer, sizeof(sBuffer), "self.BunchOfParams(%d, %f, %s, Vector(%f, %f, %f))", TEST_INTEGER, TEST_FLOAT, TEST_BOOLEAN_STR, TEST_VECTOR_0, TEST_VECTOR_1, TEST_VECTOR_2);
-	SetVariantString(sBuffer);
-	AcceptEntityInput(TEST_ENTITY, "RunScriptCode");
+	RunScript("function BunchOfParams(entity, param1, param2, param3, param4, param5) { return entity.BunchOfParams(param1, param2, param3, param4, param5) }");
+	
+	hExecute = new VScriptExecute(HSCRIPT_RootTable.GetValue("BunchOfParams"));
+	
+	hExecute.SetParam(1, FIELD_HSCRIPT, VScript_EntityToHScript(TEST_ENTITY));
+	hExecute.SetParam(2, FIELD_INTEGER, TEST_INTEGER);
+	hExecute.SetParam(3, FIELD_FLOAT, TEST_FLOAT);
+	hExecute.SetParam(4, FIELD_BOOLEAN, TEST_BOOLEAN);
+	hExecute.SetParamString(5, FIELD_CSTRING, TEST_CSTRING);
+	hExecute.SetParamVector(6, FIELD_VECTOR, TEST_VECTOR);
+	
+	hExecute.Execute();
+	AssertInt(FIELD_FLOAT, hExecute.ReturnType);
+	AssertFloat(TEST_FLOAT, hExecute.ReturnValue);
+	delete hExecute;
 	
 	// Create AnotherRandomInt function that does the exact same as RandomInt
 	pFunction = VScript_GetGlobalFunction("AnotherRandomInt");
@@ -93,11 +103,19 @@ public void OnMapStart()
 		pFunction.Register();
 	}
 	
+	// Test ReturnString with SDKCall
 	pFunction.CreateDetour().Enable(Hook_Pre, Detour_ReturnString);
 	SDKCall(pFunction.CreateSDKCall(), sBuffer, sizeof(sBuffer));
 	AssertString(TEST_CSTRING, sBuffer);
 	
-	// TODO fix this
+	// Test ReturnString with VScript
+	hExecute = new VScriptExecute(HSCRIPT_RootTable.GetValue("ReturnString"));
+	hExecute.Execute();
+	AssertInt(FIELD_CSTRING, hExecute.ReturnType);
+	hExecute.GetReturnString(sBuffer, sizeof(sBuffer));
+	AssertString(TEST_CSTRING, sBuffer);
+	delete hExecute;
+	
 	pFunction = VScript_GetGlobalFunction("ReturnVector");
 	if (!pFunction)
 	{
@@ -108,17 +126,26 @@ public void OnMapStart()
 		pFunction.Register();
 	}
 	
+	// Test ReturnVector with SDKCall
 	pFunction.CreateDetour().Enable(Hook_Pre, Detour_ReturnVector);
 	SDKCall(pFunction.CreateSDKCall(), vecResult);
-//	AssertVector(TEST_VECTOR, vecResult);	// TODO fix this
+	AssertVector(TEST_VECTOR, vecResult);
+	
+	// Test ReturnVector with VScript
+	hExecute = new VScriptExecute(HSCRIPT_RootTable.GetValue("ReturnVector"));
+	hExecute.Execute();
+	AssertInt(FIELD_VECTOR, hExecute.ReturnType);
+	hExecute.GetReturnVector(vecResult);
+	AssertVector(TEST_VECTOR, vecResult);
+	delete hExecute;
 	
 	// Test out instance function
 	pFunction = VScript_GetClassFunction("CEntities", "FindByClassname");
 	pFunction.CreateDetour().Enable(Hook_Pre, Detour_FindByClassname);
 	
 	HSCRIPT pEntities = HSCRIPT_RootTable.GetValue("Entities");
-	iValue = SDKCall(pFunction.CreateSDKCall(), pEntities.Instance, 0, TEST_CLASSNAME);
-	AssertInt(TEST_ENTITY, iValue);
+	HSCRIPT pEntity = SDKCall(pFunction.CreateSDKCall(), pEntities.Instance, 0, TEST_CLASSNAME);
+	AssertInt(TEST_ENTITY, VScript_HScriptToEntity(pEntity));
 	
 	CheckFunctions(VScript_GetAllGlobalFunctions());
 	
@@ -237,9 +264,13 @@ public MRESReturn Detour_BunchOfParams(int iEntity, DHookReturn hReturn, DHookPa
 	AssertFloat(TEST_FLOAT, hParam.Get(2));
 	AssertInt(TEST_BOOLEAN, hParam.Get(3));
 	
+	char sBuffer[256];
+	hParam.GetString(4, sBuffer, sizeof(sBuffer));
+	AssertString(TEST_CSTRING, sBuffer);
+	
 	float vecBuffer[3];
 	for (int i = 0; i < sizeof(vecBuffer); i++)
-		vecBuffer[i] = hParam.GetObjectVar(4, i * 4, ObjectValueType_Float);
+		vecBuffer[i] = hParam.GetObjectVar(5, i * 4, ObjectValueType_Float);
 	
 	AssertVector(TEST_VECTOR, vecBuffer);
 	

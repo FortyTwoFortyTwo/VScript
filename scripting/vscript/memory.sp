@@ -15,13 +15,6 @@ void Memory_DeleteAddress(Address pAddress)
 	g_mMemoryBlocks.Remove(Memory_AddressToString(pAddress));
 }
 
-MemoryBlock Memory_Create(int iSize)
-{
-	MemoryBlock hMemory = new MemoryBlock(iSize);
-	g_mMemoryBlocks.SetValue(Memory_AddressToString(hMemory.Address), hMemory);
-	return hMemory;
-}
-
 void Memory_SetAddress(Address pAddress, MemoryBlock hMemory)
 {
 	Memory_DeleteAddress(pAddress);

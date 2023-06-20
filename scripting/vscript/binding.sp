@@ -57,32 +57,7 @@ void Binding_SetCustom(VScriptFunction pFunction)
 	info.pFunction = pFunction;
 	info.pAddress = Function_GetFunction(pFunction);
 	
-	if (Function_GetFlags(pFunction) & SF_MEMBER_FUNC)
-		StartPrepSDKCall(SDKCall_Raw);
-	else
-		StartPrepSDKCall(SDKCall_Static);
-	
-	PrepSDKCall_SetAddress(info.pAddress);
-	
-	int iParamCount = Function_GetParamCount(pFunction);
-	for (int i = 0; i < iParamCount; i++)
-	{
-		if (Field_GetSMField(Function_GetParam(pFunction, i)) == SMField_Vector)
-		{
-			// 3 params for vector
-			for (int j = 0; j < 3; j++)
-				PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-		}
-		else
-		{
-			PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-		}
-	}
-	
-	if (Function_GetReturnType(pFunction) != FIELD_VOID)
-		PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
-	
-	info.hSDKCall = EndPrepSDKCall();
+	info.hSDKCall = Function_CreateSDKCall(pFunction, false, true);
 	if (!info.hSDKCall)
 		ThrowError("Unable to create SDKCall from binding detour, file a bug report.");
 	
@@ -117,34 +92,83 @@ public MRESReturn Binding_Detour(DHookReturn hReturn, DHookParam hParam)
 	BindingInfo info;
 	g_aBindingInfos.GetArray(iIndex, info);
 	
-	any a[32];	// SM allows a max of 32 params
+	// Figure out how big the array need to be
+	int iMaxSize = 1;
+	for (int i = 0; i < iArguments; i++)
+	{
+		int iSize;
+		
+		switch (Field_GetSMField(Function_GetParam(info.pFunction, i)))
+		{
+			case SMField_Any:
+			{
+				iSize = 1;
+			}
+			case SMField_String:
+			{
+				Address pString = LoadFromAddress(pArguments + view_as<Address>(i * g_iScriptVariant_sizeof + g_iScriptVariant_union), NumberType_Int32);
+				iSize = LoadStringLengthFromAddress(pString);
+			}
+			case SMField_Vector:
+			{
+				iSize = 3;
+			}
+		}
+		
+		if (iMaxSize < iSize)
+			iMaxSize = iSize;
+	}
+	
+	any[][] a = new any[16][iMaxSize];	// VScript allows a max of 14 params
 	int iCount;
 	
 	if (pMember)
-		a[iCount++] = pMember;
+		a[iCount++][0] = pMember;
 	
 	for (int i = 0; i < iArguments; i++)
 	{
 		any nValue = LoadFromAddress(pArguments + view_as<Address>(i * g_iScriptVariant_sizeof + g_iScriptVariant_union), NumberType_Int32);
 		
-		if (Field_GetSMField(Function_GetParam(info.pFunction, i)) == SMField_Vector)
+		switch (Field_GetSMField(Function_GetParam(info.pFunction, i)))
 		{
-			for (int j = 0; j < 3; j++)
-				a[iCount++] = LoadFromAddress(nValue + (j * 4), NumberType_Int32);
+			case SMField_Any:
+			{
+				a[iCount][0] = nValue;
+			}
+			case SMField_String:
+			{
+				LoadStringFromAddress(nValue, view_as<char>(a[iCount]), iMaxSize);
+			}
+			case SMField_Vector:
+			{
+				for (int j = 0; j < 3; j++)
+					a[iCount][j] = LoadFromAddress(nValue + (j * 4), NumberType_Int32);
+			}
 		}
-		else
-		{
-			a[iCount++] = nValue;
-		}
+		
+		iCount++;
 	}
 	
+	fieldtype_t nField = Function_GetReturnType(info.pFunction);
+	
 	// No other simple way to do it /shrug
-	any nResult = SDKCall(info.hSDKCall, a[0],a[1],a[2],a[3],a[4],a[5],a[6],a[7],a[8],a[9],a[10],a[11],a[12],a[13],a[14],a[15],a[16],a[17],a[18],a[19],a[20],a[21],a[22],a[23],a[24],a[25],a[26],a[27],a[28],a[29],a[30],a[31]);
+	any nResult = SDKCall(info.hSDKCall, a[0],a[1],a[2],a[3],a[4],a[5],a[6],a[7],a[8],a[9],a[10],a[11],a[12],a[13],a[14],a[15]);
+	
+	if (Field_GetSMField(nField) == SMField_Vector)
+	{
+		// Prevent memory crash by creating new memory
+		float vecResult[3];
+		LoadVectorFromAddress(nResult, vecResult);
+		MemoryBlock hVector = CreateVectorMemory(vecResult);
+		nResult = hVector.Address;
+		hVector.Disown();
+		delete hVector;
+	}
 	
 	if (pReturn)
 	{
-		StoreToAddress(pReturn + view_as<Address>(g_iScriptVariant_type), Field_EnumToGame(Function_GetReturnType(info.pFunction)), NumberType_Int16);
 		StoreToAddress(pReturn + view_as<Address>(g_iScriptVariant_union), nResult, NumberType_Int32);
+		StoreToAddress(pReturn + view_as<Address>(g_iScriptVariant_type), Field_EnumToGame(nField), NumberType_Int16);
 	}
 	
 	hReturn.Value = true;

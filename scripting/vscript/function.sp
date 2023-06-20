@@ -177,11 +177,11 @@ void Function_Register(VScriptFunction pFunction)
 	SDKCall(g_hSDKCallRegisterFunction, GetScriptVM(), pFunction);
 }
 
-Handle Function_CreateSDKCall(VScriptFunction pFunction)
+Handle Function_CreateSDKCall(VScriptFunction pFunction, bool bEntity = true, bool bReturnPlain = false)
 {
 	if (!(Function_GetFlags(pFunction) & SF_MEMBER_FUNC))
 		StartPrepSDKCall(SDKCall_Static);
-	else if (Class_IsDerivedFrom(List_GetClassFromFunction(pFunction), List_GetClass("CBaseEntity")))
+	else if (bEntity && Class_IsDerivedFrom(List_GetClassFromFunction(pFunction), List_GetClass("CBaseEntity")))
 		StartPrepSDKCall(SDKCall_Entity);
 	else
 		StartPrepSDKCall(SDKCall_Raw);
@@ -192,12 +192,17 @@ Handle Function_CreateSDKCall(VScriptFunction pFunction)
 	for (int i = 0; i < iCount; i++)
 	{
 		fieldtype_t nField = Function_GetParam(pFunction, i);
-		PrepSDKCall_AddParameter(Field_GetSDKType(nField), Field_GetSDKPassMethod(nField), VDECODE_FLAG_ALLOWNULL|VDECODE_FLAG_ALLOWNOTINGAME|VDECODE_FLAG_ALLOWWORLD, VENCODE_FLAG_COPYBACK);
+		PrepSDKCall_AddParameter(Field_GetSDKType(nField), Field_GetSDKPassMethod(nField), VDECODE_FLAG_ALLOWNULL|VDECODE_FLAG_ALLOWNOTINGAME|VDECODE_FLAG_ALLOWWORLD);
 	}
 	
 	fieldtype_t nField = Function_GetReturnType(pFunction);
 	if (nField != FIELD_VOID)
-		PrepSDKCall_SetReturnInfo(Field_GetSDKType(nField), Field_GetSDKPassMethod(nField));
+	{
+		if (bReturnPlain && Field_GetSMField(nField) != SMField_Any)
+			PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
+		else
+			PrepSDKCall_SetReturnInfo(Field_GetSDKType(nField), SDKPass_Plain);	// Vector must have SDKPass_Plain in returns
+	}
 	
 	return EndPrepSDKCall();
 }

@@ -100,9 +100,7 @@ methodmap ScriptVariant_t < MemoryBlock
 	
 	public void GetVector(float vecBuffer[3])
 	{
-		Address pVector = this.nValue;
-		for (int i = 0; i < sizeof(vecBuffer); i++)
-			vecBuffer[i] = LoadFromAddress(pVector + view_as<Address>(i * 4), NumberType_Int32);
+		LoadVectorFromAddress(this.nValue, vecBuffer);
 	}
 	
 	property fieldtype_t nType

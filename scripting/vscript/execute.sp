@@ -109,10 +109,7 @@ ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
 			}
 			case SMField_Vector:
 			{
-				hValue[iParam] = new MemoryBlock(sizeof(param.vecValue) * 4);
-				for (int i = 0; i < sizeof(param.vecValue); i++)
-					hValue[iParam].StoreToOffset(i * 4, view_as<int>(param.vecValue[i]), NumberType_Int32);
-				
+				hValue[iParam] = CreateVectorMemory(param.vecValue);
 				nValue = hValue[iParam].Address;
 			}
 		}
