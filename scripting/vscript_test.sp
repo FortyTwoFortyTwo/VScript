@@ -36,7 +36,10 @@ public void OnMapStart()
 	SetVariantString("self.ValidateScriptScope()");
 	AcceptEntityInput(TEST_ENTITY, "RunScriptCode");
 	
-	//Test this first, because of resetting g_pScriptVM
+	/*
+	 * Test member call with bunch of params, this first because of resetting g_pScriptVM
+	 */
+	
 	pFunction = VScript_GetClassFunction("CBaseEntity", "BunchOfParams");
 	if (!pFunction)
 	{
@@ -53,18 +56,10 @@ public void OnMapStart()
 		VScript_ResetScriptVM();
 	}
 	
-	// Create a detour for newly created function
-	pFunction.CreateDetour().Enable(Hook_Pre, Detour_BunchOfParams);
-	
-	// Test with SDKCall
-	float flValue = SDKCall(pFunction.CreateSDKCall(), TEST_ENTITY, TEST_INTEGER, TEST_FLOAT, TEST_BOOLEAN, TEST_CSTRING, TEST_VECTOR);
-	AssertFloat(TEST_FLOAT, flValue);
-	
-	// Test again but with vscript
 	RunScript("function BunchOfParams(entity, param1, param2, param3, param4, param5) { return entity.BunchOfParams(param1, param2, param3, param4, param5) }");
 	
+	// Setup VScript Call
 	hExecute = new VScriptExecute(HSCRIPT_RootTable.GetValue("BunchOfParams"));
-	
 	hExecute.SetParam(1, FIELD_HSCRIPT, VScript_EntityToHScript(TEST_ENTITY));
 	hExecute.SetParam(2, FIELD_INTEGER, TEST_INTEGER);
 	hExecute.SetParam(3, FIELD_FLOAT, TEST_FLOAT);
@@ -72,12 +67,26 @@ public void OnMapStart()
 	hExecute.SetParamString(5, FIELD_CSTRING, TEST_CSTRING);
 	hExecute.SetParamVector(6, FIELD_VECTOR, TEST_VECTOR);
 	
+	// Test binding without detour
+	hExecute.Execute();
+	AssertInt(FIELD_VOID, hExecute.ReturnType);
+	
+	// Now detour the newly created function
+	pFunction.CreateDetour().Enable(Hook_Pre, Detour_BunchOfParams);
+	
+	// Test again
 	hExecute.Execute();
 	AssertInt(FIELD_FLOAT, hExecute.ReturnType);
 	AssertFloat(TEST_FLOAT, hExecute.ReturnValue);
 	delete hExecute;
 	
-	// Create AnotherRandomInt function that does the exact same as RandomInt
+	// Test with SDKCall
+	float flValue = SDKCall(pFunction.CreateSDKCall(), TEST_ENTITY, TEST_INTEGER, TEST_FLOAT, TEST_BOOLEAN, TEST_CSTRING, TEST_VECTOR);
+	AssertFloat(TEST_FLOAT, flValue);
+	
+	/*
+	 * Create AnotherRandomInt function that does the exact same as RandomInt
+	 */
 	pFunction = VScript_GetGlobalFunction("AnotherRandomInt");
 	if (!pFunction)
 	{
@@ -93,6 +102,10 @@ public void OnMapStart()
 	hDetour.Disable(Hook_Post, Detour_RandomInt);
 	AssertInt(TEST_INTEGER, iValue);
 	
+	/*
+	 * Test ReturnString function
+	 */
+	
 	pFunction = VScript_GetGlobalFunction("ReturnString");
 	if (!pFunction)
 	{
@@ -103,18 +116,28 @@ public void OnMapStart()
 		pFunction.Register();
 	}
 	
-	// Test ReturnString with SDKCall
-	pFunction.CreateDetour().Enable(Hook_Pre, Detour_ReturnString);
-	SDKCall(pFunction.CreateSDKCall(), sBuffer, sizeof(sBuffer));
-	AssertString(TEST_CSTRING, sBuffer);
-	
-	// Test ReturnString with VScript
 	hExecute = new VScriptExecute(HSCRIPT_RootTable.GetValue("ReturnString"));
+	
+	// Binding without detour
+	hExecute.Execute();
+	AssertInt(FIELD_VOID, hExecute.ReturnType);	// null
+	
+	pFunction.CreateDetour().Enable(Hook_Pre, Detour_ReturnString);
+	
+	// Binding with detour
 	hExecute.Execute();
 	AssertInt(FIELD_CSTRING, hExecute.ReturnType);
 	hExecute.GetReturnString(sBuffer, sizeof(sBuffer));
 	AssertString(TEST_CSTRING, sBuffer);
 	delete hExecute;
+	
+	// Test ReturnString with SDKCall
+	SDKCall(pFunction.CreateSDKCall(), sBuffer, sizeof(sBuffer));
+	AssertString(TEST_CSTRING, sBuffer);
+	
+	/*
+	 * Test ReturnVector function
+	 */
 	
 	pFunction = VScript_GetGlobalFunction("ReturnVector");
 	if (!pFunction)
@@ -126,26 +149,39 @@ public void OnMapStart()
 		pFunction.Register();
 	}
 	
-	// Test ReturnVector with SDKCall
-	pFunction.CreateDetour().Enable(Hook_Pre, Detour_ReturnVector);
-	SDKCall(pFunction.CreateSDKCall(), vecResult);
-	AssertVector(TEST_VECTOR, vecResult);
-	
-	// Test ReturnVector with VScript
 	hExecute = new VScriptExecute(HSCRIPT_RootTable.GetValue("ReturnVector"));
+	
+	// Binding without detour
+	hExecute.Execute();
+	AssertInt(FIELD_VOID, hExecute.ReturnType);	// null
+	
+	pFunction.CreateDetour().Enable(Hook_Pre, Detour_ReturnVector);
+	
+	// Binding with detour
 	hExecute.Execute();
 	AssertInt(FIELD_VECTOR, hExecute.ReturnType);
 	hExecute.GetReturnVector(vecResult);
 	AssertVector(TEST_VECTOR, vecResult);
 	delete hExecute;
 	
-	// Test out instance function
+	// Test ReturnVector with SDKCall
+	SDKCall(pFunction.CreateSDKCall(), vecResult);
+	AssertVector(TEST_VECTOR, vecResult);
+	
+	/*
+	 * Test instance function
+	 */
+	
 	pFunction = VScript_GetClassFunction("CEntities", "FindByClassname");
 	pFunction.CreateDetour().Enable(Hook_Pre, Detour_FindByClassname);
 	
 	HSCRIPT pEntities = HSCRIPT_RootTable.GetValue("Entities");
 	HSCRIPT pEntity = SDKCall(pFunction.CreateSDKCall(), pEntities.Instance, 0, TEST_CLASSNAME);
 	AssertInt(TEST_ENTITY, VScript_HScriptToEntity(pEntity));
+	
+	/*
+	 * Check that all function params have proper field
+	 */
 	
 	CheckFunctions(VScript_GetAllGlobalFunctions());
 	
@@ -159,7 +195,9 @@ public void OnMapStart()
 	
 	delete aList;
 	
-	// Test compile script with param and returns
+	/*
+	 * Test compile script with param and returns
+	 */
 	
 	RunScript("function ReturnParam(param) { return param }");
 	
@@ -182,7 +220,10 @@ public void OnMapStart()
 	
 	delete hExecute;
 	
-	// Multiple params, test if ScriptVariant_t size is correct
+	/*
+	 * Multiple params, test if ScriptVariant_t size is correct
+	 */
+	
 	RunScript("function MoreParam(param1, param2, param3) { return param3 }");
 	
 	hExecute = new VScriptExecute(HSCRIPT_RootTable.GetValue("MoreParam"));
@@ -192,7 +233,10 @@ public void OnMapStart()
 	hExecute.Execute();
 	AssertInt(TEST_INTEGER, hExecute.ReturnValue);
 	
-	// Test table stuffs
+	/*
+	 * Test table stuffs
+	 */
+	
 	HSCRIPT pTable = RunScript("return { thing = 322, empty = null, }");
 	
 	AssertInt(322, pTable.GetValue("thing"));
@@ -274,7 +318,7 @@ public MRESReturn Detour_BunchOfParams(int iEntity, DHookReturn hReturn, DHookPa
 	
 	AssertVector(TEST_VECTOR, vecBuffer);
 	
-	hReturn.Value = TEST_FLOAT;	// TODO fix this, dont always work
+	hReturn.Value = TEST_FLOAT;
 	return MRES_Supercede;
 }
 

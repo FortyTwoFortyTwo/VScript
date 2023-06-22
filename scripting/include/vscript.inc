@@ -181,7 +181,7 @@ methodmap VScriptFunction < Address
 	}
 	
 	// Set the function as empty, doing nothing. This is used when wanting to create a new function only to be used for detour.
-	// This MUST be used after return and params has been set. If return is not void, 0 is returned by default.
+	// This MUST be used after return and params has been set. If return is not void, 0 or null is returned by default.
 	public native void SetFunctionEmpty();
 	
 	// Gets/Sets the return field type
@@ -313,7 +313,7 @@ methodmap VScriptExecute < Handle
 	// @return                 Script status after executed.
 	public native ScriptStatus_t Execute();
 	
-	// Gets return field type
+	// Gets return field type, FIELD_VOID if null
 	property fieldtype_t ReturnType
 	{
 		public native get();

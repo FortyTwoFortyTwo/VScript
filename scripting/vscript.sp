@@ -406,7 +406,17 @@ public any Native_Function_CopyFrom(Handle hPlugin, int iNumParams)
 
 public any Native_Function_Register(Handle hPlugin, int iNumParams)
 {
-	Function_Register(GetNativeCell(1));
+	VScriptFunction pFunction = GetNativeCell(1);
+	
+	char sBuffer[64];
+	Function_GetScriptName(pFunction, sBuffer, sizeof(sBuffer));
+	if (!sBuffer[0])
+		ThrowNativeError(SP_ERROR_NATIVE, "Function must have script name set before registering it");
+	
+	if (Function_GetFunction(pFunction) == Address_Null)
+		ThrowNativeError(SP_ERROR_NATIVE, "Function must have address set before registering it");
+	
+	Function_Register(pFunction);
 	return 0;
 }
 

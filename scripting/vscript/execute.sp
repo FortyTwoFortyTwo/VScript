@@ -136,7 +136,15 @@ ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
 			{
 				pReturn.GetVector(execute.nReturn.vecValue);
 			}
+			default:
+			{
+				execute.nReturn.nValue = 0;
+			}
 		}
+	}
+	else
+	{
+		execute.nReturn.nValue = 0;
 	}
 	
 	execute.nReturn.nType = pReturn.nType;
