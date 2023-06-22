@@ -274,7 +274,7 @@
 			"game"	"tf"
 		}
 		
-		// L4D2 and TF2 have an extra +4 bytes at offset 4 and 12
+		// L4D2 and TF2 have an extra +4 bytes at offset 4, and windows have another at 12
 		
 		"Offsets"
 		{
@@ -286,7 +286,7 @@
 			
 			"sizeof(ScriptVariant_t)"
 			{
-				"linux"		"16"
+				"linux"		"12"
 				"windows"	"16"
 			}
 		}

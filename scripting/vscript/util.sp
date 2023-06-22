@@ -47,7 +47,7 @@ int LoadStringLengthFromAddress(Address pString)
 MemoryBlock CreateStringMemory(const char[] sBuffer)
 {
 	int iLength = strlen(sBuffer);
-	MemoryBlock hString = new MemoryBlock(iLength);
+	MemoryBlock hString = new MemoryBlock(iLength + 1);	// plus 1 for null term
 	for (int i = 0; i < iLength; i++)
 		hString.StoreToOffset(i, sBuffer[i], NumberType_Int8);
 	
