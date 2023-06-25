@@ -125,6 +125,8 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 
 public void OnPluginStart()
 {
+	CreateConVar("vscript_version", PLUGIN_VERSION ... "." ... PLUGIN_VERSION_REVISION, "VScript plugin version", FCVAR_SPONLY|FCVAR_NOTIFY|FCVAR_DONTRECORD);
+	
 	GameData hGameData = new GameData("vscript");
 	
 	hGameData.GetKeyValue("OS", g_sOperatingSystem, sizeof(g_sOperatingSystem));
