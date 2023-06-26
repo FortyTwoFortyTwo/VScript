@@ -163,7 +163,7 @@ public MRESReturn Binding_Detour(DHookReturn hReturn, DHookParam hParam)
 			nResult = 0;
 		}
 	}
-	else if (Field_GetSMField(nField) == SMField_Vector)
+	else if (nField != FIELD_VOID && Field_GetSMField(nField) == SMField_Vector)
 	{
 		if (nResult == 0)
 		{
