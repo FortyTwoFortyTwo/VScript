@@ -451,6 +451,45 @@ native HSCRIPT VScript_EntityToHScript(int entity);
 native int VScript_HScriptToEntity(HSCRIPT hscript);
 
 /**
+ * Gets VScriptFunction from class or creates one if don't exist
+ *
+ * @param className        Class name.
+ * @param functionName     Function name.
+ * 
+ * @return                 Address of VScriptFunction, either existing or newly created
+ * @error                  Invalid class name
+ */
+stock VScriptFunction VScript_CreateClassFunction(const char[] className, const char[] functionName)
+{
+	VScriptFunction func = VScript_GetClassFunction(className, functionName);
+	if (func)
+		return func;
+	
+	VScriptClass class = VScript_GetClass(className);
+	func = class.CreateFunction();
+	func.SetScriptName(functionName);
+	return func;
+}
+
+/**
+ * Gets VScriptFunction from global or creates one if don't exist
+ * 
+ * @param functionName     Function name.
+ * 
+ * @return                 Address of VScriptFunction, either existing or newly created
+ */
+stock VScriptFunction VScript_CreateGlobalFunction(const char[] functionName)
+{
+	VScriptFunction func = VScript_GetGlobalFunction(functionName);
+	if (func)
+		return func;
+	
+	func = VScript_CreateFunction();
+	func.SetScriptName(functionName);
+	return func;
+}
+
+/**
  * Returns the value of a constant
  * 
  * @param table            Enum or bitfield name to get.

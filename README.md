@@ -79,15 +79,11 @@ VScriptFunction g_NewFunction;
 
 public void OnPluginStart()
 {
-	g_NewFunction = VScript_GetGlobalFunction("NewFunction");
-	if (!g_NewFunction)	// Check that its not already made
-	{
-		g_NewFunction = VScript_CreateFunction();
-		g_NewFunction.SetScriptName("NewFunction");
-		g_NewFunction.SetParam(1, FIELD_FLOAT);
-		g_NewFunction.Return = FIELD_INTEGER;
-		g_NewFunction.SetFunctionEmpty();
-	}
+	// Create a new function, or get an existing one if name already exists
+	g_NewFunction = VScript_CreateGlobalFunction("NewFunction");
+	g_NewFunction.SetParam(1, FIELD_FLOAT);
+	g_NewFunction.Return = FIELD_INTEGER;
+	g_NewFunction.SetFunctionEmpty();
 }
 
 public void OnMapStart()

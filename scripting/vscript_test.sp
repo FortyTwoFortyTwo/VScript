@@ -40,21 +40,16 @@ public void OnMapStart()
 	 * Test member call with bunch of params, this first because of resetting g_pScriptVM
 	 */
 	
-	pFunction = VScript_GetClassFunction("CBaseEntity", "BunchOfParams");
-	if (!pFunction)
-	{
-		pFunction = VScript_GetClass("CBaseEntity").CreateFunction();
-		pFunction.SetScriptName("BunchOfParams");
-		pFunction.SetParam(1, FIELD_INTEGER);
-		pFunction.SetParam(2, FIELD_FLOAT);
-		pFunction.SetParam(3, FIELD_BOOLEAN);
-		pFunction.SetParam(4, FIELD_CSTRING);
-		pFunction.SetParam(5, FIELD_VECTOR);
-		
-		pFunction.Return = FIELD_FLOAT;
-		pFunction.SetFunctionEmpty();
-		VScript_ResetScriptVM();
-	}
+	pFunction = VScript_CreateClassFunction("CBaseEntity", "BunchOfParams");
+	pFunction.SetParam(1, FIELD_INTEGER);
+	pFunction.SetParam(2, FIELD_FLOAT);
+	pFunction.SetParam(3, FIELD_BOOLEAN);
+	pFunction.SetParam(4, FIELD_CSTRING);
+	pFunction.SetParam(5, FIELD_VECTOR);
+	
+	pFunction.Return = FIELD_FLOAT;
+	pFunction.SetFunctionEmpty();
+	VScript_ResetScriptVM();
 	
 	RunScript("function BunchOfParams(entity, param1, param2, param3, param4, param5) { return entity.BunchOfParams(param1, param2, param3, param4, param5) }");
 	
@@ -106,15 +101,10 @@ public void OnMapStart()
 	 * Test ReturnString function
 	 */
 	
-	pFunction = VScript_GetGlobalFunction("ReturnString");
-	if (!pFunction)
-	{
-		pFunction = VScript_CreateFunction();
-		pFunction.SetScriptName("ReturnString");
-		pFunction.Return = FIELD_CSTRING;
-		pFunction.SetFunctionEmpty();
-		pFunction.Register();
-	}
+	pFunction = VScript_CreateGlobalFunction("ReturnString");
+	pFunction.Return = FIELD_CSTRING;
+	pFunction.SetFunctionEmpty();
+	pFunction.Register();
 	
 	hExecute = new VScriptExecute(HSCRIPT_RootTable.GetValue("ReturnString"));
 	
@@ -139,15 +129,10 @@ public void OnMapStart()
 	 * Test ReturnVector function
 	 */
 	
-	pFunction = VScript_GetGlobalFunction("ReturnVector");
-	if (!pFunction)
-	{
-		pFunction = VScript_CreateFunction();
-		pFunction.SetScriptName("ReturnVector");
-		pFunction.Return = FIELD_VECTOR;
-		pFunction.SetFunctionEmpty();
-		pFunction.Register();
-	}
+	pFunction = VScript_CreateGlobalFunction("ReturnVector");
+	pFunction.Return = FIELD_VECTOR;
+	pFunction.SetFunctionEmpty();
+	pFunction.Register();
 	
 	hExecute = new VScriptExecute(HSCRIPT_RootTable.GetValue("ReturnVector"));
 	
