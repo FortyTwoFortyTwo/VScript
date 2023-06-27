@@ -189,7 +189,7 @@ public any Native_HScript_GetValueField(Handle hPlugin, int iNumParams)
 
 public any Native_HScript_GetValue(Handle hPlugin, int iNumParams)
 {
-	ScriptVariant_t pValue = HScript_NativeGetValue(SMField_Any);
+	ScriptVariant_t pValue = HScript_NativeGetValue(SMField_Cell);
 	any nValue = pValue.nValue;
 	delete pValue;
 	return nValue;
@@ -231,7 +231,7 @@ public any Native_HScript_IsValueNull(Handle hPlugin, int iNumParams)
 
 public any Native_HScript_SetValue(Handle hPlugin, int iNumParams)
 {
-	HScript_NativeSetValue(SMField_Any);
+	HScript_NativeSetValue(SMField_Cell);
 	return 0;
 }
 
@@ -249,7 +249,7 @@ public any Native_HScript_SetValueVector(Handle hPlugin, int iNumParams)
 
 public any Native_HScript_SetValueNull(Handle hPlugin, int iNumParams)
 {
-	HScript_NativeSetValue(SMField_Unknwon);
+	HScript_NativeSetValue(SMField_Void);	// FIELD_VOID is for null
 	return 0;
 }
 

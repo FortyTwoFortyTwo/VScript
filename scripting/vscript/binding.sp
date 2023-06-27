@@ -100,7 +100,7 @@ public MRESReturn Binding_Detour(DHookReturn hReturn, DHookParam hParam)
 		
 		switch (Field_GetSMField(Function_GetParam(info.pFunction, i)))
 		{
-			case SMField_Any:
+			case SMField_Cell:
 			{
 				iSize = 1;
 			}
@@ -131,7 +131,7 @@ public MRESReturn Binding_Detour(DHookReturn hReturn, DHookParam hParam)
 		
 		switch (Field_GetSMField(Function_GetParam(info.pFunction, i)))
 		{
-			case SMField_Any:
+			case SMField_Cell:
 			{
 				a[iCount][0] = nValue;
 			}
@@ -163,7 +163,7 @@ public MRESReturn Binding_Detour(DHookReturn hReturn, DHookParam hParam)
 			nResult = 0;
 		}
 	}
-	else if (nField != FIELD_VOID && Field_GetSMField(nField) == SMField_Vector)
+	else if (Field_GetSMField(nField) == SMField_Vector)
 	{
 		if (nResult == 0)
 		{

@@ -137,9 +137,9 @@ void HScript_NativeSetValue(SMField nSMField)
 	char[] sBuffer = new char[iLength + 1];
 	GetNativeString(2, sBuffer, iLength + 1);
 	
-	// HSCRIPT.SetValueNull used SMField_Unknwon, which is just setting void field
+	// HSCRIPT.SetValueNull used SMField_Void, which is just setting void field
 	fieldtype_t nField = FIELD_VOID;
-	if (nSMField != SMField_Unknwon)
+	if (nSMField != SMField_Void)
 	{
 		nField = GetNativeCell(3);
 		if (Field_GetSMField(nField) != nSMField)
@@ -153,7 +153,7 @@ void HScript_NativeSetValue(SMField nSMField)
 	
 	switch (nSMField)
 	{
-		case SMField_Any:
+		case SMField_Cell:
 		{
 			pValue.nValue = GetNativeCell(4);
 		}

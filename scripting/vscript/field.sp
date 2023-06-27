@@ -1,7 +1,8 @@
 enum SMField
 {
 	SMField_Unknwon,
-	SMField_Any,
+	SMField_Void,
+	SMField_Cell,
 	SMField_String,
 	SMField_Vector,
 }
@@ -22,14 +23,14 @@ enum struct FieldInfo
 }
 
 static FieldInfo g_FieldInfos[FIELD_MAX] = {
-	{ "FIELD_VOID",			SMField_Unknwon,	SDKType_Unknown,		SDKPass_Unknown,	ReturnType_Void,		HookParamType_Unknown,	-1	},
-	{ "FIELD_FLOAT",		SMField_Any,		SDKType_Float,			SDKPass_Plain,		ReturnType_Float,		HookParamType_Float,	4	},
+	{ "FIELD_VOID",			SMField_Void,		SDKType_Unknown,		SDKPass_Unknown,	ReturnType_Void,		HookParamType_Unknown,	-1	},
+	{ "FIELD_FLOAT",		SMField_Cell,		SDKType_Float,			SDKPass_Plain,		ReturnType_Float,		HookParamType_Float,	4	},
 	{ "FIELD_VECTOR",		SMField_Vector,		SDKType_Vector,			SDKPass_ByValue,	ReturnType_VectorPtr,	HookParamType_Object,	12	},
-	{ "FIELD_INTEGER",		SMField_Any,		SDKType_PlainOldData,	SDKPass_Plain,		ReturnType_Int,			HookParamType_Int,		4	},
-	{ "FIELD_BOOLEAN",		SMField_Any,		SDKType_Bool,			SDKPass_Plain,		ReturnType_Bool,		HookParamType_Bool,		4	},
+	{ "FIELD_INTEGER",		SMField_Cell,		SDKType_PlainOldData,	SDKPass_Plain,		ReturnType_Int,			HookParamType_Int,		4	},
+	{ "FIELD_BOOLEAN",		SMField_Cell,		SDKType_Bool,			SDKPass_Plain,		ReturnType_Bool,		HookParamType_Bool,		4	},
 	{ "FIELD_TYPEUNKNOWN",	SMField_Unknwon,	SDKType_Unknown,		SDKPass_Unknown,	ReturnType_Unknown,		HookParamType_Unknown,	-1	},
 	{ "FIELD_CSTRING",		SMField_String,		SDKType_String,			SDKPass_Pointer,	ReturnType_CharPtr,		HookParamType_CharPtr,	4	},
-	{ "FIELD_HSCRIPT",		SMField_Any,		SDKType_PlainOldData,	SDKPass_Plain,		ReturnType_Int,			HookParamType_Int,		4	},
+	{ "FIELD_HSCRIPT",		SMField_Cell,		SDKType_PlainOldData,	SDKPass_Plain,		ReturnType_Int,			HookParamType_Int,		4	},
 	{ "FIELD_VARIANT",		SMField_Unknwon,	SDKType_Unknown,		SDKPass_Unknown,	ReturnType_Unknown,		HookParamType_Unknown,	-1	},
 	{ "FIELD_QANGLE",		SMField_Vector,		SDKType_QAngle,			SDKPass_ByValue,	ReturnType_VectorPtr,	HookParamType_Object,	12	},
 };

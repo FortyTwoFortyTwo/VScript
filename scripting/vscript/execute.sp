@@ -99,7 +99,7 @@ ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
 		
 		switch (Field_GetSMField(param.nType))
 		{
-			case SMField_Any:
+			case SMField_Cell:
 			{
 				nValue = param.nValue;
 			}
@@ -120,31 +120,28 @@ ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
 	
 	ScriptStatus_t nStatus = SDKCall(g_hSDKCallExecuteFunction, GetScriptVM(), execute.pHScript, hArgs ? hArgs.Address : Address_Null, iNumParams, pReturn.Address, execute.hScope, true);
 	
-	if (pReturn.nType != FIELD_VOID)
+	switch (Field_GetSMField(pReturn.nType))
 	{
-		switch (Field_GetSMField(pReturn.nType))
+		case SMField_Void:
 		{
-			case SMField_Any:
-			{
-				execute.nReturn.nValue = pReturn.nValue;
-			}
-			case SMField_String:
-			{
-				execute.nReturn.pValue = pReturn.nValue;
-			}
-			case SMField_Vector:
-			{
-				pReturn.GetVector(execute.nReturn.vecValue);
-			}
-			default:
-			{
-				execute.nReturn.nValue = 0;
-			}
+			execute.nReturn.nValue = 0;
 		}
-	}
-	else
-	{
-		execute.nReturn.nValue = 0;
+		case SMField_Cell:
+		{
+			execute.nReturn.nValue = pReturn.nValue;
+		}
+		case SMField_String:
+		{
+			execute.nReturn.pValue = pReturn.nValue;
+		}
+		case SMField_Vector:
+		{
+			pReturn.GetVector(execute.nReturn.vecValue);
+		}
+		default:
+		{
+			execute.nReturn.nValue = 0;
+		}
 	}
 	
 	execute.nReturn.nType = pReturn.nType;

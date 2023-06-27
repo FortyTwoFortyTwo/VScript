@@ -198,7 +198,7 @@ Handle Function_CreateSDKCall(VScriptFunction pFunction, bool bEntity = true, bo
 	fieldtype_t nField = Function_GetReturnType(pFunction);
 	if (nField != FIELD_VOID)
 	{
-		if (bReturnPlain && Field_GetSMField(nField) != SMField_Any)
+		if (bReturnPlain && Field_GetSMField(nField) != SMField_Cell)
 			PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
 		else
 			PrepSDKCall_SetReturnInfo(Field_GetSDKType(nField), SDKPass_Plain);	// Vector must have SDKPass_Plain in returns
