@@ -306,7 +306,31 @@ public any Native_Function_GetScriptName(Handle hPlugin, int iNumParams)
 
 public any Native_Function_SetScriptName(Handle hPlugin, int iNumParams)
 {
-	Function_SetScriptName(GetNativeCell(1), 2);
+	VScriptFunction pFunction = GetNativeCell(1);
+	
+	int iLength;
+	GetNativeStringLength(2, iLength);
+	
+	char[] sBuffer = new char[iLength + 1];
+	GetNativeString(2, sBuffer, iLength + 1);
+	
+	// Check if script name dont already exist
+	if (Function_GetFlags(pFunction) & SF_MEMBER_FUNC)
+	{
+		VScriptClass pClass = List_GetClassFromFunction(pFunction);
+		if (Class_GetFunctionFromName(pClass, sBuffer))
+		{
+			char sClass[256];
+			Class_GetScriptName(pClass, sClass, sizeof(sClass));
+			ThrowNativeError(SP_ERROR_NATIVE, "Class '%s' already have a function named '%s'", sClass, sBuffer);
+		}
+	}
+	else if (List_GetFunction(sBuffer))
+	{
+		ThrowNativeError(SP_ERROR_NATIVE, "Global function named '%s' already exists", sBuffer);
+	}
+	
+	Function_SetScriptName(pFunction, 2);
 	return 0;
 }
 
