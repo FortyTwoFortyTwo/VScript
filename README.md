@@ -93,8 +93,7 @@ public void OnPluginStart()
 public void OnMapStart()
 {
 	// Global function need to be registered everytime g_pScriptVM has been reset, which usually happens on mapchange
-	if (!VScript_GetGlobalFunction("NewFunction"))
-		g_NewFunction.Register();
+	g_NewFunction.Register();
 }
 ```
 

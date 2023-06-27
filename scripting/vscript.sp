@@ -418,6 +418,11 @@ public any Native_Function_Register(Handle hPlugin, int iNumParams)
 	if (Function_GetFunction(pFunction) == Address_Null)
 		ThrowNativeError(SP_ERROR_NATIVE, "Function must have address set before registering it");
 	
+	// Is function already registered?
+	ArrayList aList = List_GetAllGlobalFunctions();
+	if (aList.FindValue(pFunction) != -1)
+		return 0;	// Silently do nothing
+	
 	Function_Register(pFunction);
 	return 0;
 }
