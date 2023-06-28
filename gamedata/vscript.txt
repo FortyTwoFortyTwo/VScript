@@ -328,6 +328,17 @@
 			"FIELD_VARIANT"		"33"	// +1
 			"FIELD_QANGLE"		"40"	// +1
 		}
+		
+		// L4D2 have a global pointer that we don't want to modify it on plugin load
+		
+		"Signatures"
+		{
+			"CSpeechScriptBridge::Init"
+			{
+				"linux"		"@_ZN19CSpeechScriptBridge4InitEv"
+				"windows"	"\x57\x8B\xF9\x80\x3F\x00\x74\x2A\x68\x2A\x2A\x2A\x2A"
+			}
+		}
 	}
 	
 	"tf"

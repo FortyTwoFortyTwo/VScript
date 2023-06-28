@@ -181,6 +181,14 @@ public void OnMapStart()
 	delete aList;
 	
 	/*
+	 * Test Entity to HSCRIPT convert
+	 */
+	
+	HSCRIPT pScript = VScript_EntityToHScript(TEST_ENTITY);
+	int iEntity = VScript_HScriptToEntity(pScript);
+	AssertInt(TEST_ENTITY, iEntity);
+	
+	/*
 	 * Test compile script with param and returns
 	 */
 	

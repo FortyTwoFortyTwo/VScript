@@ -1,6 +1,8 @@
 static ArrayList g_aGlobalFunctions;
 static ArrayList g_aClasses;
 
+static DynamicDetour g_hSpeechScriptBridgeInit;
+
 void List_LoadGamedata(GameData hGameData)
 {
 	DynamicDetour hDetour;
@@ -13,12 +15,19 @@ void List_LoadGamedata(GameData hGameData)
 	
 	hDetour = VTable_CreateDetour(hGameData, "IScriptVM", "RegisterClass", ReturnType_Bool, HookParamType_Int);
 	hDetour.Enable(Hook_Post, List_RegisterClass);
+	
+	Address pAddress = hGameData.GetMemSig("CSpeechScriptBridge::Init");
+	if (pAddress)
+		g_hSpeechScriptBridgeInit = new DynamicDetour(pAddress, CallConv_THISCALL, ReturnType_Void, ThisPointer_Address);
 }
 
 void List_LoadDefaults()
 {
 	g_aGlobalFunctions = new ArrayList();
 	g_aClasses = new ArrayList();
+	
+	if (g_hSpeechScriptBridgeInit)
+		g_hSpeechScriptBridgeInit.Enable(Hook_Pre, List_BlockDetour);
 	
 	HSCRIPT pScriptVM = GetScriptVM();
 	
@@ -27,6 +36,9 @@ void List_LoadDefaults()
 	GameSystem_ServerInit();
 	GameSystem_ServerTerm();
 	SetScriptVM(pScriptVM);
+	
+	if (g_hSpeechScriptBridgeInit)
+		g_hSpeechScriptBridgeInit.Disable(Hook_Pre, List_BlockDetour);
 }
 
 MRESReturn List_Init(Address pScriptVM, DHookReturn hReturn)
@@ -55,6 +67,11 @@ MRESReturn List_RegisterClass(Address pScriptVM, DHookReturn hReturn, DHookParam
 		g_aClasses.Push(pClass);
 	
 	return MRES_Ignored;
+}
+
+MRESReturn List_BlockDetour(Address pThis)
+{
+	return MRES_Supercede;
 }
 
 ArrayList List_GetAllGlobalFunctions()
