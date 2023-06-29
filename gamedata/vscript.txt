@@ -338,6 +338,12 @@
 				"linux"		"@_ZN19CSpeechScriptBridge4InitEv"
 				"windows"	"\x57\x8B\xF9\x80\x3F\x00\x74\x2A\x68\x2A\x2A\x2A\x2A"
 			}
+			
+			"CSpeechScriptBridge::Term"
+			{
+				"linux"		"@_ZN19CSpeechScriptBridge4TermEv_part_78"
+				"windows"	"\x56\x8B\xF1\x83\x3E\xFF\x74\x2A"
+			}
 		}
 	}
 	
