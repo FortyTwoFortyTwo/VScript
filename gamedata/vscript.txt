@@ -331,18 +331,28 @@
 		
 		// L4D2 have a global pointer that we don't want to modify it on plugin load
 		
+		"Addresses"
+		{
+			"g_ExpresserRRScriptBridge"
+			{
+				"signature"	"VScriptServerTerm"
+				"linux"
+				{
+					"offset"	"31"
+				}
+				"windows"
+				{
+					"offset"	"42"
+				}
+			}
+		}
+		
 		"Signatures"
 		{
-			"CSpeechScriptBridge::Init"
+			"VScriptServerTerm"
 			{
-				"linux"		"@_ZN19CSpeechScriptBridge4InitEv"
-				"windows"	"\x57\x8B\xF9\x80\x3F\x00\x74\x2A\x68\x2A\x2A\x2A\x2A"
-			}
-			
-			"CSpeechScriptBridge::Term"
-			{
-				"linux"		"@_ZN19CSpeechScriptBridge4TermEv_part_78"
-				"windows"	"\x56\x8B\xF1\x83\x3E\xFF\x74\x2A"
+				"linux"		"@_Z17VScriptServerTermv"
+				"windows"	"\x80\x3D\x2A\x2A\x2A\x2A\x00\x74\x2A\xE8\x2A\x2A\x2A\x2A\xC6\x05\x2A\x2A\x2A\x2A\x01"
 			}
 		}
 	}
