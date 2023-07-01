@@ -10,6 +10,8 @@
 				"windows"	"windows"
 			}
 			
+			"ResetScriptVMOnLoad"	"0"
+			
 			"IGameSystem"
 			{
 				"linux"		"18CVScriptGameSystem"
@@ -327,32 +329,12 @@
 			"FIELD_HSCRIPT"		"32"	// +1
 			"FIELD_VARIANT"		"33"	// +1
 			"FIELD_QANGLE"		"40"	// +1
-		}
-		
-		// L4D2 have a global pointer that we don't want to modify it on plugin load
-		
-		"Addresses"
-		{
-			"g_ExpresserRRScriptBridge"
+			
+			// L4D2 have a global pointer that modifying it will crash, temp solution for now in linux
+			
+			"ResetScriptVMOnLoad"
 			{
-				"signature"	"VScriptServerTerm"
-				"linux"
-				{
-					"offset"	"31"
-				}
-				"windows"
-				{
-					"offset"	"42"
-				}
-			}
-		}
-		
-		"Signatures"
-		{
-			"VScriptServerTerm"
-			{
-				"linux"		"@_Z17VScriptServerTermv"
-				"windows"	"\x80\x3D\x2A\x2A\x2A\x2A\x00\x74\x2A\xE8\x2A\x2A\x2A\x2A\xC6\x05\x2A\x2A\x2A\x2A\x01"
+				"linux"		"1"
 			}
 		}
 	}

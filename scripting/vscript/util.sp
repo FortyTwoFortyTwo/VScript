@@ -8,6 +8,16 @@ void SetScriptVM(HSCRIPT pScript)
 	StoreToAddress(g_pToScriptVM, pScript, NumberType_Int32);
 }
 
+void ResetScriptVM()
+{
+	int iEntity = INVALID_ENT_REFERENCE;
+	while ((iEntity = FindEntityByClassname(iEntity, "*")) != INVALID_ENT_REFERENCE)
+		Entity_Clear(iEntity);
+	
+	GameSystem_ServerTerm();
+	GameSystem_ServerInit();
+}
+
 int LoadPointerStringFromAddress(Address pPointer, char[] sBuffer, int iMaxLen)
 {
 	Address pString = LoadFromAddress(pPointer, NumberType_Int32);
