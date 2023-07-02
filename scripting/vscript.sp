@@ -2,11 +2,12 @@
 
 #include "include/vscript.inc"
 
-#define PLUGIN_VERSION			"1.7.3"
+#define PLUGIN_VERSION			"1.7.4"
 #define PLUGIN_VERSION_REVISION	"manual"
 
 char g_sOperatingSystem[16];
 bool g_bWindows;
+bool g_bAllowResetScriptVM;
 
 Address g_pToScriptVM;
 
@@ -131,6 +132,10 @@ public void OnPluginStart()
 	
 	hGameData.GetKeyValue("OS", g_sOperatingSystem, sizeof(g_sOperatingSystem));
 	g_bWindows = StrEqual(g_sOperatingSystem, "windows");
+	
+	char sVal[12];
+	hGameData.GetKeyValue("AllowResetScriptVM", sVal, sizeof(sVal));
+	g_bAllowResetScriptVM = !!StringToInt(sVal);
 	
 	g_iScriptVariant_sizeof = hGameData.GetOffset("sizeof(ScriptVariant_t)");
 	g_iScriptVariant_union = hGameData.GetOffset("ScriptVariant_t::union");
@@ -620,6 +625,9 @@ public any Native_Execute_GetReturnVector(Handle hPlugin, int iNumParams)
 
 public any Native_ResetScriptVM(Handle hPlugin, int iNumParams)
 {
+	if (!g_bAllowResetScriptVM)
+		ThrowNativeError(SP_ERROR_NATIVE, "This feature is not supported in this game and operating system.");
+	
 	int iEntity = INVALID_ENT_REFERENCE;
 	while ((iEntity = FindEntityByClassname(iEntity, "*")) != INVALID_ENT_REFERENCE)
 		Entity_Clear(iEntity);

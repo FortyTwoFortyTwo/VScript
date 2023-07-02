@@ -26,6 +26,8 @@
 			"IGameSystem::ExtraOffsets"	""
 			"IScriptVM::ExtraOffsets"	""
 			
+			"AllowResetScriptVM"	"1"
+			
 			"FIELD_VOID"		"0"
 			"FIELD_FLOAT"		"1"
 			"FIELD_VECTOR"		"3"
@@ -320,6 +322,13 @@
 			{
 				"linux"		"6 8 16 31 33 37 38"
 				"windows"	"6 8 16 29 33 36 38"
+			}
+			
+			// resetting g_pScriptVM in linux causes crash
+			
+			"AllowResetScriptVM"
+			{
+				"linux"		"0"
 			}
 			
 			"FIELD_TYPEUNKNOWN"	"30"	// +1

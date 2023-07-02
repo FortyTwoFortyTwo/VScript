@@ -20,6 +20,9 @@ void List_LoadDefaults()
 	g_aGlobalFunctions = new ArrayList();
 	g_aClasses = new ArrayList();
 	
+	if (!g_bAllowResetScriptVM)
+		return;
+	
 	HSCRIPT pScriptVM = GetScriptVM();
 	
 	// Create new vscriptvm and set back, so we can collect all of the default stuffs

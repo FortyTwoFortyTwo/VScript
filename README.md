@@ -96,3 +96,7 @@ public void OnMapStart()
 #### VScript_EntityToHScript and VScript_HScriptToEntity
 
 VScript uses FIELD_HSCRIPT to interact with entities, so `VScript_EntityToHScript` and `VScript_HScriptToEntity` are helpful functions to convert between entity index and hscript object to manage with it.
+
+## Known Issues
+
+In L4D2 linux, attempting to reset g_pScriptVM will eventually cause a crash. For now a plugin prevents any attempts to reset such, meaning that not everything may work properly until a mapchange occurs.
