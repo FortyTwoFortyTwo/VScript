@@ -180,6 +180,12 @@ methodmap VScriptFunction < Address
 		public native set(Address func);
 	}
 	
+	// Gets the offset of a virtual function from class, -1 if function is not a virtual
+	property int Offset
+	{
+		public native get();
+	}
+	
 	// Set the function as empty, doing nothing. This is used when wanting to create a new function only to be used for detour.
 	// This MUST be used after return and params has been set. If return is not void, 0 or null is returned by default.
 	public native void SetFunctionEmpty();
@@ -227,6 +233,11 @@ methodmap VScriptFunction < Address
 	// 
 	// @return                 DynamicDetour handle, must be deleted when not needed.
 	public native DynamicDetour CreateDetour();
+	
+	// Creates a hook handle from DynamicHook with parameters auto filled
+	// 
+	// @return                 DynamicHook handle, must be deleted when not needed. Returns null if function is not a virtual.
+	public native DynamicHook CreateHook();
 }
 
 methodmap VScriptClass < Address

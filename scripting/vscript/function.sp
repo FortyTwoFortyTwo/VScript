@@ -142,12 +142,83 @@ void Function_SetBinding(VScriptFunction pFunction, Address pBinding)
 
 Address Function_GetFunction(VScriptFunction pFunction)
 {
-	return LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Function), NumberType_Int32);
+	int iOffset = Function_GetOffset(pFunction);
+	if (iOffset == -1)
+	{
+		// Simple function address
+		return LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Function), NumberType_Int32);
+	}
+	else
+	{
+		// Virtual function
+		char sClass[64];
+		VScriptClass pClass = List_GetClassFromFunction(pFunction);
+		Class_GetScriptName(pClass, sClass, sizeof(sClass));
+		return VTable_GetAddressFromOffset(sClass, iOffset);
+	}
 }
 
 void Function_SetFunction(VScriptFunction pFunction, Address pFunc)
 {
+	for (int iOffset = 4; iOffset < g_iScriptFunctionBinding_sizeof; iOffset++)	// Fill any extra empty space as nothing
+		StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_Function + iOffset), 0x00, NumberType_Int8);
+	
 	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_Function), pFunc, NumberType_Int32);
+}
+
+int Function_GetOffset(VScriptFunction pFunction)
+{
+	Address pAddress = LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Function), NumberType_Int32);
+	
+	// This function could be virtual, check it
+	int iOffset;
+	if (g_bWindows)
+	{
+		if (g_iScriptFunctionBinding_sizeof > 4 && LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Function + 4), NumberType_Int32) != 0)
+			return -1;	// It's a virtual in linux, but not windows
+		
+		// Windows only gives function address that directly calls a virtual, load the instruction
+		Address pInstruction = LoadFromAddress(pAddress, NumberType_Int32);
+		
+		int iRead = RoundToFloor(float(view_as<int>(pInstruction)) / float(0x01000000));
+		if (iRead < 0)
+			iRead += 0x100;
+		
+		pInstruction = pInstruction & view_as<Address>(0x00FFFFFF);
+		
+		if (pInstruction != view_as<Address>(0xFF018B))	// First 3 bytes on virtual call
+			return -1;	// normal function
+		
+		switch (iRead)
+		{
+			// 1-byte read
+			case 0x60: iOffset = LoadFromAddress(pAddress + view_as<Address>(4), NumberType_Int8);
+			
+			// 4-byte read
+			case 0xA0: iOffset = LoadFromAddress(pAddress + view_as<Address>(4), NumberType_Int32);
+			
+			case 0x90: return -1;	// 4-byte read, but does not return and does more underneath, so treat it as a normal function
+			
+			default:
+			{
+				char sName[256];
+				Function_GetScriptName(pFunction, sName, sizeof(sName));
+				LogError("Unknown virtual instruction %02x from %s", iRead, sName);
+				return -1;
+			}
+		}
+	}
+	else
+	{
+		// pAddress is an offset
+		iOffset = view_as<int>(pAddress) - 1;
+		if (iOffset < 0 || iOffset >= 0x01000000)
+			return -1;	// normal function
+	}
+	
+	// Its a virtual function
+	return RoundToFloor(float(iOffset) / 4.0);
+	
 }
 
 ScriptFuncBindingFlags_t Function_GetFlags(VScriptFunction pFunction)
@@ -186,7 +257,11 @@ Handle Function_CreateSDKCall(VScriptFunction pFunction, bool bEntity = true, bo
 	else
 		StartPrepSDKCall(SDKCall_Raw);
 	
-	PrepSDKCall_SetAddress(Function_GetFunction(pFunction));
+	int iOffset = Function_GetOffset(pFunction);
+	if (iOffset != -1)
+		PrepSDKCall_SetVirtual(iOffset);
+	else
+		PrepSDKCall_SetAddress(Function_GetFunction(pFunction));
 	
 	int iCount = Function_GetParamCount(pFunction);
 	for (int i = 0; i < iCount; i++)
@@ -219,13 +294,35 @@ DynamicDetour Function_CreateDetour(VScriptFunction pFunction)
 	else
 		hDetour = new DynamicDetour(Function_GetFunction(pFunction), CallConv_THISCALL, Field_GetReturnType(nField), ThisPointer_Address);
 	
+	Function_FillParams(pFunction, hDetour);
+	return hDetour;
+}
+
+DynamicHook Function_CreateHook(VScriptFunction pFunction)
+{
+	int iOffset = Function_GetOffset(pFunction);
+	if (iOffset == -1)
+		return null;
+	
+	fieldtype_t nField = Function_GetReturnType(pFunction);
+	
+	DynamicHook hHook;
+	if (Class_IsDerivedFrom(List_GetClassFromFunction(pFunction), List_GetClass("CBaseEntity")))
+		hHook = new DynamicHook(iOffset, HookType_Entity, Field_GetReturnType(nField), ThisPointer_CBaseEntity);
+	else
+		hHook = new DynamicHook(iOffset, HookType_Raw, Field_GetReturnType(nField), ThisPointer_Address);
+	
+	Function_FillParams(pFunction, hHook);
+	return hHook;
+}
+
+void Function_FillParams(VScriptFunction pFunction, DHookSetup hSetup)
+{
 	int iCount = Function_GetParamCount(pFunction);
 	for (int i = 0; i < iCount; i++)
 	{
-		nField = Function_GetParam(pFunction, i);
+		fieldtype_t nField = Function_GetParam(pFunction, i);
 		HookParamType nType = Field_GetParamType(nField);
-		hDetour.AddParam(nType, nType == HookParamType_Object ? Field_GetSize(nField) : -1);
+		hSetup.AddParam(nType, nType == HookParamType_Object ? Field_GetSize(nField) : -1);
 	}
-	
-	return hDetour;
 }

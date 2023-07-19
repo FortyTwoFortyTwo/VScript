@@ -10,17 +10,8 @@
 				"windows"	"windows"
 			}
 			
-			"IGameSystem"
-			{
-				"linux"		"18CVScriptGameSystem"
-				"windows"	"CVScriptGameSystem"
-			}
-			
-			"IScriptVM"
-			{	
-				"linux"		"11CSquirrelVM"
-				"windows"	"CSquirrelVM"
-			}
+			"IGameSystem"	"CVScriptGameSystem"
+			"IScriptVM"		"CSquirrelVM"
 			
 			// Extra virtual functions that exists for each games
 			"IGameSystem::ExtraOffsets"	""

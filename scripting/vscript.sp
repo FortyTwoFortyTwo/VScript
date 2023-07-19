@@ -2,7 +2,7 @@
 
 #include "include/vscript.inc"
 
-#define PLUGIN_VERSION			"1.7.4"
+#define PLUGIN_VERSION			"1.8.0"
 #define PLUGIN_VERSION_REVISION	"manual"
 
 char g_sOperatingSystem[16];
@@ -10,6 +10,8 @@ bool g_bWindows;
 bool g_bAllowResetScriptVM;
 
 Address g_pToScriptVM;
+
+int g_iScriptFunctionBinding_sizeof;
 
 int g_iScriptVariant_sizeof;
 int g_iScriptVariant_union;
@@ -76,6 +78,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScriptFunction.Binding.get", Native_Function_BindingGet);
 	CreateNative("VScriptFunction.Function.get", Native_Function_FunctionGet);
 	CreateNative("VScriptFunction.Function.set", Native_Function_FunctionSet);
+	CreateNative("VScriptFunction.Offset.get", Native_Function_OffsetGet);
 	CreateNative("VScriptFunction.SetFunctionEmpty", Native_Function_SetFunctionEmpty);
 	CreateNative("VScriptFunction.Return.get", Native_Function_ReturnGet);
 	CreateNative("VScriptFunction.Return.set", Native_Function_ReturnSet);
@@ -86,6 +89,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScriptFunction.Register", Native_Function_Register);
 	CreateNative("VScriptFunction.CreateSDKCall", Native_Function_CreateSDKCall);
 	CreateNative("VScriptFunction.CreateDetour", Native_Function_CreateDetour);
+	CreateNative("VScriptFunction.CreateHook", Native_Function_CreateHook);
 	
 	CreateNative("VScriptClass.GetScriptName", Native_Class_GetScriptName);
 	CreateNative("VScriptClass.GetAllFunctions", Native_Class_GetAllFunctions);
@@ -137,13 +141,14 @@ public void OnPluginStart()
 	hGameData.GetKeyValue("AllowResetScriptVM", sVal, sizeof(sVal));
 	g_bAllowResetScriptVM = !!StringToInt(sVal);
 	
+	g_iScriptFunctionBinding_sizeof = hGameData.GetOffset("sizeof(ScriptFunctionBindingStorageType_t)");
+	
 	g_iScriptVariant_sizeof = hGameData.GetOffset("sizeof(ScriptVariant_t)");
 	g_iScriptVariant_union = hGameData.GetOffset("ScriptVariant_t::union");
 	g_iScriptVariant_type = hGameData.GetOffset("ScriptVariant_t::m_type");
 	
 	VTable_LoadGamedata(hGameData);
 	
-	Binding_LoadGamedata(hGameData);
 	Class_LoadGamedata(hGameData);
 	Entity_LoadGamedata(hGameData);
 	Execute_LoadGamedata(hGameData);
@@ -159,7 +164,7 @@ public void OnPluginStart()
 	delete hGameData;
 	
 	List_LoadDefaults();
-	Binding_UpdateFunctions();
+	Binding_Init();
 	Memory_Init();
 }
 
@@ -387,6 +392,11 @@ public any Native_Function_FunctionSet(Handle hPlugin, int iNumParams)
 	return 0;
 }
 
+public any Native_Function_OffsetGet(Handle hPlugin, int iNumParams)
+{
+	return Function_GetOffset(GetNativeCell(1));
+}
+
 public any Native_Function_SetFunctionEmpty(Handle hPlugin, int iNumParams)
 {
 	VScriptFunction pFunction = GetNativeCell(1);
@@ -471,6 +481,17 @@ public any Native_Function_CreateDetour(Handle hPlugin, int iNumParams)
 	
 	DynamicDetour hClone = view_as<DynamicDetour>(CloneHandle(hDetour, hPlugin));
 	delete hDetour;
+	return hClone;
+}
+
+public any Native_Function_CreateHook(Handle hPlugin, int iNumParams)
+{
+	DynamicHook hHook = Function_CreateHook(GetNativeCell(1));
+	if (!hHook)
+		return hHook;
+	
+	DynamicHook hClone = view_as<DynamicHook>(CloneHandle(hHook, hPlugin));
+	delete hHook;
 	return hClone;
 }
 

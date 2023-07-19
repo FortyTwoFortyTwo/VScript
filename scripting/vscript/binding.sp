@@ -8,23 +8,20 @@ enum struct BindingInfo
 static ArrayList g_aBindingInfos;
 static Address g_pCustomBinding;
 
-void Binding_LoadGamedata(GameData hGamedata)
+void Binding_Init()
 {
 	g_aBindingInfos = new ArrayList(sizeof(BindingInfo));
 	g_pCustomBinding = Memory_CreateEmptyFunction(true);
 	
 	DynamicDetour hDetour = new DynamicDetour(g_pCustomBinding, CallConv_CDECL, ReturnType_Bool, ThisPointer_Ignore);
-	hDetour.AddParam(HookParamType_Int, hGamedata.GetOffset("sizeof(ScriptFunctionBindingStorageType_t)"));	// pFunction
+	hDetour.AddParam(HookParamType_Int, g_iScriptFunctionBinding_sizeof);	// pFunction
 	hDetour.AddParam(HookParamType_Int);	// pContext
 	hDetour.AddParam(HookParamType_Int);	// pArguments
 	hDetour.AddParam(HookParamType_Int);	// nArguments
 	hDetour.AddParam(HookParamType_Int);	// pReturn
 	
 	hDetour.Enable(Hook_Pre, Binding_Detour);
-}
-
-void Binding_UpdateFunctions()
-{
+	
 	// Find all existing functions with empty binding to rehook it
 	Binding_CheckFunctions(List_GetAllGlobalFunctions());
 	

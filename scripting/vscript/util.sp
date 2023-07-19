@@ -97,7 +97,7 @@ MemoryBlock CreateVectorMemory(float vecBuffer[3])
 Handle CreateSDKCall(GameData hGameData, const char[] sClass, const char[] sFunction, SDKType nReturn = SDKType_Unknown, SDKType nParam1 = SDKType_Unknown, SDKType nParam2 = SDKType_Unknown, SDKType nParam3 = SDKType_Unknown, SDKType nParam4 = SDKType_Unknown, SDKType nParam5 = SDKType_Unknown, SDKType nParam6 = SDKType_Unknown)
 {
 	StartPrepSDKCall(SDKCall_Raw);
-	PrepSDKCall_SetAddress(VTable_GetAddress(hGameData, sClass, sFunction));
+	PrepSDKCall_SetAddress(VTable_GetAddressFromName(hGameData, sClass, sFunction));
 	
 	SDKAddParameter(nParam1);
 	SDKAddParameter(nParam2);

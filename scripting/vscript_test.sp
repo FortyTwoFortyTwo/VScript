@@ -165,6 +165,27 @@ public void OnMapStart()
 	AssertInt(TEST_ENTITY, VScript_HScriptToEntity(pEntity));
 	
 	/*
+	 * Test virtual function
+	 */
+	
+	pFunction = VScript_GetClassFunction("CBaseEntity", "GetMaxHealth");
+	if (pFunction.Offset == -1)
+		ThrowError("Expected CBaseEntity::GetMaxHealth to be virtual, but is not");
+	
+	// Test detour first
+	hDetour = pFunction.CreateDetour();
+	hDetour.Enable(Hook_Pre, Hook_GetMaxHealth);
+	iValue = SDKCall(pFunction.CreateSDKCall(), TEST_ENTITY);
+	AssertInt(iValue, TEST_INTEGER);
+	hDetour.Disable(Hook_Pre, Hook_GetMaxHealth);
+	
+	// Now test virtual hook
+	DynamicHook hHook = pFunction.CreateHook();
+	hHook.HookEntity(Hook_Pre, TEST_ENTITY, Hook_GetMaxHealth);
+	iValue = SDKCall(pFunction.CreateSDKCall(), TEST_ENTITY);
+	AssertInt(iValue, TEST_INTEGER);
+	
+	/*
 	 * Check that all function params have proper field
 	 */
 	
@@ -265,6 +286,9 @@ void CheckFunctions(ArrayList aList)
 	for (int i = 0; i < iLength; i++)
 	{
 		VScriptFunction pFunction = aList.Get(i);
+		
+		pFunction.Offset;	// Check if error would be thrown
+		
 		int iParamCount = pFunction.ParamCount;
 		for (int j = 1; j <= iParamCount; j++)
 		{
@@ -327,6 +351,13 @@ public MRESReturn Detour_FindByClassname(Address pThis, DHookReturn hReturn, DHo
 	hParam.GetString(2, sBuffer, sizeof(sBuffer));
 	AssertString(TEST_CLASSNAME, sBuffer);
 	return MRES_Ignored;
+}
+
+public MRESReturn Hook_GetMaxHealth(int iEntity, DHookReturn hReturn)
+{
+	AssertInt(iEntity, TEST_ENTITY);
+	hReturn.Value = TEST_INTEGER;
+	return MRES_Supercede;
 }
 
 void AssertInt(any nValue1, any nValue2)

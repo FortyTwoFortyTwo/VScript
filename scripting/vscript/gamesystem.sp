@@ -14,7 +14,7 @@ void GameSystem_LoadGamedata(GameData hGameData)
 	
 	// Figure out where g_pScriptVM is stored by searching through IGameSystem::FrameUpdatePostEntityThink and finding the correct instructions
 	
-	Address pFunction = VTable_GetAddress(hGameData, "IGameSystem", "FrameUpdatePostEntityThink");
+	Address pFunction = VTable_GetAddressFromName(hGameData, "IGameSystem", "FrameUpdatePostEntityThink");
 	
 	int iOffset;
 	for (iOffset = 0; iOffset <= 100; iOffset++)
