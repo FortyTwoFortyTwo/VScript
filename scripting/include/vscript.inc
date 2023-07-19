@@ -545,18 +545,28 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("HSCRIPT.Instance.get");
 	MarkNativeAsOptional("HSCRIPT.Release");
 	MarkNativeAsOptional("HSCRIPT.ReleaseScript");
-
+	
 	MarkNativeAsOptional("VScriptFunction.GetScriptName");
+	MarkNativeAsOptional("VScriptFunction.SetScriptName");
+	MarkNativeAsOptional("VScriptFunction.GetFunctionName");
+	MarkNativeAsOptional("VScriptFunction.SetFunctionName");
 	MarkNativeAsOptional("VScriptFunction.GetDescription");
+	MarkNativeAsOptional("VScriptFunction.SetDescription");
 	MarkNativeAsOptional("VScriptFunction.Binding.get");
 	MarkNativeAsOptional("VScriptFunction.Function.get");
+	MarkNativeAsOptional("VScriptFunction.Function.set");
+	MarkNativeAsOptional("VScriptFunction.Offset.get");
+	MarkNativeAsOptional("VScriptFunction.SetFunctionEmpty");
 	MarkNativeAsOptional("VScriptFunction.Return.get");
-	MarkNativeAsOptional("VScriptFunction.ParameterCount.get");
-	MarkNativeAsOptional("VScriptFunction.GetParameter");
+	MarkNativeAsOptional("VScriptFunction.Return.set");
+	MarkNativeAsOptional("VScriptFunction.ParamCount.get");
+	MarkNativeAsOptional("VScriptFunction.GetParam");
+	MarkNativeAsOptional("VScriptFunction.SetParam");
 	MarkNativeAsOptional("VScriptFunction.CopyFrom");
 	MarkNativeAsOptional("VScriptFunction.Register");
 	MarkNativeAsOptional("VScriptFunction.CreateSDKCall");
 	MarkNativeAsOptional("VScriptFunction.CreateDetour");
+	MarkNativeAsOptional("VScriptFunction.CreateHook");
 	
 	MarkNativeAsOptional("VScriptClass.GetScriptName");
 	MarkNativeAsOptional("VScriptClass.GetAllFunctions");
