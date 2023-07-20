@@ -74,6 +74,11 @@ VScriptFunction Class_CreateFunction(VScriptClass pClass)
 	return pFunction;
 }
 
+VScriptClass Class_GetBaseDesc(VScriptClass pClass)
+{
+	return LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_BaseDesc), NumberType_Int32);
+}
+
 bool Class_IsDerivedFrom(VScriptClass pClass, VScriptClass pBase)
 {
 	// Dunno why game would not allow this, but we can allow it
@@ -81,13 +86,13 @@ bool Class_IsDerivedFrom(VScriptClass pClass, VScriptClass pBase)
 		return true;
 	
 	// CSquirrelVM::IsClassDerivedFrom
-	VScriptClass pType = LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_BaseDesc), NumberType_Int32);
+	VScriptClass pType = Class_GetBaseDesc(pClass);
 	while (pType)
 	{
 		if (pType == pBase)
 			return true;
 		
-		pType = LoadFromAddress(pType + view_as<Address>(g_iClassDesc_BaseDesc), NumberType_Int32);
+		pType = Class_GetBaseDesc(pType);
 	}
 	
 	return false;

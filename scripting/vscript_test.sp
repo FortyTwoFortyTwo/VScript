@@ -32,10 +32,6 @@ public void OnMapStart()
 	char sBuffer[256];
 	float vecResult[3];
 	
-	// Ensure that CBaseEntity is registered in L4D2
-	SetVariantString("self.ValidateScriptScope()");
-	AcceptEntityInput(TEST_ENTITY, "RunScriptCode");
-	
 	/*
 	 * Test member call with bunch of params, this first because of resetting g_pScriptVM
 	 */

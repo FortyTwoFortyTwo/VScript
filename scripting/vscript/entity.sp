@@ -83,12 +83,17 @@ HSCRIPT Entity_GetScriptInstance(int iEntity)
 			SetEntPropString(iEntity, Prop_Data, "m_iszScriptId", sId);
 		}
 		
-		pScriptInstance = SDKCall(g_hSDKCallRegisterInstance, GetScriptVM(), SDKCall(g_hSDKGetScriptDesc, iEntity), iEntity);
+		pScriptInstance = SDKCall(g_hSDKCallRegisterInstance, GetScriptVM(), Entity_GetScriptDesc(iEntity), iEntity);
 		SetEntData(iEntity, g_iOffsetScriptInstance, pScriptInstance);
 		SDKCall(g_hSDKCallSetInstanceUniqeId, GetScriptVM(), pScriptInstance, sId);
 	}
 	
 	return pScriptInstance;
+}
+
+VScriptClass Entity_GetScriptDesc(int iEntity)
+{
+	return SDKCall(g_hSDKGetScriptDesc, iEntity);
 }
 
 void Entity_Clear(int iEntity)

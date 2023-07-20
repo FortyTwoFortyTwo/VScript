@@ -30,6 +30,10 @@ void List_LoadDefaults()
 	GameSystem_ServerInit();
 	GameSystem_ServerTerm();
 	SetScriptVM(pScriptVM);
+	
+	int iEntity = INVALID_ENT_REFERENCE;
+	while ((iEntity = FindEntityByClassname(iEntity, "*")) != INVALID_ENT_REFERENCE)
+		List_AddEntityScriptDesc(iEntity);
 }
 
 MRESReturn List_Init(Address pScriptVM, DHookReturn hReturn)
@@ -58,6 +62,19 @@ MRESReturn List_RegisterClass(Address pScriptVM, DHookReturn hReturn, DHookParam
 		g_aClasses.Push(pClass);
 	
 	return MRES_Ignored;
+}
+
+void List_AddEntityScriptDesc(int iEntity)
+{
+	VScriptClass pClass = Entity_GetScriptDesc(iEntity);
+	while (pClass)
+	{
+		if (g_aClasses.FindValue(pClass) != -1)
+			return;
+		
+		g_aClasses.Push(pClass);
+		pClass = Class_GetBaseDesc(pClass);
+	}
 }
 
 ArrayList List_GetAllGlobalFunctions()

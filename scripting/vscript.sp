@@ -2,7 +2,7 @@
 
 #include "include/vscript.inc"
 
-#define PLUGIN_VERSION			"1.8.0"
+#define PLUGIN_VERSION			"1.8.1"
 #define PLUGIN_VERSION_REVISION	"manual"
 
 char g_sOperatingSystem[16];
@@ -171,6 +171,11 @@ public void OnPluginStart()
 public void OnPluginEnd()
 {
 	Memory_DisownAll();
+}
+
+public void OnEntityCreated(int iEntity, const char[] sClassname)
+{
+	List_AddEntityScriptDesc(iEntity);
 }
 
 public any Native_HScript_GetKey(Handle hPlugin, int iNumParams)
