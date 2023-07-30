@@ -96,7 +96,8 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScriptClass.GetAllFunctions", Native_Class_GetAllFunctions);
 	CreateNative("VScriptClass.GetFunction", Native_Class_GetFunction);
 	CreateNative("VScriptClass.CreateFunction", Native_Class_CreateFunction);
-	CreateNative("VScriptClass.IsDerivedFrom", Native_Class_IsDerivedFrom);
+	CreateNative("VScriptClass.Base.get", Native_Class_BaseGet);
+	CreateNative("VScriptClass.IsDerivedFrom", Native_Class_IsDerivedFrom);	// legacy native, to be removed later
 	
 	CreateNative("VScriptExecute.VScriptExecute", Native_Execute);
 	CreateNative("VScriptExecute.AddParam", Native_Execute_AddParam);
@@ -539,6 +540,11 @@ public any Native_Class_GetFunction(Handle hPlugin, int iNumParams)
 public any Native_Class_CreateFunction(Handle hPlugin, int iNumParams)
 {
 	return Class_CreateFunction(GetNativeCell(1));
+}
+
+public any Native_Class_BaseGet(Handle hPlugin, int iNumParams)
+{
+	return Class_GetBaseDesc(GetNativeCell(1));
 }
 
 public any Native_Class_IsDerivedFrom(Handle hPlugin, int iNumParams)

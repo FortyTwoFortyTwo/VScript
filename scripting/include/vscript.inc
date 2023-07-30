@@ -271,11 +271,29 @@ methodmap VScriptClass < Address
 	// @return                 Address of VScriptFunction.
 	public native VScriptFunction CreateFunction();
 	
+	// Gets the class that this is based on, Address_Null if does not have base class
+	property VScriptClass Base
+	{
+		public native get();
+	}
+	
 	// Return whenever if this class function is derived from other class base
 	// 
 	// @param base             Function base to find if derived at.
 	// @return                 True if derived from, false otherwise.
-	public native bool IsDerivedFrom(VScriptClass base);
+	public bool IsDerivedFrom(VScriptClass base)
+	{
+		while (base)
+		{
+			if (this == base)
+				return true;
+			
+			base = base.Base;
+		}
+		
+		return false;
+	}
+	
 }
 
 methodmap VScriptExecute < Handle
@@ -579,7 +597,7 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("VScriptClass.GetAllFunctions");
 	MarkNativeAsOptional("VScriptClass.GetFunction");
 	MarkNativeAsOptional("VScriptClass.CreateFunction");
-	MarkNativeAsOptional("VScriptClass.IsDerivedFrom");
+	MarkNativeAsOptional("VScriptClass.Base.get");
 	
 	MarkNativeAsOptional("VScriptExecute.VScriptExecute");
 	MarkNativeAsOptional("VScriptExecute.AddParam");
