@@ -238,6 +238,12 @@ methodmap VScriptFunction < Address
 	// 
 	// @return                 DynamicHook handle, must be deleted when not needed. Returns null if function is not a virtual.
 	public native DynamicHook CreateHook();
+	
+	// Gets the class that this function is associated to it, Address_Null if global function
+	property VScriptClass Class
+	{
+		public native get();
+	}
 }
 
 methodmap VScriptClass < Address
@@ -567,6 +573,7 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("VScriptFunction.CreateSDKCall");
 	MarkNativeAsOptional("VScriptFunction.CreateDetour");
 	MarkNativeAsOptional("VScriptFunction.CreateHook");
+	MarkNativeAsOptional("VScriptFunction.Class.get");
 	
 	MarkNativeAsOptional("VScriptClass.GetScriptName");
 	MarkNativeAsOptional("VScriptClass.GetAllFunctions");

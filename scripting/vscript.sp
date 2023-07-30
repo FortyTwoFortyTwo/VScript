@@ -90,6 +90,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScriptFunction.CreateSDKCall", Native_Function_CreateSDKCall);
 	CreateNative("VScriptFunction.CreateDetour", Native_Function_CreateDetour);
 	CreateNative("VScriptFunction.CreateHook", Native_Function_CreateHook);
+	CreateNative("VScriptFunction.Class.get", Native_Function_ClassGet);
 	
 	CreateNative("VScriptClass.GetScriptName", Native_Class_GetScriptName);
 	CreateNative("VScriptClass.GetAllFunctions", Native_Class_GetAllFunctions);
@@ -498,6 +499,11 @@ public any Native_Function_CreateHook(Handle hPlugin, int iNumParams)
 	DynamicHook hClone = view_as<DynamicHook>(CloneHandle(hHook, hPlugin));
 	delete hHook;
 	return hClone;
+}
+
+public any Native_Function_ClassGet(Handle hPlugin, int iNumParams)
+{
+	return List_GetClassFromFunction(GetNativeCell(1));
 }
 
 public any Native_Class_GetScriptName(Handle hPlugin, int iNumParams)
