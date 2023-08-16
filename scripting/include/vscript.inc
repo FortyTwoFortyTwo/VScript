@@ -124,6 +124,9 @@ methodmap HSCRIPT < Address
 	// Frees a HSCRIPT memory
 	public native void Release();
 
+	// Frees a HSCRIPT memory. This is only used for script scopes.
+	public native void ReleaseScope();
+
 	// Frees a HSCRIPT memory. This is only used for compiled scripts.
 	public native void ReleaseScript();
 }
@@ -399,6 +402,16 @@ native HSCRIPT VScript_CompileScript(const char[] script, const char[] id = NULL
 native HSCRIPT VScript_CompileScriptFile(const char[] filepath);
 
 /**
+ * Creates a new HSCRIPT scope, it MUST be deleted when no longer needed by using HSCRIPT.ReleaseScope()
+ * 
+ * @param name             Name to set the scope
+ * @param parent           Parent of the HSCRIPT to set as
+ * 
+ * @return                 HSCRIPT of scope.
+ */
+native HSCRIPT VScript_CreateScope(const char[] name, HSCRIPT parent = HSCRIPT_RootTable);
+
+/**
  * Creates a new HSCRIPT table, it MUST be deleted when no longer needed by using HSCRIPT.Release()
  * 
  * @return                 HSCRIPT of table.
@@ -568,6 +581,7 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("HSCRIPT.ClearValue");
 	MarkNativeAsOptional("HSCRIPT.Instance.get");
 	MarkNativeAsOptional("HSCRIPT.Release");
+	MarkNativeAsOptional("HSCRIPT.ReleaseScope");
 	MarkNativeAsOptional("HSCRIPT.ReleaseScript");
 	
 	MarkNativeAsOptional("VScriptFunction.GetScriptName");
@@ -615,6 +629,7 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("VScript_ResetScriptVM");
 	MarkNativeAsOptional("VScript_CompileScript");
 	MarkNativeAsOptional("VScript_CompileScriptFile");
+	MarkNativeAsOptional("VScript_CreateScope");
 	MarkNativeAsOptional("VScript_CreateTable");
 	MarkNativeAsOptional("VScript_GetAllClasses");
 	MarkNativeAsOptional("VScript_GetClass");

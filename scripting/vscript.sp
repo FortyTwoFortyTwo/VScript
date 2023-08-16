@@ -2,7 +2,7 @@
 
 #include "include/vscript.inc"
 
-#define PLUGIN_VERSION			"1.8.2"
+#define PLUGIN_VERSION			"1.8.3"
 #define PLUGIN_VERSION_REVISION	"manual"
 
 char g_sOperatingSystem[16];
@@ -67,6 +67,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("HSCRIPT.ClearValue", Native_HScript_ClearValue);
 	CreateNative("HSCRIPT.Instance.get", Native_HScript_InstanceGet);
 	CreateNative("HSCRIPT.Release", Native_HScript_Release);
+	CreateNative("HSCRIPT.ReleaseScope", Native_HScript_ReleaseScope);
 	CreateNative("HSCRIPT.ReleaseScript", Native_HScript_ReleaseScript);
 	
 	CreateNative("VScriptFunction.GetScriptName", Native_Function_GetScriptName);
@@ -115,6 +116,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScript_ResetScriptVM", Native_ResetScriptVM);
 	CreateNative("VScript_CompileScript", Native_CompileScript);
 	CreateNative("VScript_CompileScriptFile", Native_CompileScriptFile);
+	CreateNative("VScript_CreateScope", Native_CreateScope);
 	CreateNative("VScript_CreateTable", Native_CreateTable);
 	CreateNative("VScript_GetAllClasses", Native_GetAllClasses);
 	CreateNative("VScript_GetClass", Native_GetClass);
@@ -302,6 +304,12 @@ public any Native_HScript_InstanceGet(Handle hPlugin, int iNumParams)
 public any Native_HScript_Release(Handle hPlugin, int iNumParams)
 {
 	HScript_ReleaseValue(GetNativeCell(1));
+	return 0;
+}
+
+public any Native_HScript_ReleaseScope(Handle hPlugin, int iNumParams)
+{
+	HScript_ReleaseScope(GetNativeCell(1));
 	return 0;
 }
 
@@ -732,6 +740,17 @@ public any Native_CompileScriptFile(Handle hPlugin, int iNumParams)
 		Format(sId, sizeof(sId), sFilepath[iIndex + 1]);
 		return SDKCall(g_hSDKCallCompileScript, GetScriptVM(), sScript, sId);
 	}
+}
+
+public any Native_CreateScope(Handle hPlugin, int iNumParams)
+{
+	int iLength;
+	GetNativeStringLength(1, iLength);
+	
+	char[] sName = new char[iLength + 1];
+	GetNativeString(1, sName, iLength + 1);
+	
+	return HScript_CreateScope(sName, GetNativeCell(2));
 }
 
 public any Native_CreateTable(Handle hPlugin, int iNumParams)

@@ -201,10 +201,10 @@ public void OnMapStart()
 	 * Test compile script with param and returns
 	 */
 	
-	RunScript("function ReturnParam(param) { return param }");
+	HSCRIPT pScope = VScript_CreateScope("ThisIsAScope");
+	RunScript("function ReturnParam(param) { return param }", pScope);
 	
-	// Since were executing it with null scope, function is there
-	hExecute = new VScriptExecute(HSCRIPT_RootTable.GetValue("ReturnParam"));
+	hExecute = new VScriptExecute(pScope.GetValue("ReturnParam"));
 	
 	hExecute.SetParam(1, FIELD_FLOAT, TEST_FLOAT);
 	hExecute.Execute();
@@ -221,6 +221,7 @@ public void OnMapStart()
 	AssertVector(TEST_VECTOR, vecResult);
 	
 	delete hExecute;
+	pScope.ReleaseScope();
 	
 	/*
 	 * Multiple params, test if ScriptVariant_t size is correct
@@ -262,10 +263,10 @@ public void OnMapStart()
 	PrintToServer("All tests passed!");
 }
 
-any RunScript(const char[] sScript)
+any RunScript(const char[] sScript, HSCRIPT pScope = HSCRIPT_RootTable)
 {
 	HSCRIPT pCompile = VScript_CompileScript(sScript);
-	VScriptExecute hExecute = new VScriptExecute(pCompile);
+	VScriptExecute hExecute = new VScriptExecute(pCompile, pScope);
 	hExecute.Execute();
 	any nReturn = hExecute.ReturnValue;
 	

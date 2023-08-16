@@ -179,6 +179,18 @@
 				"windows"	"12"
 			}
 			
+			"IScriptVM::CreateScope"
+			{
+				"linux"		"13"
+				"windows"	"13"
+			}
+			
+			"IScriptVM::ReleaseScope"
+			{
+				"linux"		"14"
+				"windows"	"14"
+			}
+			
 			"IScriptVM::ExecuteFunction"
 			{
 				"linux"		"17"

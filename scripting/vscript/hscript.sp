@@ -1,3 +1,4 @@
+static Handle g_hSDKCallCreateScope;
 static Handle g_hSDKCallCreateTable;
 static Handle g_hSDKCallGetKeyValue;
 static Handle g_hSDKCallGetValue;
@@ -5,10 +6,12 @@ static Handle g_hSDKCallSetValue;
 static Handle g_hSDKCallReleaseValue;
 static Handle g_hSDKCallClearValue;
 static Handle g_hSDKCallGetInstanceValue;
+static Handle g_hSDKCallReleaseScope;
 static Handle g_hSDKCallReleaseScript;
 
 void HScript_LoadGamedata(GameData hGameData)
 {
+	g_hSDKCallCreateScope = CreateSDKCall(hGameData, "IScriptVM", "CreateScope", SDKType_PlainOldData, SDKType_String, SDKType_PlainOldData);
 	g_hSDKCallCreateTable = CreateSDKCall(hGameData, "IScriptVM", "CreateTable", _, SDKType_PlainOldData);
 	g_hSDKCallGetKeyValue = CreateSDKCall(hGameData, "IScriptVM", "GetKeyValue", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData);
 	g_hSDKCallGetValue = CreateSDKCall(hGameData, "IScriptVM", "GetValue", SDKType_Bool, SDKType_PlainOldData, SDKType_String, SDKType_PlainOldData);
@@ -16,7 +19,13 @@ void HScript_LoadGamedata(GameData hGameData)
 	g_hSDKCallReleaseValue = CreateSDKCall(hGameData, "IScriptVM", "ReleaseValue", _, SDKType_PlainOldData);
 	g_hSDKCallClearValue = CreateSDKCall(hGameData, "IScriptVM", "ClearValue", SDKType_Bool, SDKType_PlainOldData, SDKType_String);
 	g_hSDKCallGetInstanceValue = CreateSDKCall(hGameData, "IScriptVM", "GetInstanceValue", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData);
+	g_hSDKCallReleaseScope = CreateSDKCall(hGameData, "IScriptVM", "ReleaseScope", _, SDKType_PlainOldData);
 	g_hSDKCallReleaseScript = CreateSDKCall(hGameData, "IScriptVM", "ReleaseScript", _, SDKType_PlainOldData);
+}
+
+HSCRIPT HScript_CreateScope(const char[] sName, HSCRIPT pParent)
+{
+	return SDKCall(g_hSDKCallCreateScope, GetScriptVM(), sName, pParent);
 }
 
 HSCRIPT HScript_CreateTable()
@@ -203,6 +212,11 @@ void HScript_ClearValue(HSCRIPT pHScript, const char[] sKey)
 Address HScript_GetInstanceValue(HSCRIPT pHScript)
 {
 	return SDKCall(g_hSDKCallGetInstanceValue, GetScriptVM(), pHScript, 0);
+}
+
+void HScript_ReleaseScope(HSCRIPT pHScript)
+{
+	SDKCall(g_hSDKCallReleaseScope, GetScriptVM(), pHScript);
 }
 
 void HScript_ReleaseScript(HSCRIPT pHScript)
