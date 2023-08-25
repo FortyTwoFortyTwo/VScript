@@ -98,6 +98,11 @@ methodmap ScriptVariant_t < MemoryBlock
 		LoadPointerStringFromAddress(this.Address + view_as<Address>(g_iScriptVariant_union), sBuffer, iLength);
 	}
 	
+	public int GetStringLength()
+	{
+		return LoadPointerStringLengthFromAddress(this.Address + view_as<Address>(g_iScriptVariant_union));
+	}
+	
 	public void GetVector(float vecBuffer[3])
 	{
 		LoadVectorFromAddress(this.nValue, vecBuffer);

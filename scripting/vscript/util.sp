@@ -29,6 +29,12 @@ int LoadStringFromAddress(Address pString, char[] sBuffer, int iMaxLen)
 	return iChar;
 }
 
+int LoadPointerStringLengthFromAddress(Address pPointer)
+{
+	Address pString = LoadFromAddress(pPointer, NumberType_Int32);
+	return LoadStringLengthFromAddress(pString);
+}
+
 int LoadStringLengthFromAddress(Address pString)
 {
 	int iChar;
@@ -65,18 +71,6 @@ void StoreNativePointerStringToAddress(Address pAddress, int iParam)
 	
 	MemoryBlock hString = CreateStringMemory(sBuffer);
 	Memory_SetAddress(pAddress, hString);
-}
-
-MemoryBlock StoreNativeStringToMemory(int iParam)
-{
-	int iLength;
-	GetNativeStringLength(iParam, iLength);
-	iLength++;
-	
-	char[] sBuffer = new char[iLength];
-	GetNativeString(iParam, sBuffer, iLength);
-	
-	return CreateStringMemory(sBuffer);
 }
 
 void LoadVectorFromAddress(Address pVector, float vecBuffer[3])

@@ -1,25 +1,19 @@
-// VScriptExecute is an ArrayList, with index 0 as Execute, index 1 and above as ExecuteParam
+// VScriptExecute is an ArrayList, with index 0 as Execute, index 1 to arg count as ExecuteParam, and rest above as value of string
 
 enum struct ExecuteParam
 {
 	fieldtype_t nType;
 	any nValue;			// int
-	Address pValue;		// string
 	float vecValue[3];	// vector
-	
-	void Delete()
-	{
-		// Should ideally also be called when VScriptExecute is deleted
-		if (this.pValue)
-			Memory_DeleteAddress(this.pValue);
-	}
+	int iStringCount;	// Amount of array indexs used to store string value
 }
 
 enum struct Execute
 {
+	ExecuteParam nReturn;	// must be first in this struct
 	HSCRIPT pHScript;
-	ExecuteParam nReturn;
 	HSCRIPT hScope;
+	int iNumParams;
 }
 
 static Handle g_hSDKCallExecuteFunction;
@@ -40,6 +34,20 @@ VScriptExecute Execute_Create(HSCRIPT pHScript, HSCRIPT hScope)
 	return view_as<VScriptExecute>(aExecute);
 }
 
+static void Execute_InsertAt(VScriptExecute aExecute, int iParam, any[] nValues)
+{
+	int iLength = view_as<ArrayList>(aExecute).Length;
+	if (iLength == iParam)
+	{
+		view_as<ArrayList>(aExecute).PushArray(nValues);
+	}
+	else
+	{
+		view_as<ArrayList>(aExecute).ShiftUp(iParam);
+		view_as<ArrayList>(aExecute).SetArray(iParam, nValues);
+	}
+}
+
 void Execute_GetInfo(VScriptExecute aExecute, Execute execute)
 {
 	view_as<ArrayList>(aExecute).GetArray(0, execute);
@@ -52,12 +60,20 @@ static void Execute_SetInfo(VScriptExecute aExecute, Execute execute)
 
 int Execute_GetParamCount(VScriptExecute aExecute)
 {
-	return view_as<ArrayList>(aExecute).Length - 1;
+	return view_as<ArrayList>(aExecute).Get(0, Execute::iNumParams);
 }
 
-void Execute_AddParam(VScriptExecute aExecute, ExecuteParam param)
+static void Execute_SetParamCount(VScriptExecute aExecute, int iNumParams)
 {
-	view_as<ArrayList>(aExecute).PushArray(param);
+	view_as<ArrayList>(aExecute).Set(0, iNumParams, Execute::iNumParams);
+}
+
+int Execute_AddParam(VScriptExecute aExecute, ExecuteParam param)
+{
+	int iNumParams = Execute_GetParamCount(aExecute) + 1;
+	Execute_SetParamCount(aExecute, iNumParams);
+	Execute_InsertAt(aExecute, iNumParams, param);
+	return iNumParams;
 }
 
 void Execute_SetParam(VScriptExecute aExecute, int iParam, ExecuteParam param)
@@ -66,14 +82,70 @@ void Execute_SetParam(VScriptExecute aExecute, int iParam, ExecuteParam param)
 	{
 		// Fill any new params between as void
 		ExecuteParam nothing;
-		view_as<ArrayList>(aExecute).PushArray(nothing);
+		Execute_SetParamCount(aExecute, i);
+		Execute_InsertAt(aExecute, i, nothing);
 	}
 	
-	ExecuteParam del;
-	view_as<ArrayList>(aExecute).GetArray(iParam, del);
-	del.Delete();
-	
+	Execute_ClearParamString(aExecute, iParam);
 	view_as<ArrayList>(aExecute).SetArray(iParam, param);
+}
+
+int Execute_GetParamStringCount(VScriptExecute aExecute, int iParam)
+{
+	return view_as<ArrayList>(aExecute).Get(iParam, ExecuteParam::iStringCount);
+}
+
+void Execute_GetParamString(VScriptExecute aExecute, int iParam, char[] sBuffer, int iLength)
+{
+	int iStartingIndex = Execute_GetParamCount(aExecute) + 1;
+	for (int i = 0; i < iParam; i++)
+		iStartingIndex += Execute_GetParamStringCount(aExecute, i);
+	
+	int iStringCount = Execute_GetParamStringCount(aExecute, iParam);
+	for (int i = iStartingIndex; i < iStartingIndex + iStringCount; i++)
+	{
+		char sValue[sizeof(Execute)];
+		view_as<ArrayList>(aExecute).GetString(i, sValue, sizeof(sValue));
+		StrCat(sBuffer, iLength, sValue);
+	}
+}
+
+int Execute_SetParamString(VScriptExecute aExecute, int iParam, const char[] sBuffer)
+{
+	Execute_ClearParamString(aExecute, iParam);
+	
+	int iStartingIndex = Execute_GetParamCount(aExecute) + 1;
+	for (int i = 0; i < iParam; i++)
+		iStartingIndex += Execute_GetParamStringCount(aExecute, i);
+	
+	// How many indexes do we need?
+	int iStringCount = RoundToCeil(float(strlen(sBuffer)) / float(sizeof(Execute) - 1));
+	view_as<ArrayList>(aExecute).Set(iParam, iStringCount, ExecuteParam::iStringCount);
+	
+	for (int i = iStartingIndex; i < iStartingIndex + iStringCount; i++)
+	{
+		char sValue[sizeof(Execute)];
+		strcopy(sValue, sizeof(sValue), sBuffer[(i - iStartingIndex) * (sizeof(Execute) - 1)]);
+		Execute_InsertAt(aExecute, i, view_as<any>(sValue));
+	}
+	
+	return iStringCount;
+}
+
+void Execute_ClearParamString(VScriptExecute aExecute, int iParam)
+{
+	int iStringCount = Execute_GetParamStringCount(aExecute, iParam);
+	if (!iStringCount)
+		return;
+	
+	int iStartingIndex = Execute_GetParamCount(aExecute) + 1;
+	for (int i = 0; i < iParam; i++)
+		iStartingIndex += Execute_GetParamStringCount(aExecute, i);
+	
+	for (int i = 0; i < iStringCount; i++)
+		view_as<ArrayList>(aExecute).Erase(iStartingIndex);
+	
+	view_as<ArrayList>(aExecute).Set(iParam, 0, ExecuteParam::iStringCount);
 }
 
 ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
@@ -105,7 +177,12 @@ ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
 			}
 			case SMField_String:
 			{
-				nValue = param.pValue;
+				int iLength = Execute_GetParamStringCount(aExecute, iParam + 1) * (sizeof(Execute) - 1) + 1;
+				char[] sBuffer = new char[iLength];
+				Execute_GetParamString(aExecute, iParam + 1, sBuffer, iLength);
+				
+				hValue[iParam] = CreateStringMemory(sBuffer);
+				nValue = hValue[iParam].Address;
 			}
 			case SMField_Vector:
 			{
@@ -120,6 +197,8 @@ ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
 	
 	ScriptStatus_t nStatus = SDKCall(g_hSDKCallExecuteFunction, GetScriptVM(), execute.pHScript, hArgs ? hArgs.Address : Address_Null, iNumParams, pReturn.Address, execute.hScope, true);
 	
+	Execute_ClearParamString(aExecute, 0);	// Clear previous return string value
+	
 	switch (Field_GetSMField(pReturn.nType))
 	{
 		case SMField_Void:
@@ -132,7 +211,11 @@ ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
 		}
 		case SMField_String:
 		{
-			execute.nReturn.pValue = pReturn.nValue;
+			int iLength = pReturn.GetStringLength();
+			char[] sBuffer = new char[iLength];
+			pReturn.GetString(sBuffer, iLength);
+			
+			execute.nReturn.iStringCount = Execute_SetParamString(aExecute, 0, sBuffer);
 		}
 		case SMField_Vector:
 		{

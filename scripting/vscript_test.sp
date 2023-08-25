@@ -5,7 +5,7 @@
 
 #define TEST_INTEGER	322
 #define TEST_FLOAT		3.14159
-#define TEST_CSTRING	"Message"
+#define TEST_CSTRING	"VScript Is Awesome!"
 
 #define TEST_BOOLEAN	true
 #define TEST_BOOLEAN_STR	"true"

@@ -2,7 +2,7 @@
 
 #include "include/vscript.inc"
 
-#define PLUGIN_VERSION			"1.8.3"
+#define PLUGIN_VERSION			"1.8.4"
 #define PLUGIN_VERSION_REVISION	"manual"
 
 char g_sOperatingSystem[16];
@@ -583,10 +583,18 @@ public any Native_Execute_AddParam(Handle hPlugin, int iNumParams)
 
 public any Native_Execute_AddParamString(Handle hPlugin, int iNumParams)
 {
+	VScriptExecute aExecute = GetNativeCell(1);
+	
+	int iLength;
+	GetNativeStringLength(3, iLength);
+	
+	char[] sBuffer = new char[iLength + 1];
+	GetNativeString(3, sBuffer, iLength + 1);
+	
 	ExecuteParam param;
 	param.nType = GetNativeCell(2);
-	param.pValue = StoreNativeStringToMemory(3).Address;
-	Execute_AddParam(GetNativeCell(1), param);
+	int iParam = Execute_AddParam(aExecute, param);
+	Execute_SetParamString(aExecute, iParam, sBuffer);
 	return 0;
 }
 
@@ -610,10 +618,19 @@ public any Native_Execute_SetParam(Handle hPlugin, int iNumParams)
 
 public any Native_Execute_SetParamString(Handle hPlugin, int iNumParams)
 {
+	VScriptExecute aExecute = GetNativeCell(1);
+	int iParam = GetNativeCell(2);
+	
+	int iLength;
+	GetNativeStringLength(4, iLength);
+	
+	char[] sBuffer = new char[iLength + 1];
+	GetNativeString(4, sBuffer, iLength + 1);
+	
 	ExecuteParam param;
 	param.nType = GetNativeCell(3);
-	param.pValue = StoreNativeStringToMemory(4).Address;
-	Execute_SetParam(GetNativeCell(1), GetNativeCell(2), param);
+	Execute_SetParam(aExecute, iParam, param);
+	Execute_SetParamString(aExecute, iParam, sBuffer);
 	return 0;
 }
 
@@ -649,12 +666,9 @@ public any Native_Execute_ReturnValueGet(Handle hPlugin, int iNumParams)
 
 public any Native_Execute_GetReturnString(Handle hPlugin, int iNumParams)
 {
-	Execute execute;
-	Execute_GetInfo(GetNativeCell(1), execute);
-	
 	int iLength = GetNativeCell(3);
 	char[] sBuffer = new char[iLength];
-	LoadStringFromAddress(execute.nReturn.pValue, sBuffer, iLength);
+	Execute_GetParamString(GetNativeCell(1), 0, sBuffer, iLength);
 	SetNativeString(2, sBuffer, iLength);
 	return 0;
 }
