@@ -115,14 +115,14 @@
 			
 			"ScriptVariant_t::m_type"
 			{
-				"linux"		"4"
-				"windows"	"4"
+				"linux"		"8"
+				"windows"	"8"
 			}
 			
 			"sizeof(ScriptVariant_t)"
 			{
-				"linux"		"8"
-				"windows"	"8"
+				"linux"		"12"
+				"windows"	"16"
 			}
 			
 			"sizeof(ScriptFunctionBindingStorageType_t)"
@@ -187,125 +187,87 @@
 			
 			"IScriptVM::ReleaseScope"
 			{
-				"linux"		"14"
-				"windows"	"14"
+				"linux"		"15"
+				"windows"	"15"
 			}
 			
 			"IScriptVM::ExecuteFunction"
-			{
-				"linux"		"17"
-				"windows"	"17"
-			}
-			
-			"IScriptVM::RegisterFunction"
 			{
 				"linux"		"18"
 				"windows"	"18"
 			}
 			
-			"IScriptVM::RegisterClass"
+			"IScriptVM::RegisterFunction"
 			{
 				"linux"		"19"
 				"windows"	"19"
 			}
 			
-			"IScriptVM::RegisterInstance"
+			"IScriptVM::RegisterClass"
 			{
 				"linux"		"20"
 				"windows"	"20"
 			}
 			
-			"IScriptVM::SetInstanceUniqeId"
+			"IScriptVM::RegisterInstance"
 			{
 				"linux"		"21"
 				"windows"	"21"
 			}
 			
-			"IScriptVM::GetInstanceValue"
+			"IScriptVM::SetInstanceUniqeId"
 			{
-				"linux"		"23"
-				"windows"	"23"
+				"linux"		"22"
+				"windows"	"22"
 			}
 			
-			"IScriptVM::GenerateUniqueKey"
+			"IScriptVM::GetInstanceValue"
 			{
 				"linux"		"24"
 				"windows"	"24"
 			}
 			
+			"IScriptVM::GenerateUniqueKey"
+			{
+				"linux"		"25"
+				"windows"	"25"
+			}
+			
 			"IScriptVM::SetValue"
 			{
-				"linux"		"27"
-				"windows"	"26"
+				"linux"		"28"
+				"windows"	"27"
 			}
 			
 			"IScriptVM::CreateTable"
 			{
-				"linux"		"28"
-				"windows"	"28"
+				"linux"		"29"
+				"windows"	"29"
 			}
 			
 			"IScriptVM::GetKeyValue"
-			{
-				"linux"		"30"
-				"windows"	"30"
-			}
-			
-			"IScriptVM::GetValue"
 			{
 				"linux"		"31"
 				"windows"	"31"
 			}
 			
-			"IScriptVM::ReleaseValue"
+			"IScriptVM::GetValue"
 			{
 				"linux"		"32"
 				"windows"	"32"
 			}
 			
-			"IScriptVM::ClearValue"
+			"IScriptVM::ReleaseValue"
 			{
 				"linux"		"33"
 				"windows"	"33"
 			}
-		}
-	}
-	
-	"#default"
-	{
-		"#supported"
-		{
-			"game"	"left4dead2"
-			"game"	"tf"
-		}
-		
-		// L4D2 and TF2 have an extra +4 bytes at offset 4, and windows have another at 12
-		
-		"Offsets"
-		{
-			"ScriptVariant_t::m_type"
-			{
-				"linux"		"8"
-				"windows"	"8"
-			}
 			
-			"sizeof(ScriptVariant_t)"
+			"IScriptVM::ClearValue"
 			{
-				"linux"		"12"
-				"windows"	"16"
+				"linux"		"34"
+				"windows"	"34"
 			}
-		}
-	}
-	
-	"csgo"
-	{
-		"Keys"
-		{
-			"FIELD_TYPEUNKNOWN"	"31"	// +2
-			"FIELD_CSTRING"		"32"	// +2
-			"FIELD_HSCRIPT"		"33"	// +2
-			"FIELD_VARIANT"		"0"
-			"FIELD_QANGLE"		"0"
 		}
 	}
 	
@@ -315,7 +277,6 @@
 		{
 			//   6 - IScriptVM::GetInternalVM
 			//   8 - IScriptVM::ForwardConsoleCommand
-			//  16 - IScriptVM::ReferenceScope
 			//31/29- IScriptVM::SetValue (integer version)
 			//  33 - IScriptVM::IsTable
 			//37/36- IScriptVM::GetValue (integer version)
@@ -323,8 +284,8 @@
 			// There are more after 41, but none of our offsets go beyond that yet
 			"IScriptVM::ExtraOffsets"
 			{
-				"linux"		"6 8 16 31 33 37 38"
-				"windows"	"6 8 16 29 33 36 38"
+				"linux"		"6 8 31 33 37 38"
+				"windows"	"6 8 29 33 36 38"
 			}
 			
 			// resetting g_pScriptVM in linux causes crash
@@ -348,9 +309,6 @@
 		{
 			//  6 - IGameSystem::LevelShutdownPreClearSteamAPIContext
 			"IGameSystem::ExtraOffsets"	"6"
-			
-			// 14 - IScriptVM::ReferenceScope
-			"IScriptVM::ExtraOffsets"	"14"
 		}
 		
 		"Offsets"
