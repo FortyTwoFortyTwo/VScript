@@ -33,7 +33,7 @@
 		
 		"Offsets"
 		{
-			// All offsets are based on games with smallest offset numbers (e.g. CSGO)
+			// All offsets are based on games with smallest offset numbers (e.g. TF2)
 			
 			"ScriptClassDesc_t::m_pszScriptName"
 			{
