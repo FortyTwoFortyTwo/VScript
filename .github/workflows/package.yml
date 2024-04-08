@@ -2,6 +2,7 @@ name: Package
 
 on: 
   push:
+  workflow_dispatch:
   schedule:
     - cron: '0 0 1 * *'  # every month
 jobs:
