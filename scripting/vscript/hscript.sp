@@ -58,7 +58,8 @@ int HScript_GetKey(HSCRIPT pHScript, int iIterator, char[] sKey, int iLength, fi
 		nField = pValue.nType;
 	}
 	
-	delete pKey, pValue;
+	delete pKey;
+	delete pValue;
 	
 	return iIterator;
 }
@@ -125,7 +126,8 @@ ScriptVariant_t HScript_NativeGetValueEx(bool bError)
 		return pValue;
 	}
 	
-	delete pKey, pValue;
+	delete pKey;
+	delete pValue;
 	
 	if (bError)
 		ThrowNativeError(SP_ERROR_NATIVE, "Key name '%s' don't exist", sKey);

@@ -230,7 +230,9 @@ ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
 	execute.nReturn.nType = pReturn.nType;
 	Execute_SetInfo(aExecute, execute);
 	
-	delete hArgs, pReturn;
+	delete hArgs;
+	delete pReturn;
+	
 	for (int i = 0; i < iNumParams; i++)
 		delete hValue[i];
 	
