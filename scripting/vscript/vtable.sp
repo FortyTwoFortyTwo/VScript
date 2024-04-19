@@ -76,9 +76,8 @@ void VTable_LoadGamedataAddress()
 	}
 	else
 	{
-		VTable_LoadAddress(0);
-		VTable_LoadAddress(4, 4);
-		iExtraOffset = 4;	// Because of the extra 4 zeros above
+		// Symbol is located 4 bytes before where vtable offset starts
+		iExtraOffset = 4;
 	}
 	
 	GameData hTempGameData = VTable_GetGamedata();
@@ -176,16 +175,23 @@ DynamicDetour VTable_CreateDetour(GameData hGameData, const char[] sClass, const
 void VTable_SetSymbol(const char[] sSymbol, const char[] sLibrary)
 {
 	g_kvTempGamedata.JumpToKey(sSymbol, true);
-	
-	char sInstructions[256];
-	for (int i = 0; i < strlen(sSymbol); i++)
-		StrCat(sInstructions, sizeof(sInstructions), VTable_GetSigValue(sSymbol[i]));
-	
-	// Null terminator at the end
-	StrCat(sInstructions, sizeof(sInstructions), VTable_GetSigValue(0));
-	
 	g_kvTempGamedata.SetString("library", sLibrary);
-	g_kvTempGamedata.SetString(g_sOperatingSystem, sInstructions);
+	
+	if (sSymbol[0] == '@')
+	{
+		g_kvTempGamedata.SetString(g_sOperatingSystem, sSymbol);
+	}
+	else
+	{
+		char sInstructions[256];
+		for (int i = 0; i < strlen(sSymbol); i++)
+			StrCat(sInstructions, sizeof(sInstructions), VTable_GetSigValue(sSymbol[i]));
+		
+		// Null terminator at the end
+		StrCat(sInstructions, sizeof(sInstructions), VTable_GetSigValue(0));
+		
+		g_kvTempGamedata.SetString(g_sOperatingSystem, sInstructions);
+	}
 	
 	g_kvTempGamedata.GoBack();
 }
@@ -255,7 +261,7 @@ void VTable_CreateSymbol(const char[] sName, char[] sBuffer, int iLength)
 	if (g_bWindows)
 		Format(sBuffer, iLength, ".?AV%s@@", sName);	// this is so scuffed
 	else
-		Format(sBuffer, iLength, "%d%s", strlen(sName), sName);	// e.g. 11CSquirrelVM
+		Format(sBuffer, iLength, "@_ZTV%d%s", strlen(sName), sName);	// e.g. @_ZTV11CSquirrelVM
 }
 
 GameData VTable_GetGamedata(const char[] sFile = "__vscript__")
