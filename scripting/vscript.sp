@@ -2,7 +2,7 @@
 
 #include "include/vscript.inc"
 
-#define PLUGIN_VERSION			"1.8.5"
+#define PLUGIN_VERSION			"1.8.6"
 #define PLUGIN_VERSION_REVISION	"manual"
 
 char g_sOperatingSystem[16];
