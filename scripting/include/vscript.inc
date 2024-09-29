@@ -20,6 +20,7 @@ enum fieldtype_t
 	FIELD_HSCRIPT,
 	FIELD_VARIANT,
 	FIELD_QANGLE,
+	FIELD_UINT32,
 };
 
 enum ScriptStatus_t

@@ -7,7 +7,7 @@ enum SMField
 	SMField_Vector,
 }
 
-const int FIELD_MAX = view_as<int>(FIELD_QANGLE) + 1;
+const int FIELD_MAX = view_as<int>(FIELD_UINT32) + 1;
 
 enum struct FieldInfo
 {
@@ -33,6 +33,7 @@ static FieldInfo g_FieldInfos[FIELD_MAX] = {
 	{ "FIELD_HSCRIPT",		SMField_Cell,		SDKType_PlainOldData,	SDKPass_Plain,		ReturnType_Int,			HookParamType_Int,		4	},
 	{ "FIELD_VARIANT",		SMField_Unknwon,	SDKType_Unknown,		SDKPass_Unknown,	ReturnType_Unknown,		HookParamType_Unknown,	-1	},
 	{ "FIELD_QANGLE",		SMField_Vector,		SDKType_QAngle,			SDKPass_ByValue,	ReturnType_VectorPtr,	HookParamType_Object,	12	},
+	{ "FIELD_UINT32",		SMField_Cell,		SDKType_PlainOldData,	SDKPass_Plain,		ReturnType_Int,			HookParamType_Int,		4	},
 };
 
 void Field_LoadGamedata(GameData hGameData)

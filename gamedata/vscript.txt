@@ -28,6 +28,7 @@
 			"FIELD_CSTRING"		"30"
 			"FIELD_HSCRIPT"		"31"
 			"FIELD_VARIANT"		"32"
+			"FIELD_UINT32"		"37"
 			"FIELD_QANGLE"		"39"
 		}
 		
@@ -299,6 +300,7 @@
 			"FIELD_CSTRING"		"31"	// +1
 			"FIELD_HSCRIPT"		"32"	// +1
 			"FIELD_VARIANT"		"33"	// +1
+			"FIELD_UINT32"		"38"	// +1
 			"FIELD_QANGLE"		"40"	// +1
 		}
 	}
