@@ -1,21 +1,78 @@
 static int g_iClassDesc_ScriptName;
+static int g_iClassDesc_ClassName;
+static int g_iClassDesc_Description;
 static int g_iClassDesc_BaseDesc;
 static int g_iClassDesc_FunctionBindings;
+static int g_iClassDesc_sizeof;
 
 static int g_iFunctionBinding_sizeof;
 
 void Class_LoadGamedata(GameData hGameData)
 {
 	g_iClassDesc_ScriptName = hGameData.GetOffset("ScriptClassDesc_t::m_pszScriptName");
+	g_iClassDesc_ClassName = hGameData.GetOffset("ScriptClassDesc_t::m_pszClassname");
+	g_iClassDesc_Description = hGameData.GetOffset("ScriptClassDesc_t::m_pszDescription");
 	g_iClassDesc_BaseDesc = hGameData.GetOffset("ScriptClassDesc_t::m_pBaseDesc");
 	g_iClassDesc_FunctionBindings = hGameData.GetOffset("ScriptClassDesc_t::m_FunctionBindings");
-	
+	g_iClassDesc_sizeof = hGameData.GetOffset("sizeof(ScriptClassDesc_t)");
 	g_iFunctionBinding_sizeof = hGameData.GetOffset("sizeof(ScriptFunctionBinding_t)");
+}
+
+VScriptClass Class_Create()
+{
+	// TODO proper way to handle with memory?
+	
+	MemoryBlock hClass = new MemoryBlock(g_iClassDesc_sizeof);
+	
+	VScriptClass pClass = view_as<VScriptClass>(hClass.Address);
+	
+	hClass.Disown();
+	delete hClass;
+	
+	List_AddClass(pClass);
+	return pClass;
+}
+
+void Class_Init(VScriptClass pClass)
+{
+	for (int i = 0; i < g_iClassDesc_sizeof; i++)	// Make sure that all is cleared first
+		StoreToAddress(pClass + view_as<Address>(i), 0, NumberType_Int8);
+	
+	// Set strings as empty, but not null
+	Address pEmptyString = GetEmptyString();
+	StoreToAddress(pClass + view_as<Address>(g_iClassDesc_ScriptName), pEmptyString, NumberType_Int32);
+	StoreToAddress(pClass + view_as<Address>(g_iClassDesc_ClassName), pEmptyString, NumberType_Int32);
+	StoreToAddress(pClass + view_as<Address>(g_iClassDesc_Description), pEmptyString, NumberType_Int32);
 }
 
 void Class_GetScriptName(VScriptClass pClass, char[] sBuffer, int iLength)
 {
 	LoadPointerStringFromAddress(pClass + view_as<Address>(g_iClassDesc_ScriptName), sBuffer, iLength);
+}
+
+void Class_SetScriptName(VScriptClass pClass, int iParam)
+{
+	StoreNativePointerStringToAddress(pClass + view_as<Address>(g_iClassDesc_ScriptName), iParam);
+}
+
+void Class_GetClassName(VScriptClass pClass, char[] sBuffer, int iLength)
+{
+	LoadPointerStringFromAddress(pClass + view_as<Address>(g_iClassDesc_ClassName), sBuffer, iLength);
+}
+
+void Class_SetClassName(VScriptClass pClass, int iParam)
+{
+	StoreNativePointerStringToAddress(pClass + view_as<Address>(g_iClassDesc_ClassName), iParam);
+}
+
+void Class_GetDescription(VScriptClass pClass, char[] sBuffer, int iLength)
+{
+	LoadPointerStringFromAddress(pClass + view_as<Address>(g_iClassDesc_Description), sBuffer, iLength);
+}
+
+void Class_SetDescription(VScriptClass pClass, int iParam)
+{
+	StoreNativePointerStringToAddress(pClass + view_as<Address>(g_iClassDesc_Description), iParam);
 }
 
 ArrayList Class_GetAllFunctions(VScriptClass pClass)

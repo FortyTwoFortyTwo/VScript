@@ -254,9 +254,36 @@ methodmap VScriptClass < Address
 {
 	// Gets the script name
 	// 
-	// @param buffer           Buffer to store name.
+	// @param buffer           Buffer to store script name.
 	// @param length           Size of buffer.
 	public native void GetScriptName(char[] buffer, int length);
+	
+	// Sets the script name
+	// 
+	// @param value            Script name to set.
+	public native void SetScriptName(const char[] value);
+	
+	// Gets the class name
+	// 
+	// @param buffer           Buffer to store class name.
+	// @param length           Size of buffer.
+	public native void GetClassName(char[] buffer, int length);
+	
+	// Sets the class name
+	// 
+	// @param value            Class name to set.
+	public native void SetClassName(const char[] value);
+	
+	// Gets the description
+	// 
+	// @param buffer           Buffer to store name.
+	// @param length           Size of buffer.
+	public native void GetDescription(char[] buffer, int length);
+	
+	// Sets the description
+	// 
+	// @param value            Description to set.
+	public native void SetDescription(const char[] value);
 	
 	// Get all of the functions used for this class
 	// 
@@ -274,6 +301,12 @@ methodmap VScriptClass < Address
 	// @param functionName     Function name.
 	// @return                 Address of VScriptFunction.
 	public native VScriptFunction CreateFunction();
+	
+	// Register this class as an instance. This does not require calling VScript_ResetScriptVM unless if modifications were made afterward.
+	// 
+	// @param instance         Name of an instance in script.
+	// @return                 Created HSCRIPT instance.
+	public native HSCRIPT RegisterInstance(const char[] instance);
 	
 	// Gets the class that this is based on, Address_Null if does not have base class
 	property VScriptClass Base
@@ -435,6 +468,15 @@ native ArrayList VScript_GetAllClasses();
  * @error                  Invalid class name
  */
 native VScriptClass VScript_GetClass(const char[] className);
+
+/**
+ * Gets VScriptClass from class or creates one if don't exist. VScriptClass.RegisterInstance must be called after params are filled.
+ * 
+ * @param className        Class name.
+ * 
+ * @return                 Address of VScriptClass, either existing or newly created
+ */
+native VScriptClass VScript_CreateClass(const char[] className);
 
 /**
  * Gets VScriptFunction from class

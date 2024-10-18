@@ -164,6 +164,22 @@ public void OnMapStart()
 	AssertInt(TEST_ENTITY, VScript_HScriptToEntity(pEntity));
 	
 	/*
+	 * Create a new class instance
+	 */
+	
+	VScriptClass pClass = VScript_CreateClass("NewClass");
+	
+	pFunction = VScript_CreateClassFunction("NewClass", "InstanceFunction");
+	pFunction.SetParam(1, FIELD_INTEGER);
+	pFunction.Return = FIELD_FLOAT;
+	pFunction.SetFunctionEmpty();
+	pFunction.CreateDetour().Enable(Hook_Pre, Detour_InstanceFunction);
+	
+	HSCRIPT pInstance = pClass.RegisterInstance("InstanceName");
+	
+	AssertInt(TEST_FLOAT, SDKCall(pFunction.CreateSDKCall(), pInstance.Instance, TEST_INTEGER));
+	
+	/*
 	 * Test virtual function
 	 */
 	
@@ -194,7 +210,7 @@ public void OnMapStart()
 	int iLength = aList.Length;
 	for (int i = 0; i < iLength; i++)
 	{
-		VScriptClass pClass = aList.Get(i);
+		pClass = aList.Get(i);
 		CheckFunctions(pClass.GetAllFunctions());
 	}
 	
@@ -351,6 +367,13 @@ public MRESReturn Detour_FindByClassname(Address pThis, DHookReturn hReturn, DHo
 	hParam.GetString(2, sBuffer, sizeof(sBuffer));
 	AssertString(TEST_CLASSNAME, sBuffer);
 	return MRES_Ignored;
+}
+
+public MRESReturn Detour_InstanceFunction(Address pThis, DHookReturn hReturn, DHookParam hParam)
+{
+	AssertInt(TEST_INTEGER, hParam.Get(1));
+	hReturn.Value = TEST_FLOAT;
+	return MRES_Supercede;
 }
 
 public MRESReturn Hook_GetMaxHealth(int iEntity, DHookReturn hReturn)

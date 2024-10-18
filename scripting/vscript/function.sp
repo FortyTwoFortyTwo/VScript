@@ -46,19 +46,11 @@ VScriptFunction Function_Create()
 
 void Function_Init(VScriptFunction pFunction, bool bClass)
 {
-	static Address pEmptyString;
-	if (!pEmptyString)
-	{
-		MemoryBlock hMemory = new MemoryBlock(1);
-		pEmptyString = hMemory.Address;
-		hMemory.Disown();
-		delete hMemory;
-	}
-	
 	for (int i = 0; i < g_iFunctionBinding_sizeof; i++)	// Make sure that all is cleared first
 		StoreToAddress(pFunction + view_as<Address>(i), 0, NumberType_Int8);
 	
 	// Set strings as empty, but not null
+	Address pEmptyString = GetEmptyString();
 	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_ScriptName), pEmptyString, NumberType_Int32);
 	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_FunctionName), pEmptyString, NumberType_Int32);
 	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_Description), pEmptyString, NumberType_Int32);
