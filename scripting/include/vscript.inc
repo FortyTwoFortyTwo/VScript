@@ -651,9 +651,15 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("VScriptFunction.Class.get");
 	
 	MarkNativeAsOptional("VScriptClass.GetScriptName");
+	MarkNativeAsOptional("VScriptClass.SetScriptName");
+	MarkNativeAsOptional("VScriptClass.GetClassName");
+	MarkNativeAsOptional("VScriptClass.SetClassName");
+	MarkNativeAsOptional("VScriptClass.GetDescription");
+	MarkNativeAsOptional("VScriptClass.SetDescription");
 	MarkNativeAsOptional("VScriptClass.GetAllFunctions");
 	MarkNativeAsOptional("VScriptClass.GetFunction");
 	MarkNativeAsOptional("VScriptClass.CreateFunction");
+	MarkNativeAsOptional("VScriptClass.RegisterInstance");
 	MarkNativeAsOptional("VScriptClass.Base.get");
 	
 	MarkNativeAsOptional("VScriptExecute.VScriptExecute");
@@ -676,6 +682,7 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("VScript_CreateTable");
 	MarkNativeAsOptional("VScript_GetAllClasses");
 	MarkNativeAsOptional("VScript_GetClass");
+	MarkNativeAsOptional("VScript_CreateClass");
 	MarkNativeAsOptional("VScript_GetClassFunction");
 	MarkNativeAsOptional("VScript_GetAllGlobalFunctions");
 	MarkNativeAsOptional("VScript_GetGlobalFunction");
