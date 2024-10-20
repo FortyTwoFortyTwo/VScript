@@ -66,6 +66,12 @@
 				"windows"	"16"
 			}
 			
+			"ScriptClassDesc_t::m_pNextDesc"
+			{
+				"linux"		"48"
+				"windows"	"48"
+			}
+			
 			"sizeof(ScriptClassDesc_t)"
 			{
 				"linux"		"52"
