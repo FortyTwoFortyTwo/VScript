@@ -50,6 +50,20 @@ int LoadStringLengthFromAddress(Address pString)
 	return iChar;
 }
 
+Address GetEmptyString()
+{
+	static Address pEmptyString;
+	if (!pEmptyString)
+	{
+		MemoryBlock hMemory = new MemoryBlock(1);
+		pEmptyString = hMemory.Address;
+		hMemory.Disown();
+		delete hMemory;
+	}
+	
+	return pEmptyString;
+}
+
 MemoryBlock CreateStringMemory(const char[] sBuffer)
 {
 	int iLength = strlen(sBuffer);

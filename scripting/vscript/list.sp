@@ -58,8 +58,7 @@ MRESReturn List_RegisterClass(Address pScriptVM, DHookReturn hReturn, DHookParam
 		return MRES_Ignored;
 	
 	VScriptClass pClass = hParam.Get(1);
-	if (g_aClasses.FindValue(pClass) == -1)
-		g_aClasses.Push(pClass);
+	List_AddClass(pClass);
 	
 	return MRES_Ignored;
 }
@@ -75,6 +74,12 @@ void List_AddEntityScriptDesc(int iEntity)
 		g_aClasses.Push(pClass);
 		pClass = Class_GetBaseDesc(pClass);
 	}
+}
+
+void List_AddClass(VScriptClass pClass)
+{
+	if (g_aClasses.FindValue(pClass) == -1)
+		g_aClasses.Push(pClass);
 }
 
 ArrayList List_GetAllGlobalFunctions()

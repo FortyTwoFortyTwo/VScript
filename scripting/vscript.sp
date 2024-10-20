@@ -2,7 +2,7 @@
 
 #include "include/vscript.inc"
 
-#define PLUGIN_VERSION			"1.8.7"
+#define PLUGIN_VERSION			"1.9.0"
 #define PLUGIN_VERSION_REVISION	"manual"
 
 char g_sOperatingSystem[16];
@@ -18,6 +18,7 @@ int g_iScriptVariant_union;
 int g_iScriptVariant_type;
 
 static Handle g_hSDKCallCompileScript;
+static Handle g_hSDKCallRegisterInstance;
 static Handle g_hSDKCallGetInstanceEntity;
 
 const HSCRIPT INVALID_HSCRIPT = view_as<HSCRIPT>(-1);
@@ -94,9 +95,15 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScriptFunction.Class.get", Native_Function_ClassGet);
 	
 	CreateNative("VScriptClass.GetScriptName", Native_Class_GetScriptName);
+	CreateNative("VScriptClass.SetScriptName", Native_Class_SetScriptName);
+	CreateNative("VScriptClass.GetClassName", Native_Class_GetClassName);
+	CreateNative("VScriptClass.SetClassName", Native_Class_SetClassName);
+	CreateNative("VScriptClass.GetDescription", Native_Class_GetDescription);
+	CreateNative("VScriptClass.SetDescription", Native_Class_SetDescription);
 	CreateNative("VScriptClass.GetAllFunctions", Native_Class_GetAllFunctions);
 	CreateNative("VScriptClass.GetFunction", Native_Class_GetFunction);
 	CreateNative("VScriptClass.CreateFunction", Native_Class_CreateFunction);
+	CreateNative("VScriptClass.RegisterInstance", Native_Class_RegisterInstance);
 	CreateNative("VScriptClass.Base.get", Native_Class_BaseGet);
 	CreateNative("VScriptClass.IsDerivedFrom", Native_Class_IsDerivedFrom);	// legacy native, to be removed later
 	
@@ -120,6 +127,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScript_CreateTable", Native_CreateTable);
 	CreateNative("VScript_GetAllClasses", Native_GetAllClasses);
 	CreateNative("VScript_GetClass", Native_GetClass);
+	CreateNative("VScript_CreateClass", Native_CreateClass);
 	CreateNative("VScript_GetClassFunction", Native_GetClassFunction);
 	CreateNative("VScript_GetAllGlobalFunctions", Native_GetAllGlobalFunctions);
 	CreateNative("VScript_GetGlobalFunction", Native_GetGlobalFunction);
@@ -163,6 +171,7 @@ public void OnPluginStart()
 	List_LoadGamedata(hGameData);
 	
 	g_hSDKCallCompileScript = CreateSDKCall(hGameData, "IScriptVM", "CompileScript", SDKType_PlainOldData, SDKType_String, SDKType_String);
+	g_hSDKCallRegisterInstance = CreateSDKCall(hGameData, "IScriptVM", "RegisterInstance", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_String);
 	g_hSDKCallGetInstanceEntity = CreateSDKCall(hGameData, "IScriptVM", "GetInstanceValue", SDKType_CBaseEntity, SDKType_PlainOldData, SDKType_PlainOldData);
 	
 	delete hGameData;
@@ -339,7 +348,7 @@ public any Native_Function_SetScriptName(Handle hPlugin, int iNumParams)
 	char[] sBuffer = new char[iLength + 1];
 	GetNativeString(2, sBuffer, iLength + 1);
 	
-	// Check if script name dont already exist
+	// Check if script name not already exist
 	if (Function_GetFlags(pFunction) & SF_MEMBER_FUNC)
 	{
 		VScriptClass pClass = List_GetClassFromFunction(pFunction);
@@ -525,6 +534,57 @@ public any Native_Class_GetScriptName(Handle hPlugin, int iNumParams)
 	return 0;
 }
 
+public any Native_Class_SetScriptName(Handle hPlugin, int iNumParams)
+{
+	VScriptClass pClass = GetNativeCell(1);
+	
+	int iLength;
+	GetNativeStringLength(2, iLength);
+	
+	char[] sBuffer = new char[iLength + 1];
+	GetNativeString(2, sBuffer, iLength + 1);
+	
+	// Check if script name not already exist
+	if (List_GetClass(sBuffer))
+		ThrowNativeError(SP_ERROR_NATIVE, "Global function named '%s' already exists", sBuffer);
+	
+	Class_SetScriptName(pClass, 2);
+	return 0;
+}
+
+public any Native_Class_GetClassName(Handle hPlugin, int iNumParams)
+{
+	int iLength = GetNativeCell(3);
+	char[] sBuffer = new char[iLength];
+	
+	Class_GetClassName(GetNativeCell(1), sBuffer, iLength);
+	SetNativeString(2, sBuffer, iLength);
+	return 0;
+}
+
+public any Native_Class_SetClassName(Handle hPlugin, int iNumParams)
+{
+	// Could add an already exist check like SetScriptName, meh
+	Class_SetClassName(GetNativeCell(1), 2);
+	return 0;
+}
+
+public any Native_Class_GetDescription(Handle hPlugin, int iNumParams)
+{
+	int iLength = GetNativeCell(3);
+	char[] sBuffer = new char[iLength];
+	
+	Class_GetDescription(GetNativeCell(1), sBuffer, iLength);
+	SetNativeString(2, sBuffer, iLength);
+	return 0;
+}
+
+public any Native_Class_SetDescription(Handle hPlugin, int iNumParams)
+{
+	Class_SetDescription(GetNativeCell(1), 2);
+	return 0;
+}
+
 public any Native_Class_GetAllFunctions(Handle hPlugin, int iNumParams)
 {
 	ArrayList aList = Class_GetAllFunctions(GetNativeCell(1));
@@ -548,6 +608,26 @@ public any Native_Class_GetFunction(Handle hPlugin, int iNumParams)
 public any Native_Class_CreateFunction(Handle hPlugin, int iNumParams)
 {
 	return Class_CreateFunction(GetNativeCell(1));
+}
+
+public any Native_Class_RegisterInstance(Handle hPlugin, int iNumParams)
+{
+	int iLength;
+	GetNativeStringLength(2, iLength);
+	
+	char[] sBuffer = new char[iLength + 1];
+	GetNativeString(2, sBuffer, iLength + 1);
+	
+	// Second param is void *, but we can just pass string to it
+	HSCRIPT pInstance = SDKCall(g_hSDKCallRegisterInstance, GetScriptVM(), GetNativeCell(1), sBuffer);
+	
+	// Not sure if this is the correct way to do it, but it works
+	ScriptVariant_t pValue = new ScriptVariant_t();
+	pValue.nType = FIELD_HSCRIPT;
+	pValue.nValue = pInstance;
+	HScript_SetValue(HSCRIPT_RootTable, sBuffer, pValue);
+	
+	return pInstance;
 }
 
 public any Native_Class_BaseGet(Handle hPlugin, int iNumParams)
@@ -793,6 +873,25 @@ public any Native_GetClass(Handle hPlugin, int iNumParams)
 	if (!pClass)
 		return ThrowNativeError(SP_ERROR_NATIVE, "Could not find class name '%s'", sBuffer);
 	
+	return pClass;
+}
+
+public any Native_CreateClass(Handle hPlugin, int iNumParams)
+{
+	int iLength;
+	GetNativeStringLength(1, iLength);
+	
+	char[] sBuffer = new char[iLength + 1];
+	GetNativeString(1, sBuffer, iLength + 1);
+	
+	VScriptClass pClass = List_GetClass(sBuffer);
+	if (pClass)
+		return pClass;
+	
+	pClass = Class_Create();
+	Class_Init(pClass);
+	Class_SetScriptName(pClass, 1);
+	Class_SetClassName(pClass, 1);
 	return pClass;
 }
 
