@@ -1,8 +1,13 @@
+static int g_iInitializing;
+static GlobalForward g_fOnScriptVMInitialized;
+
 static ArrayList g_aGlobalFunctions;
 static ArrayList g_aClasses;
 
 void List_LoadGamedata(GameData hGameData)
 {
+	g_fOnScriptVMInitialized = new GlobalForward("VScript_OnScriptVMInitialized", ET_Ignore);
+	
 	DynamicDetour hDetour;
 	
 	hDetour = VTable_CreateDetour(hGameData, "IScriptVM", "Init", ReturnType_Bool);
@@ -13,6 +18,9 @@ void List_LoadGamedata(GameData hGameData)
 	
 	hDetour = VTable_CreateDetour(hGameData, "IScriptVM", "RegisterClass", ReturnType_Bool, HookParamType_Int);
 	hDetour.Enable(Hook_Post, List_RegisterClass);
+	
+	hDetour = VTable_CreateDetour(hGameData, "IGameSystem", "LevelInitPreEntity", ReturnType_Bool);
+	hDetour.Enable(Hook_Post, List_LevelInitPreEntity);
 }
 
 void List_LoadDefaults()
@@ -26,10 +34,12 @@ void List_LoadDefaults()
 	HSCRIPT pScriptVM = GetScriptVM();
 	
 	// Create new vscriptvm and set back, so we can collect all of the default stuffs
+	g_iInitializing = -1;	// Don't want to call forward from this
 	SetScriptVM(view_as<HSCRIPT>(Address_Null));
 	GameSystem_ServerInit();
 	GameSystem_ServerTerm();
 	SetScriptVM(pScriptVM);
+	g_iInitializing = 0;
 	
 	int iEntity = INVALID_ENT_REFERENCE;
 	while ((iEntity = FindEntityByClassname(iEntity, "*")) != INVALID_ENT_REFERENCE)
@@ -38,6 +48,9 @@ void List_LoadDefaults()
 
 MRESReturn List_Init(Address pScriptVM, DHookReturn hReturn)
 {
+	if (g_iInitializing == 0)
+		g_iInitializing = 1;
+	
 	g_aGlobalFunctions.Clear();
 	g_aClasses.Clear();
 	return MRES_Ignored;
@@ -59,6 +72,18 @@ MRESReturn List_RegisterClass(Address pScriptVM, DHookReturn hReturn, DHookParam
 	
 	VScriptClass pClass = hParam.Get(1);
 	List_AddClass(pClass);
+	
+	return MRES_Ignored;
+}
+
+MRESReturn List_LevelInitPreEntity(Address pGameSystem, DHookReturn hReturn)
+{
+	if (g_iInitializing == 1)
+	{
+		g_iInitializing = 0;
+		Call_StartForward(g_fOnScriptVMInitialized);
+		Call_Finish();
+	}
 	
 	return MRES_Ignored;
 }

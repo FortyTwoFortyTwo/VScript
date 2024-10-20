@@ -2,7 +2,7 @@
 
 #include "include/vscript.inc"
 
-#define PLUGIN_VERSION			"1.9.0"
+#define PLUGIN_VERSION			"1.9.1"
 #define PLUGIN_VERSION_REVISION	"manual"
 
 char g_sOperatingSystem[16];
@@ -120,6 +120,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScriptExecute.GetReturnString", Native_Execute_GetReturnString);
 	CreateNative("VScriptExecute.GetReturnVector", Native_Execute_GetReturnVector);
 	
+	CreateNative("VScript_IsScriptVMInitialized", Native_IsScriptVMInitialized);
 	CreateNative("VScript_ResetScriptVM", Native_ResetScriptVM);
 	CreateNative("VScript_CompileScript", Native_CompileScript);
 	CreateNative("VScript_CompileScriptFile", Native_CompileScriptFile);
@@ -761,6 +762,11 @@ public any Native_Execute_GetReturnVector(Handle hPlugin, int iNumParams)
 	vecValue = execute.nReturn.vecValue;
 	SetNativeArray(2, vecValue, sizeof(vecValue));
 	return 0;
+}
+
+public any Native_IsScriptVMInitialized(Handle hPlugin, int iNumParams)
+{
+	return GetScriptVM() != Address_Null;
 }
 
 public any Native_ResetScriptVM(Handle hPlugin, int iNumParams)

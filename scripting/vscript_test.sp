@@ -24,19 +24,15 @@ public Plugin myinfo =
 	url = "https://github.com/FortyTwoFortyTwo/VScript",
 };
 
-public void OnMapStart()
+public void OnAllPluginsLoaded()
 {
-	VScriptFunction pFunction;
-	VScriptExecute hExecute;
-	int iValue;
-	char sBuffer[256];
-	float vecResult[3];
+	// Best to do it in OnAllPluginsLoaded, to ensure that vscript plugin is fully loaded
 	
 	/*
 	 * Test member call with bunch of params, this first because of resetting g_pScriptVM
 	 */
 	
-	pFunction = VScript_CreateClassFunction("CBaseEntity", "BunchOfParams");
+	VScriptFunction pFunction = VScript_CreateClassFunction("CBaseEntity", "BunchOfParams");
 	pFunction.SetParam(1, FIELD_INTEGER);
 	pFunction.SetParam(2, FIELD_FLOAT);
 	pFunction.SetParam(3, FIELD_BOOLEAN);
@@ -45,8 +41,22 @@ public void OnMapStart()
 	
 	pFunction.Return = FIELD_FLOAT;
 	pFunction.SetFunctionEmpty();
-	VScript_ResetScriptVM();
 	
+	// If script vm is already initialized, force reset it as we can use modified CBaseEntity.
+	// If were only calling VScriptClass.RegisterInstance or VScriptFunction.Register, only need to manually call VScript_OnScriptVMInitialized() without resetting it.
+	if (VScript_IsScriptVMInitialized())
+		VScript_ResetScriptVM();
+}
+
+public void VScript_OnScriptVMInitialized()
+{
+	VScriptFunction pFunction;
+	VScriptExecute hExecute;
+	int iValue;
+	char sBuffer[256];
+	float vecResult[3];
+	
+	// BunchOfParams created at OnAllPluginsLoaded
 	RunScript("function BunchOfParams(entity, param1, param2, param3, param4, param5) { return entity.BunchOfParams(param1, param2, param3, param4, param5) }");
 	
 	// Setup VScript Call
@@ -63,6 +73,7 @@ public void OnMapStart()
 	AssertInt(FIELD_VOID, hExecute.ReturnType);
 	
 	// Now detour the newly created function
+	pFunction = VScript_GetClassFunction("CBaseEntity", "BunchOfParams");
 	pFunction.CreateDetour().Enable(Hook_Pre, Detour_BunchOfParams);
 	
 	// Test again

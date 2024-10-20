@@ -225,7 +225,7 @@ methodmap VScriptFunction < Address
 	// @param from             A function to copy from.
 	public native void CopyFrom(VScriptFunction from);
 	
-	// Register this as a global function until when g_pScriptVM has been reset.
+	// Register this as a global function until when g_pScriptVM has been reset. This should be called inside VScript_OnScriptVMInitialized forward.
 	public native void Register();
 	
 	// Creates an SDKCall with parameters auto filled
@@ -302,7 +302,7 @@ methodmap VScriptClass < Address
 	// @return                 Address of VScriptFunction.
 	public native VScriptFunction CreateFunction();
 	
-	// Register this class as an instance. This does not require calling VScript_ResetScriptVM unless if modifications were made afterward.
+	// Register this class as an instance. This should be used inside VScript_OnScriptVMInitialized forward.
 	// 
 	// @param instance         Name of an instance in script.
 	// @return                 Created HSCRIPT instance.
@@ -409,6 +409,20 @@ methodmap VScriptExecute < Handle
 	// @param length           Size of buffer.
 	public native void GetReturnVector(float buffer[3]);
 }
+
+
+/**
+ * Called when g_pScriptVM has been fully initialized, this is where VScriptClass.RegisterInstance and VScriptFunction.Register should be called
+ * @note This forward does not get called on plugin lateload, use VScript_IsScriptVMInitialized to determine whenever to manually call this forward
+ */
+forward void VScript_OnScriptVMInitialized();
+
+/**
+ * Returns whenever g_pScriptVM has been initialized, useful for plugin start to determine whenever to call VScript_ResetScriptVM or VScript_OnScriptVMInitialized if this were to return true
+ * 
+ * @return                 True if script vm is initialized, false otherwise
+ */
+native bool VScript_IsScriptVMInitialized();
 
 /**
  * Deletes g_pScriptVM and creates a new one. This should be used when VScriptClass or VScriptFunction has been modified, including adding new functions to class
@@ -675,6 +689,7 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("VScriptExecute.GetReturnString");
 	MarkNativeAsOptional("VScriptExecute.GetReturnVector");
 	
+	MarkNativeAsOptional("VScript_IsScriptVMInitialized");
 	MarkNativeAsOptional("VScript_ResetScriptVM");
 	MarkNativeAsOptional("VScript_CompileScript");
 	MarkNativeAsOptional("VScript_CompileScriptFile");

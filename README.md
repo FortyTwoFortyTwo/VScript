@@ -17,7 +17,7 @@ All builds can be found [here](https://github.com/FortyTwoFortyTwo/VScript/actio
 
 Compiles and executes a script code with params and returns, helpful when `RunScriptCode` input does not support receiving returns.
 ```sp
-public void OnPluginStart()
+public void OnAllPluginsLoaded()
 {
 	HSCRIPT script = VScript_CompileScript("printl(\"Wow a message!\"); return 4242; function PrintMessage(param) { printl(param) }");
 	
@@ -44,7 +44,7 @@ This allows to directly call or detour a function without needing to manually ge
 ```sp
 Handle g_SDKCallGetAngles;
 
-public void OnPluginStart()
+public void OnAllPluginsLoaded()
 {
 	VScriptFunction func = VScript_GetClassFunction("CBaseEntity", "GetAngles");
 	g_SDKCallGetAngles = func.CreateSDKCall();
@@ -77,18 +77,22 @@ Creates a new native function where scripts can make use of it. Does nothing by 
 ```sp
 VScriptFunction g_NewFunction;
 
-public void OnPluginStart()
+public void OnAllPluginsLoaded()
 {
 	// Create a new function, or get an existing one if name already exists
 	g_NewFunction = VScript_CreateGlobalFunction("NewFunction");
 	g_NewFunction.SetParam(1, FIELD_FLOAT);
 	g_NewFunction.Return = FIELD_INTEGER;
 	g_NewFunction.SetFunctionEmpty();
+	
+	// If plugin were to be lateloaded and that script vm is already initialized, just manually call it.
+	if (VScript_IsScriptVMInitialized())
+		VScript_OnScriptVMInitialized();
 }
 
-public void OnMapStart()
+public void VScript_OnScriptVMInitialized()
 {
-	// Global function need to be registered everytime g_pScriptVM has been reset, which usually happens on mapchange
+	// Global function need to be registered everytime g_pScriptVM has been reset, which happens right before this forward
 	g_NewFunction.Register();
 }
 ```
