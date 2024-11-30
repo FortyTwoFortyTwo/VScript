@@ -11,3 +11,7 @@ cp -r addons/sourcemod/plugins/vscript.smx package/addons/sourcemod/plugins
 cp -r ../gamedata/vscript.txt package/addons/sourcemod/gamedata
 cp -r ../scripting/include package/addons/sourcemod/scripting
 cp -r ../LICENSE package
+
+# Create ZIP file
+cd package
+zip -r ../VScript-$PLUGIN_VERSION.$PLUGIN_VERSION_REVISION.zip *
