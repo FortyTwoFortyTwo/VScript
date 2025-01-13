@@ -62,16 +62,17 @@ void Binding_SetCustom(VScriptFunction pFunction)
 	Function_SetBinding(pFunction, g_pCustomBinding);
 }
 
-void Binding_Delete(VScriptFunction pFunction)
+bool Binding_Delete(VScriptFunction pFunction)
 {
 	int iIndex = g_aBindingInfos.FindValue(pFunction, BindingInfo::pFunction);
 	if (iIndex == -1)
-		return;
+		return false;
 	
 	BindingInfo info;
 	g_aBindingInfos.GetArray(iIndex, info);
 	delete info.hSDKCall;
 	g_aBindingInfos.Erase(iIndex);
+	return true;
 }
 
 public MRESReturn Binding_Detour(DHookReturn hReturn, DHookParam hParam)

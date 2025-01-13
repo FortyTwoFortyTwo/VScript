@@ -3,7 +3,7 @@
 SourceMod plugin that exposes many VScript features to make use of it. Currently supports L4D2 and TF2.
 
 ## Builds
-All builds can be found in [releases](https://github.com/FortyTwoFortyTwo/VScript/releases) page, auto-built on every commits done in master branch.
+All builds can be found in [releases](https://github.com/FortyTwoFortyTwo/VScript/releases) page, auto-built on every commits done in main branch.
 
 ## Requirements
 - At least SourceMod version 1.12.0.6924

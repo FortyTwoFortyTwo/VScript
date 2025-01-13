@@ -138,13 +138,24 @@ VScriptFunction Class_GetFunctionFromName(VScriptClass pClass, const char[] sNam
 
 VScriptFunction Class_CreateFunction(VScriptClass pClass)
 {
-	Address pFunctionBindings = pClass + view_as<Address>(g_iClassDesc_FunctionBindings);
-	int iFunctionCount = LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_FunctionBindings) + view_as<Address>(0x0C), NumberType_Int32);
+	int iFunctionCount = Class_GetFunctionCount(pClass);
 	
+	// Clear any binding detours we have first before moving over to new memory
+	ArrayList aList = new ArrayList();
+	for (int i = 0; i < iFunctionCount; i++)
+		if (Binding_Delete(Class_GetFunctionFromIndex(pClass, i)))
+			aList.Push(i);
+	
+	Address pFunctionBindings = pClass + view_as<Address>(g_iClassDesc_FunctionBindings);
 	Memory_UtlVectorSetSize(pFunctionBindings, g_iFunctionBinding_sizeof, iFunctionCount + 1);
 	
-	Address pData = LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_FunctionBindings), NumberType_Int32);
-	VScriptFunction pFunction = view_as<VScriptFunction>(pData + view_as<Address>(g_iFunctionBinding_sizeof * iFunctionCount));
+	// Re-detour any bindings
+	for (int i = 0; i < aList.Length; i++)
+		Binding_SetCustom(Class_GetFunctionFromIndex(pClass, aList.Get(i)));
+	
+	delete aList;
+	
+	VScriptFunction pFunction = Class_GetFunctionFromIndex(pClass, iFunctionCount);
 	Function_Init(pFunction, true);
 	return pFunction;
 }
