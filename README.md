@@ -1,6 +1,13 @@
 # VScript
 
-SourceMod plugin that exposes many VScript features to make use of it. Currently supports L4D2 and TF2.
+SourceMod plugin that exposes many VScript features to make use of it.
+
+Currently supports the following games:
+- Counter Strike: Source
+- Day of Defeat: Source
+- Half-Life 2: Deathmatch
+- Left 4 Dead 2
+- Team Fortress 2
 
 ## Builds
 All builds can be found in [releases](https://github.com/FortyTwoFortyTwo/VScript/releases) page, auto-built on every commits done in main branch.

@@ -34,7 +34,7 @@
 		
 		"Offsets"
 		{
-			// All offsets are based on games with smallest offset numbers (e.g. TF2)
+			// All offsets are based on any game with smallest offset numbers, of which a large amount of it is based from sdk2013
 			
 			"ScriptClassDesc_t::m_pszScriptName"
 			{
@@ -296,8 +296,51 @@
 		}
 	}
 	
+	"#default"
+	{
+		"#supported"
+		{
+			"game"	"cstrike"	// Counter Strike: Source
+			"game"	"dod"		// Day of Defeat: Source
+			"game"	"hl2mp"		// Half-Life 2: Deathmatch
+			"game"	"tf"		// Team Fortress 2
+		}
+		
+		"Keys"
+		{
+			//  6 - IGameSystem::LevelShutdownPreClearSteamAPIContext
+			"IGameSystem::ExtraOffsets"	"6"
+		}
+		
+		"Offsets"
+		{
+			// These games have m_pFunction sized 16 bytes, giving 12 extra bytes
+			
+			"ScriptFunctionBinding_t::m_flags"
+			{
+				"linux"		"56"
+				"windows"	"56"
+			}
+			
+			"sizeof(ScriptFunctionBinding_t)"
+			{
+				"linux"		"60"
+				"windows"	"60"
+			}
+			
+			"sizeof(ScriptFunctionBindingStorageType_t)"
+			{
+				"linux"		"16"
+				"windows"	"16"
+			}
+		}
+	}
+	
+	
 	"left4dead2"
 	{
+		// Left 4 Dead 2
+		
 		"Keys"
 		{
 			//   6 - IScriptVM::GetInternalVM
@@ -326,38 +369,6 @@
 			"FIELD_VARIANT"		"33"	// +1
 			"FIELD_UINT32"		"38"	// +1
 			"FIELD_QANGLE"		"40"	// +1
-		}
-	}
-	
-	"tf"
-	{
-		"Keys"
-		{
-			//  6 - IGameSystem::LevelShutdownPreClearSteamAPIContext
-			"IGameSystem::ExtraOffsets"	"6"
-		}
-		
-		"Offsets"
-		{
-			// TF2 have m_pFunction sized 16 bytes, giving 12 extra bytes
-			
-			"ScriptFunctionBinding_t::m_flags"
-			{
-				"linux"		"56"
-				"windows"	"56"
-			}
-			
-			"sizeof(ScriptFunctionBinding_t)"
-			{
-				"linux"		"60"
-				"windows"	"60"
-			}
-			
-			"sizeof(ScriptFunctionBindingStorageType_t)"
-			{
-				"linux"		"16"
-				"windows"	"16"
-			}
 		}
 	}
 }
