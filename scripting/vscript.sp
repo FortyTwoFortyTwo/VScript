@@ -2,7 +2,7 @@
 
 #include "include/vscript.inc"
 
-#define PLUGIN_VERSION			"1.9.2"
+#define PLUGIN_VERSION			"1.10.0"
 #define PLUGIN_VERSION_REVISION	"manual"
 
 char g_sOperatingSystem[16];
@@ -126,6 +126,7 @@ public APLRes AskPluginLoad2(Handle hMyself, bool bLate, char[] sError, int iLen
 	CreateNative("VScript_CompileScriptFile", Native_CompileScriptFile);
 	CreateNative("VScript_CreateScope", Native_CreateScope);
 	CreateNative("VScript_CreateTable", Native_CreateTable);
+	CreateNative("VScript_CreateInstance", Native_CreateInstance);
 	CreateNative("VScript_GetAllClasses", Native_GetAllClasses);
 	CreateNative("VScript_GetClass", Native_GetClass);
 	CreateNative("VScript_CreateClass", Native_CreateClass);
@@ -856,6 +857,11 @@ public any Native_CreateScope(Handle hPlugin, int iNumParams)
 public any Native_CreateTable(Handle hPlugin, int iNumParams)
 {
 	return HScript_CreateTable();
+}
+
+public any Native_CreateInstance(Handle hPlugin, int iNumParams)
+{
+	return HScript_CreateInstance(GetNativeCell(1), GetNativeCell(2));
 }
 
 public any Native_GetAllClasses(Handle hPlugin, int iNumParams)

@@ -5,6 +5,7 @@ static Handle g_hSDKCallGetValue;
 static Handle g_hSDKCallSetValue;
 static Handle g_hSDKCallReleaseValue;
 static Handle g_hSDKCallClearValue;
+static Handle g_hSDKCallRegisterInstance;
 static Handle g_hSDKCallGetInstanceValue;
 static Handle g_hSDKCallReleaseScope;
 static Handle g_hSDKCallReleaseScript;
@@ -18,6 +19,7 @@ void HScript_LoadGamedata(GameData hGameData)
 	g_hSDKCallSetValue = CreateSDKCall(hGameData, "IScriptVM", "SetValue", SDKType_Bool, SDKType_PlainOldData, SDKType_String, SDKType_PlainOldData);
 	g_hSDKCallReleaseValue = CreateSDKCall(hGameData, "IScriptVM", "ReleaseValue", _, SDKType_PlainOldData);
 	g_hSDKCallClearValue = CreateSDKCall(hGameData, "IScriptVM", "ClearValue", SDKType_Bool, SDKType_PlainOldData, SDKType_String);
+	g_hSDKCallRegisterInstance = CreateSDKCall(hGameData, "IScriptVM", "RegisterInstance", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData);
 	g_hSDKCallGetInstanceValue = CreateSDKCall(hGameData, "IScriptVM", "GetInstanceValue", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData);
 	g_hSDKCallReleaseScope = CreateSDKCall(hGameData, "IScriptVM", "ReleaseScope", _, SDKType_PlainOldData);
 	g_hSDKCallReleaseScript = CreateSDKCall(hGameData, "IScriptVM", "ReleaseScript", _, SDKType_PlainOldData);
@@ -36,6 +38,11 @@ HSCRIPT HScript_CreateTable()
 	HSCRIPT pHScript = pTable.nValue;
 	delete pTable;
 	return pHScript;
+}
+
+HSCRIPT HScript_CreateInstance(VScriptClass pClass, Address pInstance)
+{
+	return SDKCall(g_hSDKCallRegisterInstance, GetScriptVM(), pClass, pInstance);
 }
 
 int HScript_GetKeyValue(HSCRIPT pHScript, int iIterator, ScriptVariant_t pKey, ScriptVariant_t pValue)

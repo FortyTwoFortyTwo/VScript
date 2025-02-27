@@ -467,6 +467,17 @@ native HSCRIPT VScript_CreateScope(const char[] name, HSCRIPT parent = HSCRIPT_R
 native HSCRIPT VScript_CreateTable();
 
 /**
+ * Creates a new HSCRIPT instance, this is only to be used on non-entity script class that needs it's script instance created
+ * @note You may need to manually set property to an instance to point where the newly created hscript are at
+ *
+ * @param class            Script class an instance uses
+ * @param instance         Instance pointer address to use
+ * 
+ * @return                 HSCRIPT of an instance, null if could not create one.
+ */
+native HSCRIPT VScript_CreateInstance(VScriptClass class, Address instance);
+
+/**
  * Get all the classes used for vscript
  * 
  * @return                 Arrays of VScriptClass, handle must be deleted when not needed.
@@ -695,6 +706,7 @@ public void __pl_vscript_SetNTVOptional()
 	MarkNativeAsOptional("VScript_CompileScriptFile");
 	MarkNativeAsOptional("VScript_CreateScope");
 	MarkNativeAsOptional("VScript_CreateTable");
+	MarkNativeAsOptional("VScript_CreateInstance");
 	MarkNativeAsOptional("VScript_GetAllClasses");
 	MarkNativeAsOptional("VScript_GetClass");
 	MarkNativeAsOptional("VScript_CreateClass");
