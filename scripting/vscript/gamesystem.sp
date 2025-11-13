@@ -43,7 +43,7 @@ void GameSystem_LoadGamedata(GameData hGameData)
 		
 		if (pInstruction == view_as<Address>(0xCC) || iOffset >= 100)
 		{
-			LogError("Could not find address to get g_pScriptVM");
+			SetFailState("Could not find address to get g_pScriptVM");
 			return;
 		}
 	}

@@ -605,6 +605,20 @@ stock VScriptFunction VScript_CreateGlobalFunction(const char[] functionName)
 	return func;
 }
 
+stock void VScript_FireScriptEvent(const char[] event, HSCRIPT params)
+{
+	static HSCRIPT func;
+	if (!func)
+		func = HSCRIPT_RootTable.GetValue("FireScriptEvent");
+	
+	VScriptExecute execute = new VScriptExecute(func);
+	execute.SetParamString(1, FIELD_CSTRING, event);
+	execute.SetParam(2, FIELD_HSCRIPT, params);
+	
+	execute.Execute();
+	delete execute;
+}
+
 /**
  * Returns the value of a constant
  * 

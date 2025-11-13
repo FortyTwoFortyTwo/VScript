@@ -290,6 +290,20 @@ public void VScript_OnScriptVMInitialized()
 	
 	pTable.Release();
 	
+	/*
+	 * Test firing OnScriptEvent_ events
+	 */
+	
+	RunScript("value <- null; function OnScriptEvent_CustomEvent(params) { value = params.key } __CollectGameEventCallbacks(this);");
+	
+	pTable = VScript_CreateTable();
+	pTable.SetValue("key", FIELD_INTEGER, TEST_INTEGER);
+	VScript_FireScriptEvent("CustomEvent", pTable);
+	
+	AssertInt(HSCRIPT_RootTable.GetValue("value"), TEST_INTEGER);
+	
+	pTable.Release();
+	
 	PrintToServer("All tests passed!");
 }
 

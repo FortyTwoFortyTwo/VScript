@@ -84,7 +84,14 @@ void StoreNativePointerStringToAddress(Address pAddress, int iParam)
 	GetNativeString(iParam, sBuffer, iLength);
 	
 	MemoryBlock hString = CreateStringMemory(sBuffer);
+	
+	PrintToServer("pAddress %x hString %x sBuffer %s", pAddress, hString.Address, sBuffer);
+	
 	Memory_SetAddress(pAddress, hString);
+	
+	char asdf[256];
+	LoadPointerStringFromAddress(pAddress, asdf, sizeof(asdf));
+	PrintToServer("result %s", asdf);
 }
 
 void LoadVectorFromAddress(Address pVector, float vecBuffer[3])
@@ -93,7 +100,7 @@ void LoadVectorFromAddress(Address pVector, float vecBuffer[3])
 		vecBuffer[i] = LoadFromAddress(pVector + view_as<Address>(i * 4), NumberType_Int32);
 }
 
-MemoryBlock CreateVectorMemory(float vecBuffer[3])
+MemoryBlock CreateVectorMemory(const float vecBuffer[3])
 {
 	MemoryBlock hVector = new MemoryBlock(sizeof(vecBuffer) * 4);
 	for (int i = 0; i < sizeof(vecBuffer); i++)
