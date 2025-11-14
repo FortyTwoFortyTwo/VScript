@@ -1,16 +1,6 @@
-HSCRIPT GetScriptVM()
-{
-	return view_as<HSCRIPT>(LoadFromAddress(g_pToScriptVM, NumberType_Int32));
-}
-
-void SetScriptVM(HSCRIPT pScript)
-{
-	StoreToAddress(g_pToScriptVM, pScript, NumberType_Int32);
-}
-
 int LoadPointerStringFromAddress(Address pPointer, char[] sBuffer, int iMaxLen)
 {
-	Address pString = LoadFromAddress(pPointer, NumberType_Int32);
+	Address pString = LoadAddressFromAddress(pPointer);
 	return LoadStringFromAddress(pString, sBuffer, iMaxLen);
 }
 
@@ -31,7 +21,7 @@ int LoadStringFromAddress(Address pString, char[] sBuffer, int iMaxLen)
 
 int LoadPointerStringLengthFromAddress(Address pPointer)
 {
-	Address pString = LoadFromAddress(pPointer, NumberType_Int32);
+	Address pString = LoadAddressFromAddress(pPointer);
 	return LoadStringLengthFromAddress(pString);
 }
 
@@ -102,37 +92,14 @@ MemoryBlock CreateVectorMemory(float vecBuffer[3])
 	return hVector;
 }
 
-Handle CreateSDKCall(GameData hGameData, const char[] sClass, const char[] sFunction, SDKType nReturn = SDKType_Unknown, SDKType nParam1 = SDKType_Unknown, SDKType nParam2 = SDKType_Unknown, SDKType nParam3 = SDKType_Unknown, SDKType nParam4 = SDKType_Unknown, SDKType nParam5 = SDKType_Unknown, SDKType nParam6 = SDKType_Unknown)
+Handle CreateSignatureCall(GameData hGameData, const char[] sName)
 {
-	StartPrepSDKCall(SDKCall_Raw);
-	PrepSDKCall_SetAddress(VTable_GetAddressFromName(hGameData, sClass, sFunction));
-	
-	SDKAddParameter(nParam1);
-	SDKAddParameter(nParam2);
-	SDKAddParameter(nParam3);
-	SDKAddParameter(nParam4);
-	SDKAddParameter(nParam5);
-	SDKAddParameter(nParam6);
-	
-	if (nReturn == SDKType_CBaseEntity || nReturn == SDKType_String)
-		PrepSDKCall_SetReturnInfo(nReturn, SDKPass_Pointer);
-	else if (nReturn != SDKType_Unknown)
-		PrepSDKCall_SetReturnInfo(nReturn, SDKPass_Plain);
+	StartPrepSDKCall(SDKCall_VirtualAddress);
+	PrepSDKCall_SetFromConf(hGameData, SDKConf_Signature, sName);
 	
 	Handle hSDKCall = EndPrepSDKCall();
 	if (!hSDKCall)
-		LogError("Failed to create SDKCall: %s::%s", sClass, sFunction);
+		LogError("Failed to create SDKCall: %s", sName);
 	
 	return hSDKCall;
-}
-
-static void SDKAddParameter(SDKType nParam)
-{
-	if (nParam == SDKType_Unknown)
-		return;
-	
-	if (nParam == SDKType_CBaseEntity || nParam == SDKType_String)
-		PrepSDKCall_AddParameter(nParam, SDKPass_Pointer, VDECODE_FLAG_ALLOWNULL|VDECODE_FLAG_ALLOWNOTINGAME|VDECODE_FLAG_ALLOWWORLD);	// Don't want VENCODE_FLAG_COPYBACK here
-	else
-		PrepSDKCall_AddParameter(nParam, SDKPass_Plain);
 }

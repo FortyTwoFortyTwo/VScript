@@ -1,26 +1,13 @@
-static int g_iInitializing;
-static GlobalForward g_fOnScriptVMInitialized;
-
 static ArrayList g_aGlobalFunctions;
 static ArrayList g_aClasses;
 
 void List_LoadGamedata(GameData hGameData)
 {
-	g_fOnScriptVMInitialized = new GlobalForward("VScript_OnScriptVMInitialized", ET_Ignore);
+	DynamicDetour hDetour = DynamicDetour.FromConf(hGameData, "IScriptVM::Init");
+	hDetour.Enable(Hook_Pre, ScriptVM_Detour);
 	
-	DynamicDetour hDetour;
-	
-	hDetour = VTable_CreateDetour(hGameData, "IScriptVM", "Init", ReturnType_Bool);
-	hDetour.Enable(Hook_Pre, List_Init);
-	
-	hDetour = VTable_CreateDetour(hGameData, "IScriptVM", "RegisterFunction", _, HookParamType_Int);
-	hDetour.Enable(Hook_Post, List_RegisterFunction);
-	
-	hDetour = VTable_CreateDetour(hGameData, "IScriptVM", "RegisterClass", ReturnType_Bool, HookParamType_Int);
-	hDetour.Enable(Hook_Post, List_RegisterClass);
-	
-	hDetour = VTable_CreateDetour(hGameData, "IGameSystem", "LevelInitPreEntity", ReturnType_Bool);
-	hDetour.Enable(Hook_Post, List_LevelInitPreEntity);
+	ScriptVM_CreateHook(hGameData, "RegisterFunction", Hook_Post, List_RegisterFunction, _, HookParamType_Int);
+	ScriptVM_CreateHook(hGameData, "RegisterClass", Hook_Post, List_RegisterClass, ReturnType_Bool, HookParamType_Int);
 }
 
 void List_LoadDefaults()
@@ -46,13 +33,16 @@ void List_LoadDefaults()
 		List_AddEntityScriptDesc(iEntity);
 }
 
-MRESReturn List_Init(Address pScriptVM, DHookReturn hReturn)
+MRESReturn ScriptVM_Detour(Address pThis)
 {
+	ScriptVM_UpdateHooks();
+	
 	if (g_iInitializing == 0)
 		g_iInitializing = 1;
 	
 	g_aGlobalFunctions.Clear();
 	g_aClasses.Clear();
+	
 	return MRES_Ignored;
 }
 
@@ -72,18 +62,6 @@ MRESReturn List_RegisterClass(Address pScriptVM, DHookReturn hReturn, DHookParam
 	
 	VScriptClass pClass = hParam.Get(1);
 	List_AddClass(pClass);
-	
-	return MRES_Ignored;
-}
-
-MRESReturn List_LevelInitPreEntity(Address pGameSystem, DHookReturn hReturn)
-{
-	if (g_iInitializing == 1)
-	{
-		g_iInitializing = 0;
-		Call_StartForward(g_fOnScriptVMInitialized);
-		Call_Finish();
-	}
 	
 	return MRES_Ignored;
 }

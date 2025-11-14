@@ -1,10 +1,11 @@
 enum SMField
 {
-	SMField_Unknwon,
-	SMField_Void,
-	SMField_Cell,
-	SMField_String,
-	SMField_Vector,
+	SMField_Invalid	= 0,
+	SMField_Void	= (1 << 0),
+	SMField_Cell	= (1 << 1),
+	SMField_Address	= (1 << 2),
+	SMField_String	= (1 << 3),
+	SMField_Vector	= (1 << 4),
 }
 
 const int FIELD_MAX = view_as<int>(FIELD_UINT32) + 1;
@@ -17,7 +18,7 @@ enum struct FieldInfo
 	SDKPassMethod nSDKPassMethod;
 	ReturnType nReturnType;
 	HookParamType nHookParamType;
-	int iSize;
+	int iSize;	// if initialized as 0, set it to PointerSize
 	
 	int iGameValue;
 }
@@ -28,10 +29,10 @@ static FieldInfo g_FieldInfos[FIELD_MAX] = {
 	{ "FIELD_VECTOR",		SMField_Vector,		SDKType_Vector,			SDKPass_ByValue,	ReturnType_VectorPtr,	HookParamType_Object,	12	},
 	{ "FIELD_INTEGER",		SMField_Cell,		SDKType_PlainOldData,	SDKPass_Plain,		ReturnType_Int,			HookParamType_Int,		4	},
 	{ "FIELD_BOOLEAN",		SMField_Cell,		SDKType_Bool,			SDKPass_Plain,		ReturnType_Bool,		HookParamType_Bool,		4	},
-	{ "FIELD_TYPEUNKNOWN",	SMField_Unknwon,	SDKType_Unknown,		SDKPass_Unknown,	ReturnType_Unknown,		HookParamType_Unknown,	-1	},
-	{ "FIELD_CSTRING",		SMField_String,		SDKType_String,			SDKPass_Pointer,	ReturnType_CharPtr,		HookParamType_CharPtr,	4	},
-	{ "FIELD_HSCRIPT",		SMField_Cell,		SDKType_PlainOldData,	SDKPass_Plain,		ReturnType_Int,			HookParamType_Int,		4	},
-	{ "FIELD_VARIANT",		SMField_Unknwon,	SDKType_Unknown,		SDKPass_Unknown,	ReturnType_Unknown,		HookParamType_Unknown,	-1	},
+	{ "FIELD_TYPEUNKNOWN",	SMField_Invalid,	SDKType_Unknown,		SDKPass_Unknown,	ReturnType_Unknown,		HookParamType_Unknown,	-1	},
+	{ "FIELD_CSTRING",		SMField_String,		SDKType_String,			SDKPass_Pointer,	ReturnType_CharPtr,		HookParamType_CharPtr,	0	},	// TODO is it a pointer?
+	{ "FIELD_HSCRIPT",		SMField_Address,	SDKType_VirtualAddress,	SDKPass_Plain,		ReturnType_Unknown,		HookParamType_Unknown,	0	},
+	{ "FIELD_VARIANT",		SMField_Invalid,	SDKType_Unknown,		SDKPass_Unknown,	ReturnType_Unknown,		HookParamType_Unknown,	-1	},
 	{ "FIELD_QANGLE",		SMField_Vector,		SDKType_QAngle,			SDKPass_ByValue,	ReturnType_VectorPtr,	HookParamType_Object,	12	},
 	{ "FIELD_UINT32",		SMField_Cell,		SDKType_PlainOldData,	SDKPass_Plain,		ReturnType_Int,			HookParamType_Int,		4	},
 };
@@ -43,6 +44,9 @@ void Field_LoadGamedata(GameData hGameData)
 		char sKeyValue[12];
 		hGameData.GetKeyValue(g_FieldInfos[i].sName, sKeyValue, sizeof(sKeyValue));
 		g_FieldInfos[i].iGameValue = StringToInt(sKeyValue);
+		
+		if (g_FieldInfos[i].iSize == 0)
+			g_FieldInfos[i].iSize = PointerSize;
 	}
 }
 
@@ -68,11 +72,11 @@ char[] Field_GetName(fieldtype_t nField)
 
 SMField Field_GetSMField(fieldtype_t nField)
 {
-	if (g_FieldInfos[nField].nSMField != SMField_Unknwon)
+	if (g_FieldInfos[nField].nSMField != SMField_Invalid)
 		return g_FieldInfos[nField].nSMField;
 	
 	ThrowError("Invalid field type '%s'", Field_GetName(nField));
-	return SMField_Unknwon;
+	return SMField_Invalid;
 }
 
 SDKType Field_GetSDKType(fieldtype_t nField)

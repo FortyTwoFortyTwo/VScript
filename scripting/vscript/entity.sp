@@ -27,9 +27,9 @@ void Entity_LoadGamedata(GameData hGameData)
 	if (!g_hSDKGetScriptDesc)
 		LogError("Failed to create SDKCall: CBaseEntity::GetScriptDesc");
 	
-	g_hSDKCallRegisterInstance = CreateSDKCall(hGameData, "IScriptVM", "RegisterInstance", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_CBaseEntity);
-	g_hSDKCallSetInstanceUniqeId = CreateSDKCall(hGameData, "IScriptVM", "SetInstanceUniqeId", _, SDKType_PlainOldData, SDKType_String);
-	g_hSDKCallGenerateUniqueKey = CreateSDKCall(hGameData, "IScriptVM", "GenerateUniqueKey", SDKType_Bool, SDKType_String, SDKType_String, SDKType_PlainOldData);
+	g_hSDKCallRegisterInstance = ScriptVM_CreateSDKCall(hGameData, "RegisterInstance", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_CBaseEntity);
+	g_hSDKCallSetInstanceUniqeId = ScriptVM_CreateSDKCall(hGameData, "SetInstanceUniqeId", _, SDKType_PlainOldData, SDKType_String);
+	g_hSDKCallGenerateUniqueKey = ScriptVM_CreateSDKCall(hGameData, "GenerateUniqueKey", SDKType_Bool, SDKType_String, SDKType_String, SDKType_PlainOldData);
 }
 
 void Entity_LoadOffsets(int iEntity)
@@ -41,7 +41,7 @@ void Entity_LoadOffsets(int iEntity)
 		if (g_iOffsetScriptScope == -1)
 			ThrowError("Could not get offset for CBaseEntity::m_ScriptScope, file a bug report.");
 		else
-			g_iOffsetScriptScope += 4;
+			g_iOffsetScriptScope += view_as<int>(PointerSize);
 	}
 	
 	if (g_iOffsetScriptInstance == -1 || g_iOffsetScriptModelKeyValues == -1)
@@ -51,8 +51,8 @@ void Entity_LoadOffsets(int iEntity)
 		if (iOffset == -1)
 			ThrowError("Could not get offset for CBaseEntity::m_hScriptInstance, file a bug report.");
 		
-		g_iOffsetScriptInstance = iOffset - 4;
-		g_iOffsetScriptModelKeyValues = iOffset + 4;
+		g_iOffsetScriptInstance = iOffset - view_as<int>(PointerSize);
+		g_iOffsetScriptModelKeyValues = iOffset + view_as<int>(PointerSize);
 	}
 }
 

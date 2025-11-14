@@ -3,7 +3,7 @@
 enum struct ExecuteParam
 {
 	fieldtype_t nType;
-	any nValue;			// int
+	any nValue;			// int and address
 	float vecValue[3];	// vector
 	int iStringCount;	// Amount of array indexs used to store string value
 }
@@ -20,7 +20,7 @@ static Handle g_hSDKCallExecuteFunction;
 
 void Execute_LoadGamedata(GameData hGameData)
 {
-	g_hSDKCallExecuteFunction = CreateSDKCall(hGameData, "IScriptVM", "ExecuteFunction", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_Bool);
+	g_hSDKCallExecuteFunction = ScriptVM_CreateSDKCall(hGameData, "ExecuteFunction", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_Bool);
 }
 
 VScriptExecute Execute_Create(HSCRIPT pHScript, HSCRIPT hScope)
@@ -175,6 +175,10 @@ ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
 			{
 				nValue = param.nValue;
 			}
+			case SMField_Address:
+			{
+				ThrowError("Not Supported yet");
+			}
 			case SMField_String:
 			{
 				int iLength = Execute_GetParamStringCount(aExecute, iParam + 1) * (sizeof(Execute) - 1) + 1;
@@ -191,6 +195,7 @@ ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
 			}
 		}
 		
+		// TODO store to offset for SMField_Address
 		hArgs.StoreToOffset((iParam * g_iScriptVariant_sizeof) + g_iScriptVariant_type, Field_EnumToGame(param.nType), NumberType_Int16);
 		hArgs.StoreToOffset((iParam * g_iScriptVariant_sizeof) + g_iScriptVariant_union, nValue, NumberType_Int32);
 	}
@@ -205,7 +210,7 @@ ScriptStatus_t Execute_Execute(VScriptExecute aExecute)
 		{
 			execute.nReturn.nValue = 0;
 		}
-		case SMField_Cell:
+		case SMField_Cell, SMField_Address:
 		{
 			execute.nReturn.nValue = pReturn.nValue;
 		}

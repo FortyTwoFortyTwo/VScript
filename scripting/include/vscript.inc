@@ -177,7 +177,7 @@ methodmap VScriptFunction < Address
 		public native get();
 	}
 	
-	// Gets/Sets the address of the function
+	// Gets/Sets the address of the function, null if function is a virtual
 	property Address Function
 	{
 		public native get();

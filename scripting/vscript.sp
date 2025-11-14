@@ -1,13 +1,15 @@
+#include <virtual_address>
 #include <sourcescramble>
 
 #include "include/vscript.inc"
 
-#define PLUGIN_VERSION			"1.10.0"
+#define PLUGIN_VERSION			"2.0.0"
 #define PLUGIN_VERSION_REVISION	"manual"
 
 char g_sOperatingSystem[16];
 bool g_bWindows;
 bool g_bAllowResetScriptVM;
+int g_iInitializing;
 
 Address g_pToScriptVM;
 
@@ -39,14 +41,14 @@ const VScriptFunction VScriptFunction_Invalid = view_as<VScriptFunction>(Address
 #include "vscript/hscript.sp"
 #include "vscript/list.sp"
 #include "vscript/memory.sp"
+#include "vscript/scriptvm.sp"
 #include "vscript/util.sp"
 #include "vscript/variant.sp"
-#include "vscript/vtable.sp"
 
 public Plugin myinfo =
 {
 	name = "VScript",
-	author = "42",
+	author = "FortyTwoFortyTwo",
 	description = "Exposes VScript features into SourceMod",
 	version = PLUGIN_VERSION ... "." ... PLUGIN_VERSION_REVISION,
 	url = "https://github.com/FortyTwoFortyTwo/VScript",
@@ -161,7 +163,8 @@ public void OnPluginStart()
 	g_iScriptVariant_union = hGameData.GetOffset("ScriptVariant_t::union");
 	g_iScriptVariant_type = hGameData.GetOffset("ScriptVariant_t::m_type");
 	
-	VTable_LoadGamedata(hGameData);
+	Memory_Init();
+	ScriptVM_Init();
 	
 	Class_LoadGamedata(hGameData);
 	Entity_LoadGamedata(hGameData);
@@ -171,16 +174,17 @@ public void OnPluginStart()
 	GameSystem_LoadGamedata(hGameData);
 	HScript_LoadGamedata(hGameData);
 	List_LoadGamedata(hGameData);
+	Memory_LoadGamedata(hGameData);
+	ScriptVM_LoadGamedata(hGameData);
 	
-	g_hSDKCallCompileScript = CreateSDKCall(hGameData, "IScriptVM", "CompileScript", SDKType_PlainOldData, SDKType_String, SDKType_String);
-	g_hSDKCallRegisterInstance = CreateSDKCall(hGameData, "IScriptVM", "RegisterInstance", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_String);
-	g_hSDKCallGetInstanceEntity = CreateSDKCall(hGameData, "IScriptVM", "GetInstanceValue", SDKType_CBaseEntity, SDKType_PlainOldData, SDKType_PlainOldData);
+	g_hSDKCallCompileScript = ScriptVM_CreateSDKCall(hGameData, "CompileScript", SDKType_PlainOldData, SDKType_String, SDKType_String);
+	g_hSDKCallRegisterInstance = ScriptVM_CreateSDKCall(hGameData, "RegisterInstance", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_String);
+	g_hSDKCallGetInstanceEntity = ScriptVM_CreateSDKCall(hGameData, "GetInstanceValue", SDKType_CBaseEntity, SDKType_PlainOldData, SDKType_PlainOldData);
 	
 	delete hGameData;
 	
 	List_LoadDefaults();
 	Binding_Init();
-	Memory_Init();
 }
 
 public void OnPluginEnd()
@@ -219,10 +223,29 @@ public any Native_HScript_GetValueField(Handle hPlugin, int iNumParams)
 
 public any Native_HScript_GetValue(Handle hPlugin, int iNumParams)
 {
-	ScriptVariant_t pValue = HScript_NativeGetValue(SMField_Cell);
-	any nValue = pValue.nValue;
-	delete pValue;
-	return nValue;
+	ScriptVariant_t pValue = HScript_NativeGetValue(SMField_Cell|SMField_Address);
+	fieldtype_t nField = pValue.nType;
+	
+	switch (Field_GetSMField(nField))
+	{
+		case SMField_Cell:
+		{
+			any nValue = pValue.nValue;
+			delete pValue;
+			return nValue;
+		}
+		case SMField_Address:
+		{
+			Address pAddress = pValue.pAddress;
+			delete pValue;
+			return pAddress;
+		}
+		default:
+		{
+			ThrowError("Unexpected condition, file a bug report.");
+			return 0;
+		}
+	}
 }
 
 public any Native_HScript_GetValueString(Handle hPlugin, int iNumParams)
@@ -261,7 +284,7 @@ public any Native_HScript_IsValueNull(Handle hPlugin, int iNumParams)
 
 public any Native_HScript_SetValue(Handle hPlugin, int iNumParams)
 {
-	HScript_NativeSetValue(SMField_Cell);
+	HScript_NativeSetValue(SMField_Cell|SMField_Address);
 	return 0;
 }
 

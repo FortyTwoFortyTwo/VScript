@@ -12,17 +12,17 @@ static Handle g_hSDKCallReleaseScript;
 
 void HScript_LoadGamedata(GameData hGameData)
 {
-	g_hSDKCallCreateScope = CreateSDKCall(hGameData, "IScriptVM", "CreateScope", SDKType_PlainOldData, SDKType_String, SDKType_PlainOldData);
-	g_hSDKCallCreateTable = CreateSDKCall(hGameData, "IScriptVM", "CreateTable", _, SDKType_PlainOldData);
-	g_hSDKCallGetKeyValue = CreateSDKCall(hGameData, "IScriptVM", "GetKeyValue", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData);
-	g_hSDKCallGetValue = CreateSDKCall(hGameData, "IScriptVM", "GetValue", SDKType_Bool, SDKType_PlainOldData, SDKType_String, SDKType_PlainOldData);
-	g_hSDKCallSetValue = CreateSDKCall(hGameData, "IScriptVM", "SetValue", SDKType_Bool, SDKType_PlainOldData, SDKType_String, SDKType_PlainOldData);
-	g_hSDKCallReleaseValue = CreateSDKCall(hGameData, "IScriptVM", "ReleaseValue", _, SDKType_PlainOldData);
-	g_hSDKCallClearValue = CreateSDKCall(hGameData, "IScriptVM", "ClearValue", SDKType_Bool, SDKType_PlainOldData, SDKType_String);
-	g_hSDKCallRegisterInstance = CreateSDKCall(hGameData, "IScriptVM", "RegisterInstance", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData);
-	g_hSDKCallGetInstanceValue = CreateSDKCall(hGameData, "IScriptVM", "GetInstanceValue", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData);
-	g_hSDKCallReleaseScope = CreateSDKCall(hGameData, "IScriptVM", "ReleaseScope", _, SDKType_PlainOldData);
-	g_hSDKCallReleaseScript = CreateSDKCall(hGameData, "IScriptVM", "ReleaseScript", _, SDKType_PlainOldData);
+	g_hSDKCallCreateScope = ScriptVM_CreateSDKCall(hGameData, "CreateScope", SDKType_PlainOldData, SDKType_String, SDKType_PlainOldData);
+	g_hSDKCallCreateTable = ScriptVM_CreateSDKCall(hGameData, "CreateTable", _, SDKType_PlainOldData);
+	g_hSDKCallGetKeyValue = ScriptVM_CreateSDKCall(hGameData, "GetKeyValue", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData);
+	g_hSDKCallGetValue = ScriptVM_CreateSDKCall(hGameData, "GetValue", SDKType_Bool, SDKType_PlainOldData, SDKType_String, SDKType_PlainOldData);
+	g_hSDKCallSetValue = ScriptVM_CreateSDKCall(hGameData, "SetValue", SDKType_Bool, SDKType_PlainOldData, SDKType_String, SDKType_PlainOldData);
+	g_hSDKCallReleaseValue = ScriptVM_CreateSDKCall(hGameData, "ReleaseValue", _, SDKType_PlainOldData);
+	g_hSDKCallClearValue = ScriptVM_CreateSDKCall(hGameData, "ClearValue", SDKType_Bool, SDKType_PlainOldData, SDKType_String);
+	g_hSDKCallRegisterInstance = ScriptVM_CreateSDKCall(hGameData, "RegisterInstance", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData);
+	g_hSDKCallGetInstanceValue = ScriptVM_CreateSDKCall(hGameData, "GetInstanceValue", SDKType_PlainOldData, SDKType_PlainOldData, SDKType_PlainOldData);
+	g_hSDKCallReleaseScope = ScriptVM_CreateSDKCall(hGameData, "ReleaseScope", _, SDKType_PlainOldData);
+	g_hSDKCallReleaseScript = ScriptVM_CreateSDKCall(hGameData, "ReleaseScript", _, SDKType_PlainOldData);
 }
 
 HSCRIPT HScript_CreateScope(const char[] sName, HSCRIPT pParent)
@@ -76,7 +76,7 @@ bool HScript_GetValue(HSCRIPT pHScript, const char[] sKey, ScriptVariant_t pValu
 	return SDKCall(g_hSDKCallGetValue, GetScriptVM(), pHScript, sKey, pValue.Address);
 }
 
-ScriptVariant_t HScript_NativeGetValue(SMField nSMField = SMField_Unknwon)
+ScriptVariant_t HScript_NativeGetValue(SMField nSMField = SMField_Invalid)
 {
 	int iLength;
 	GetNativeStringLength(2, iLength);
@@ -93,11 +93,11 @@ ScriptVariant_t HScript_NativeGetValue(SMField nSMField = SMField_Unknwon)
 		ThrowNativeError(SP_ERROR_NATIVE, "Key name '%s' either don't exist or value is null", sBuffer);
 	}
 	
-	if (nSMField == SMField_Unknwon)
+	if (nSMField == SMField_Invalid)
 		return pValue;	// skip field check
 	
 	fieldtype_t nField = pValue.nType;
-	if (Field_GetSMField(nField) != nSMField)
+	if (Field_GetSMField(nField) & nSMField == SMField_Invalid)
 	{
 		delete pValue;
 		ThrowNativeError(SP_ERROR_NATIVE, "Invalid field use '%s'", Field_GetName(nField));
@@ -160,7 +160,7 @@ void HScript_NativeSetValue(SMField nSMField)
 	if (nSMField != SMField_Void)
 	{
 		nField = GetNativeCell(3);
-		if (Field_GetSMField(nField) != nSMField)
+		if (Field_GetSMField(nField) & nSMField == SMField_Invalid)
 			ThrowNativeError(SP_ERROR_NATIVE, "Invalid field use '%s'", Field_GetName(nField));
 	}
 	
@@ -169,11 +169,15 @@ void HScript_NativeSetValue(SMField nSMField)
 	
 	MemoryBlock hMemory;
 	
-	switch (nSMField)
+	switch (Field_GetSMField(nField))
 	{
 		case SMField_Cell:
 		{
 			pValue.nValue = GetNativeCell(4);
+		}
+		case SMField_Address:
+		{
+			pValue.pAddress = GetNativeCell(4);
 		}
 		case SMField_String:
 		{

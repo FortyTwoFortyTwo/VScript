@@ -13,7 +13,7 @@ Currently supports the following games:
 All builds can be found in [releases](https://github.com/FortyTwoFortyTwo/VScript/releases) page, auto-built on every commits done in main branch.
 
 ## Requirements
-- At least SourceMod version 1.12.0.6924
+- At least SourceMod version 1.13.0.7278
 - [sourcescramble](https://forums.alliedmods.net/showthread.php?p=2657347)
 
 ## Features
