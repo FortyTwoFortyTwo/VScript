@@ -10,11 +10,7 @@
 				"windows"	"windows"
 			}
 			
-			"IGameSystem"	"CVScriptGameSystem"
-			"IScriptVM"		"CSquirrelVM"
-			
 			// Extra virtual functions that exists for each games
-			"IGameSystem::ExtraOffsets"	""
 			"IScriptVM::ExtraOffsets"	""
 			
 			"AllowResetScriptVM"	"1"
@@ -32,9 +28,59 @@
 			"FIELD_QANGLE"		"39"
 		}
 		
+		"Signatures"
+		{
+			"g_pScriptVM"
+			{
+				"linux"		"@g_pScriptVM"
+			}
+		}
+		
+		"Addresses"
+		{
+			"g_pScriptVM"
+			{
+				"signature"	"g_pScriptVM"
+			}
+		}
+		
 		"Offsets"
 		{
 			// All offsets are based on any game with smallest offset numbers, of which a large amount of it is based from sdk2013
+			
+			// CUtlVector
+			
+			"CUtlVector::m_pMemory"
+			{
+				"linux"		"0"
+				"windows"	"0"
+			}
+			
+			"CUtlVector::m_nAllocationCount"
+			{
+				"linux"		"4"
+				"windows"	"4"
+			}
+			
+			"CUtlVector::m_nGrowSize"
+			{
+				"linux"		"8"
+				"windows"	"8"
+			}
+			
+			"CUtlVector::m_Size"
+			{
+				"linux"		"12"
+				"windows"	"12"
+			}
+			
+			"CUtlVector::m_pElements"
+			{
+				"linux"		"16"
+				"windows"	"16"
+			}
+			
+			// ScriptClassDesc_t
 			
 			"ScriptClassDesc_t::m_pszScriptName"
 			{
@@ -77,6 +123,8 @@
 				"linux"		"52"
 				"windows"	"52"
 			}
+			
+			// ScriptFunctionBinding_t
 			
 			"ScriptFunctionBinding_t::m_pszScriptName"
 			{
@@ -132,6 +180,8 @@
 				"windows"	"48"
 			}
 			
+			// ScriptVariant_t
+			
 			"ScriptVariant_t::union"
 			{
 				"linux"		"0"
@@ -156,41 +206,23 @@
 				"windows"	"4"
 			}
 			
+			// CBaseEntity
+			
 			"CBaseEntity::GetScriptDesc"
 			{
 				"linux"		"13"
 				"windows"	"12"
 			}
 			
-			"IGameSystem::LevelInitPreEntity"
+			// CVScriptGameSystem
+			
+			"sizeof(CVScriptGameSystem)"
 			{
-				"linux"		"4"
-				"windows"	"4"
+				"linux"		"16"
+				"windows"	"16"
 			}
 			
-			"IGameSystem::LevelShutdownPostEntity"
-			{
-				"linux"		"7"
-				"windows"	"7"
-			}
-			
-			"IGameSystem::FrameUpdatePostEntityThink"
-			{
-				"linux"		"15"
-				"windows"	"14"
-			}
-			
-			"CVScriptGameSystem::m_bAllowEntityCreationInScripts"
-			{
-				"linux"		"12"
-				"windows"	"12"
-			}
-			
-			"IScriptVM::Init"
-			{
-				"linux"		"0"
-				"windows"	"0"
-			}
+			// IScriptVM
 			
 			"IScriptVM::CompileScript"	// vtable dumper got it wrong
 			{
@@ -294,6 +326,25 @@
 				"windows"	"34"
 			}
 		}
+		
+		"Functions"
+		{
+			"IScriptVM::Init"
+			{
+				"signature"		"IScriptVM::Init"
+				"callconv"		"cdecl"
+				"return"		"void"
+				"this"			"address"
+			}
+			
+			"CVScriptGameSystem::LevelInitPreEntity"
+			{
+				"signature"		"CVScriptGameSystem::LevelInitPreEntity"
+				"callconv"		"cdecl"
+				"return"		"void"
+				"this"			"address"
+			}
+		}
 	}
 	
 	"#default"
@@ -306,10 +357,43 @@
 			"game"	"tf"		// Team Fortress 2
 		}
 		
-		"Keys"
+		"Signatures"
 		{
-			//  6 - IGameSystem::LevelShutdownPreClearSteamAPIContext
-			"IGameSystem::ExtraOffsets"	"6"
+			"g_pScriptVM"
+			{
+				// CVScriptGameSystem::FrameUpdatePostEntityThink
+				"windows"	"\x8B\x0D\x2A\x2A\x2A\x2A\x85\xC9\x74\x2A\xA1\x2A\x2A\x2A\x2A\x8B\x11\x51"
+			}
+			
+			"CVScriptGameSystem::LevelInitPreEntity"
+			{
+				"linux"		"@_ZN18CVScriptGameSystem18LevelInitPreEntityEv"
+				"windows"	"\x80\x3D\x2A\x2A\x2A\x2A\x00\x56\x8B\xF1\x74\x2A\x8B\x0D\x2A\x2A\x2A\x2A\x85\xC9"
+			}
+			
+			"CVScriptGameSystem::LevelShutdownPostEntity"
+			{
+				"linux"		"@_ZN18CVScriptGameSystem23LevelShutdownPostEntityEv"
+				"windows"	"\x80\x3D\x2A\x2A\x2A\x2A\x00\x74\x2A\x8B\x0D\x2A\x2A\x2A\x2A\x85\xC9"
+			}
+			
+			"IScriptVM::Init"
+			{
+				"library"	"vscript"
+				"linux"		"@_ZN11CSquirrelVM4InitEv"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x08\x2A\x68\x00\x04\x00\x00"
+			}
+		}
+		
+		"Addresses"
+		{
+			"g_pScriptVM"
+			{
+				"windows"
+				{
+					"read"	"2"
+				}
+			}
 		}
 		
 		"Offsets"
@@ -369,6 +453,45 @@
 			"FIELD_VARIANT"		"33"	// +1
 			"FIELD_UINT32"		"38"	// +1
 			"FIELD_QANGLE"		"40"	// +1
+		}
+		
+		"Signatures"
+		{
+			"g_pScriptVM"
+			{
+				// CVScriptGameSystem::FrameUpdatePostEntityThink
+				"windows"	"\x55\x8B\xEC\x8B\x0D\x2A\x2A\x2A\x2A\x83\xEC\x0C"
+			}
+			
+			"CVScriptGameSystem::LevelInitPreEntity"
+			{
+				"linux"		"@_ZN18CVScriptGameSystem18LevelInitPreEntityEv"
+				"windows"	"\xB9\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\xE8\x2A\x2A\x2A\x2A\x80\x3D\x2A\x2A\x2A\x2A\x00"
+			}
+			
+			"CVScriptGameSystem::LevelShutdownPostEntity"
+			{
+				"linux"		"@_ZN18CVScriptGameSystem23LevelShutdownPostEntityEv"
+				"windows"	"\x80\x3D\x2A\x2A\x2A\x2A\x00\x74\x2A\xE8\x2A\x2A\x2A\x2A\xC6\x05\x2A\x2A\x2A\x2A\x01"
+			}
+			
+			"IScriptVM::Init"
+			{
+				"library"	"vscript"
+				"linux"		"@_ZN11CSquirrelVM4InitEv"
+				"windows"	"\x55\x8B\xEC\x83\xE4\xF8\x83\xEC\x0C\x53\x56\x57\x8B\xF9"
+			}
+		}
+		
+		"Addresses"
+		{
+			"g_pScriptVM"
+			{
+				"windows"
+				{
+					"read"	"5"
+				}
+			}
 		}
 	}
 }

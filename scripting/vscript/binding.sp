@@ -98,13 +98,13 @@ public MRESReturn Binding_Detour(DHookReturn hReturn, DHookParam hParam)
 		
 		switch (Field_GetSMField(Function_GetParam(info.pFunction, i)))
 		{
-			case SMField_Cell:
+			case SMField_Cell, SMField_Address:
 			{
 				iSize = 1;
 			}
 			case SMField_String:
 			{
-				Address pString = LoadFromAddress(pArguments + view_as<Address>(i * g_iScriptVariant_sizeof + g_iScriptVariant_union), NumberType_Int32);
+				Address pString = LoadAddressFromAddress(pArguments + view_as<Address>(i * g_iScriptVariant_sizeof + g_iScriptVariant_union));
 				iSize = LoadStringLengthFromAddress(pString);
 			}
 			case SMField_Vector:
@@ -132,6 +132,10 @@ public MRESReturn Binding_Detour(DHookReturn hReturn, DHookParam hParam)
 			case SMField_Cell:
 			{
 				a[iCount][0] = nValue;
+			}
+			case SMField_Address:
+			{
+				a[iCount][0] = LoadAddressFromAddress(pArguments + view_as<Address>(i * g_iScriptVariant_sizeof + g_iScriptVariant_union));
 			}
 			case SMField_String:
 			{
@@ -184,7 +188,11 @@ public MRESReturn Binding_Detour(DHookReturn hReturn, DHookParam hParam)
 	if (pReturn)
 	{
 		StoreToAddress(pReturn + view_as<Address>(g_iScriptVariant_type), Field_EnumToGame(nField), NumberType_Int16);
-		StoreToAddress(pReturn + view_as<Address>(g_iScriptVariant_union), nResult, NumberType_Int32);
+		
+		if (Field_GetSMField(nField) == SMField_Address)
+			StoreAddressToAddress(pReturn + view_as<Address>(g_iScriptVariant_union), nResult);
+		else
+			StoreToAddress(pReturn + view_as<Address>(g_iScriptVariant_union), nResult, NumberType_Int32);
 	}
 	
 	hReturn.Value = true;

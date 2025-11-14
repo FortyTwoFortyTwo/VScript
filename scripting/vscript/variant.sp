@@ -108,6 +108,22 @@ methodmap ScriptVariant_t < MemoryBlock
 		LoadVectorFromAddress(this.nValue, vecBuffer);
 	}
 	
+	property Address pAddress
+	{
+		public get()
+		{
+			// TODO
+			ThrowError("Not supported");
+			return view_as<Address>(this.LoadFromOffset(g_iScriptVariant_union, NumberType_Int32));
+		}
+		
+		public set(Address pValue)
+		{
+			ThrowError("Not supported");
+			this.StoreToOffset(g_iScriptVariant_union, pValue, NumberType_Int32);
+		}
+	}
+	
 	property fieldtype_t nType
 	{
 		public get()

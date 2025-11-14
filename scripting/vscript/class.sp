@@ -42,9 +42,9 @@ void Class_Init(VScriptClass pClass)
 	
 	// Set strings as empty, but not null
 	Address pEmptyString = GetEmptyString();
-	StoreToAddress(pClass + view_as<Address>(g_iClassDesc_ScriptName), pEmptyString, NumberType_Int32);
-	StoreToAddress(pClass + view_as<Address>(g_iClassDesc_ClassName), pEmptyString, NumberType_Int32);
-	StoreToAddress(pClass + view_as<Address>(g_iClassDesc_Description), pEmptyString, NumberType_Int32);
+	StoreAddressToAddress(pClass + view_as<Address>(g_iClassDesc_ScriptName), pEmptyString);
+	StoreAddressToAddress(pClass + view_as<Address>(g_iClassDesc_ClassName), pEmptyString);
+	StoreAddressToAddress(pClass + view_as<Address>(g_iClassDesc_Description), pEmptyString);
 	
 	// Add to the list for m_pNextDesc to register all.
 	// Correct way to do this is to fetch ScriptClassDesc_t::GetDescList and update function's retrun.
@@ -56,11 +56,11 @@ void Class_Init(VScriptClass pClass)
 	do
 	{
 		pOther = pNext;
-		pNext = LoadFromAddress(pOther + view_as<Address>(g_iClassDesc_NextDesc), NumberType_Int32);
+		pNext = view_as<VScriptClass>(LoadAddressFromAddress(pOther + view_as<Address>(g_iClassDesc_NextDesc)));
 	}
 	while (pNext);
 	
-	StoreToAddress(pOther + view_as<Address>(g_iClassDesc_NextDesc), pClass, NumberType_Int32);
+	StoreAddressToAddress(pOther + view_as<Address>(g_iClassDesc_NextDesc), pClass);
 }
 
 void Class_GetScriptName(VScriptClass pClass, char[] sBuffer, int iLength)
@@ -97,8 +97,8 @@ ArrayList Class_GetAllFunctions(VScriptClass pClass)
 {
 	ArrayList aList = new ArrayList();
 	
-	Address pData = LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_FunctionBindings), NumberType_Int32);
-	int iFunctionCount = LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_FunctionBindings) + view_as<Address>(0x0C), NumberType_Int32);
+	Address pData = LoadAddressFromAddress(pClass + view_as<Address>(g_iClassDesc_FunctionBindings));
+	int iFunctionCount = Memory_UtlVectorGetSize(pClass + view_as<Address>(g_iClassDesc_FunctionBindings));
 	for (int i = 0; i < iFunctionCount; i++)
 	{
 		VScriptFunction pFunction = view_as<VScriptFunction>(pData + view_as<Address>(g_iFunctionBinding_sizeof * i));
@@ -110,18 +110,18 @@ ArrayList Class_GetAllFunctions(VScriptClass pClass)
 
 int Class_GetFunctionCount(VScriptClass pClass)
 {
-	return LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_FunctionBindings) + view_as<Address>(0x0C), NumberType_Int32);
+	return Memory_UtlVectorGetSize(pClass + view_as<Address>(g_iClassDesc_FunctionBindings));
 }
 
 VScriptFunction Class_GetFunctionFromIndex(VScriptClass pClass, int iIndex)
 {
-	Address pData = LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_FunctionBindings), NumberType_Int32);
+	Address pData = LoadAddressFromAddress(pClass + view_as<Address>(g_iClassDesc_FunctionBindings));
 	return view_as<VScriptFunction>(pData + view_as<Address>(g_iFunctionBinding_sizeof * iIndex));
 }
 
 VScriptFunction Class_GetFunctionFromName(VScriptClass pClass, const char[] sName)
 {
-	Address pData = LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_FunctionBindings), NumberType_Int32);
+	Address pData = LoadAddressFromAddress(pClass + view_as<Address>(g_iClassDesc_FunctionBindings));
 	int iFunctionCount = Class_GetFunctionCount(pClass);
 	for (int i = 0; i < iFunctionCount; i++)
 	{
@@ -162,7 +162,7 @@ VScriptFunction Class_CreateFunction(VScriptClass pClass)
 
 VScriptClass Class_GetBaseDesc(VScriptClass pClass)
 {
-	return LoadFromAddress(pClass + view_as<Address>(g_iClassDesc_BaseDesc), NumberType_Int32);
+	return view_as<VScriptClass>(LoadAddressFromAddress(pClass + view_as<Address>(g_iClassDesc_BaseDesc)));
 }
 
 bool Class_IsDerivedFrom(VScriptClass pClass, VScriptClass pBase)

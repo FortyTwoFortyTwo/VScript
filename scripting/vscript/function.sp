@@ -27,7 +27,7 @@ void Function_LoadGamedata(GameData hGameData)
 	g_iFunctionBinding_Flags = hGameData.GetOffset("ScriptFunctionBinding_t::m_flags");
 	g_iFunctionBinding_sizeof = hGameData.GetOffset("sizeof(ScriptFunctionBinding_t)");
 	
-	g_hSDKCallRegisterFunction = CreateSDKCall(hGameData, "IScriptVM", "RegisterFunction", _, SDKType_PlainOldData);
+	g_hSDKCallRegisterFunction = ScriptVM_CreateSDKCall(hGameData, "RegisterFunction", _, SDKType_PlainOldData);
 }
 
 VScriptFunction Function_Create()
@@ -51,9 +51,9 @@ void Function_Init(VScriptFunction pFunction, bool bClass)
 	
 	// Set strings as empty, but not null
 	Address pEmptyString = GetEmptyString();
-	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_ScriptName), pEmptyString, NumberType_Int32);
-	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_FunctionName), pEmptyString, NumberType_Int32);
-	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_Description), pEmptyString, NumberType_Int32);
+	StoreAddressToAddress(pFunction + view_as<Address>(g_iFunctionBinding_ScriptName), pEmptyString);
+	StoreAddressToAddress(pFunction + view_as<Address>(g_iFunctionBinding_FunctionName), pEmptyString);
+	StoreAddressToAddress(pFunction + view_as<Address>(g_iFunctionBinding_Description), pEmptyString);
 	
 	// Right now just need to set flags, currently we can only support member functions
 	if (bClass)
@@ -82,7 +82,7 @@ void Function_SetFunctionName(VScriptFunction pFunction, int iParam)
 
 Address Function_GetDescription(VScriptFunction pFunction, char[] sBuffer, int iLength)
 {
-	Address pString = LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Description), NumberType_Int32);
+	Address pString = LoadAddressFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Description));
 	LoadStringFromAddress(pString, sBuffer, iLength);
 	return pString;
 }
@@ -104,7 +104,7 @@ void Function_SetReturnType(VScriptFunction pFunction, fieldtype_t nField)
 
 fieldtype_t Function_GetParam(VScriptFunction pFunction, int iPosition)
 {
-	Address pData = LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Parameters), NumberType_Int32);
+	Address pData = LoadAddressFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Parameters));
 	return Field_GameToEnum(LoadFromAddress(pData + view_as<Address>(4 * iPosition), NumberType_Int32));
 }
 
@@ -113,23 +113,23 @@ void Function_SetParam(VScriptFunction pFunction, int iPosition, fieldtype_t nFi
 	// Create any new needed params
 	Memory_UtlVectorSetSize(pFunction + view_as<Address>(g_iFunctionBinding_Parameters), 4, iPosition + 1);
 	
-	Address pData = LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Parameters), NumberType_Int32);
+	Address pData = LoadAddressFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Parameters));
 	StoreToAddress(pData + view_as<Address>(4 * iPosition), Field_EnumToGame(nField), NumberType_Int32);
 }
 
 int Function_GetParamCount(VScriptFunction pFunction)
 {
-	return LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Parameters) + view_as<Address>(0x0C), NumberType_Int32);
+	return Memory_UtlVectorGetSize(pFunction + view_as<Address>(g_iFunctionBinding_Parameters));
 }
 
 Address Function_GetBinding(VScriptFunction pFunction)
 {
-	return LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Binding), NumberType_Int32);
+	return LoadAddressFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Binding));
 }
 
 void Function_SetBinding(VScriptFunction pFunction, Address pBinding)
 {
-	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_Binding), pBinding, NumberType_Int32);
+	StoreAddressToAddress(pFunction + view_as<Address>(g_iFunctionBinding_Binding), pBinding);
 }
 
 Address Function_GetFunction(VScriptFunction pFunction)
@@ -138,39 +138,36 @@ Address Function_GetFunction(VScriptFunction pFunction)
 	if (iOffset == -1)
 	{
 		// Simple function address
-		return LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Function), NumberType_Int32);
+		return LoadAddressFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Function));
 	}
 	else
 	{
 		// Virtual function
-		char sClass[64];
-		VScriptClass pClass = List_GetClassFromFunction(pFunction);
-		Class_GetScriptName(pClass, sClass, sizeof(sClass));
-		return VTable_GetAddressFromOffset(sClass, iOffset);
+		return Address_Null;
 	}
 }
 
 void Function_SetFunction(VScriptFunction pFunction, Address pFunc)
 {
-	for (int iOffset = 4; iOffset < g_iScriptFunctionBinding_sizeof; iOffset++)	// Fill any extra empty space as nothing
+	for (int iOffset = PointerSize; iOffset < g_iScriptFunctionBinding_sizeof; iOffset++)	// Fill any extra empty space as nothing
 		StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_Function + iOffset), 0x00, NumberType_Int8);
 	
-	StoreToAddress(pFunction + view_as<Address>(g_iFunctionBinding_Function), pFunc, NumberType_Int32);
+	StoreAddressToAddress(pFunction + view_as<Address>(g_iFunctionBinding_Function), pFunc);
 }
 
 int Function_GetOffset(VScriptFunction pFunction)
 {
-	Address pAddress = LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Function), NumberType_Int32);
+	Address pAddress = LoadAddressFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Function));
 	
 	// This function could be virtual, check it
 	int iOffset;
 	if (g_bWindows)
 	{
-		if (g_iScriptFunctionBinding_sizeof > 4 && LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Function + 4), NumberType_Int32) != 0)
+		if (g_iScriptFunctionBinding_sizeof > view_as<int>(PointerSize) && LoadFromAddress(pFunction + view_as<Address>(g_iFunctionBinding_Function) + PointerSize, NumberType_Int32) != 0)
 			return -1;	// It's a virtual in linux, but not windows
 		
 		// Windows only gives function address that directly calls a virtual, load the instruction
-		Address pInstruction = LoadFromAddress(pAddress, NumberType_Int32);
+		Address pInstruction = LoadAddressFromAddress(pAddress);
 		
 		int iRead = RoundToFloor(float(view_as<int>(pInstruction)) / float(0x01000000));
 		if (iRead < 0)
@@ -183,6 +180,7 @@ int Function_GetOffset(VScriptFunction pFunction)
 		
 		switch (iRead)
 		{
+			// TODO whenever to keep 4 or PointerSize, and whatever for 64 bit support
 			// 1-byte read
 			case 0x60: iOffset = LoadFromAddress(pAddress + view_as<Address>(4), NumberType_Int8);
 			
@@ -204,12 +202,12 @@ int Function_GetOffset(VScriptFunction pFunction)
 	{
 		// pAddress is an offset
 		iOffset = view_as<int>(pAddress) - 1;
-		if (iOffset < 0 || iOffset >= 0x01000000)
+		if (iOffset < 0 || iOffset >= 0x01000000)	// TODO still 0x01000000?
 			return -1;	// normal function
 	}
 	
 	// Its a virtual function
-	return RoundToFloor(float(iOffset) / 4.0);
+	return RoundToFloor(float(iOffset) / view_as<int>(PointerSize));
 	
 }
 
@@ -247,7 +245,7 @@ Handle Function_CreateSDKCall(VScriptFunction pFunction, bool bEntity = true, bo
 	else if (bEntity && Class_IsDerivedFrom(List_GetClassFromFunction(pFunction), List_GetClass("CBaseEntity")))
 		StartPrepSDKCall(SDKCall_Entity);
 	else
-		StartPrepSDKCall(SDKCall_Raw);
+		StartPrepSDKCall(SDKCall_VirtualAddress);
 	
 	int iOffset = Function_GetOffset(pFunction);
 	if (iOffset != -1)
